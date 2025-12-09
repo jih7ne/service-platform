@@ -128,7 +128,11 @@ class BabysitterRegistration extends Component
 
     public function suivant()
     {
-        $this->validate();
+        // Valider seulement si des règles existent pour cette étape
+        $rules = $this->rules();
+        if (!empty($rules)) {
+            $this->validate();
+        }
         
         if ($this->currentStep < $this->totalSteps) {
             $this->currentStep++;
@@ -190,10 +194,10 @@ class BabysitterRegistration extends Component
             }
 
             // 3. Créer l'intervenant
-            $intervenant = Intervenant::create([
-                'IdIntervenant' => $utilisateur->idUser,
-                'statut' => 'EN_ATTENTE',
-            ]);
+            $intervenant = new Intervenant();
+            $intervenant->IdIntervenant = $utilisateur->idUser;
+            $intervenant->statut = 'EN_ATTENTE';
+            $intervenant->save();
 
             // 4. Upload des documents
             $procedeJuridique = null;
@@ -215,23 +219,43 @@ class BabysitterRegistration extends Component
             }
 
             // 5. Créer le profil babysitter
-            $babysitter = Babysitter::create([
-                'idBabysitter' => $intervenant->IdIntervenant,
-                'prixHeure' => $this->prix_horaire,
-                'expAnnee' => $this->annees_experience,
-                'niveauEtudes' => $this->niveau_etudes,
-                'description' => $this->description,
-                'langues' => json_encode($this->langues),
-                'procedeJuridique' => $procedeJuridique,
-                'coprocultureSelles' => $coprocultureSelles,
-                'certifAptitudeMentale' => $certifAptitude,
-                'radiographieThorax' => $radiographieThorax,
-                'estFumeur' => $this->je_fume,
-                'mobilite' => $this->jai_voiture,
-                'possedeEnfant' => $this->jai_enfants,
-                'permisConduite' => $this->permis_conduire,
-                'maladies' => $this->experience_detaillee,
-            ]);
+            // Convertir les années d'expérience en nombre
+            $expAnneeInt = 0;
+            switch($this->annees_experience) {
+                case '0-1':
+                    $expAnneeInt = 0;
+                    break;
+                case '1-3':
+                    $expAnneeInt = 2;
+                    break;
+                case '3-5':
+                    $expAnneeInt = 4;
+                    break;
+                case '5+':
+                    $expAnneeInt = 5;
+                    break;
+            }
+
+            $babysitter = new Babysitter();
+            $babysitter->idBabysitter = $intervenant->IdIntervenant;
+            $babysitter->prixHeure = $this->prix_horaire;
+            $babysitter->expAnnee = $expAnneeInt;
+            $babysitter->niveauEtudes = $this->niveau_etudes;
+            $babysitter->description = $this->description;
+            $babysitter->langues = json_encode($this->langues);
+            $babysitter->procedeJuridique = $procedeJuridique;
+            $babysitter->coprocultureSelles = $coprocultureSelles;
+            $babysitter->certifAptitudeMentale = $certifAptitude;
+            $babysitter->radiographieThorax = $radiographieThorax;
+            $babysitter->estFumeur = $this->je_fume;
+            $babysitter->mobilite = $this->jai_voiture;
+            $babysitter->possedeEnfant = $this->jai_enfants;
+            $babysitter->permisConduite = $this->permis_conduire;
+            $babysitter->maladies = $this->experience_detaillee;
+            $babysitter->save();
+
+            // Récupérer l'ID du babysitter (qui est le même que IdIntervenant)
+            $idBabysitter = $intervenant->IdIntervenant;
 
             // 6. Associer les catégories d'enfants
             if (!empty($this->categories_enfants)) {
@@ -239,7 +263,7 @@ class BabysitterRegistration extends Component
                     $categorie = CategorieEnfant::firstOrCreate(['categorie' => $categorieNom]);
                     DB::table('choisir_categories')->insert([
                         'idCategorie' => $categorie->idCategorie,
-                        'idBabysitter' => $babysitter->idBabysitter,
+                        'idBabysitter' => $idBabysitter,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -252,7 +276,7 @@ class BabysitterRegistration extends Component
                     $formation = Formation::firstOrCreate(['formation' => $formationNom]);
                     DB::table('choisir_formations')->insert([
                         'idFormation' => $formation->idFormation,
-                        'idBabysitter' => $babysitter->idBabysitter,
+                        'idBabysitter' => $idBabysitter,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -265,7 +289,7 @@ class BabysitterRegistration extends Component
                     $superpouvoir = Superpouvoir::firstOrCreate(['superpouvoir' => $superpouvoirNom]);
                     DB::table('choisir_superpourvoirs')->insert([
                         'idSuperpouvoir' => $superpouvoir->idSuperpouvoir,
-                        'idBabysitter' => $babysitter->idBabysitter,
+                        'idBabysitter' => $idBabysitter,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);

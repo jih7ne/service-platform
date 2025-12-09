@@ -48,28 +48,11 @@
                                     </div>
                                     <div>
                                         <h3 class="font-bold text-black mb-1">Intervenant</h3>
-                                        <p class="text-sm text-gray-600">Offrez vos services de garde d'enfants</p>
+                                        <p class="text-sm text-[#2a2a2a] font-medium">Je propose mes services</p>
                                     </div>
                                 </div>
                             </div>
                         </a>
-
-                        <!-- Option Babysitter -->
-                        <button wire:click="redirectToBabysitterRegistration" class="relative cursor-pointer block w-full">
-                            <div class="p-6 border-2 rounded-xl transition-all hover:border-blue-500 hover:bg-blue-50 border-gray-300 bg-white">
-                                <div class="flex items-start gap-3">
-                                    <div class="flex-shrink-0">
-                                        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                        </svg>
-                                    </div>
-                                    <div class="text-left">
-                                        <h3 class="font-bold text-black mb-1">Babysitter</h3>
-                                        <p class="text-sm text-gray-600">Inscription spécialisée pour la garde d'enfants</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </button>
                     </div>
                 </div>
 
