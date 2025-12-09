@@ -2,15 +2,22 @@
 
 namespace App\Models\Shared;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
 
-class Utilisateur extends Model
+class Utilisateur extends Authenticatable
 {
-    use SoftDeletes;
+    use SoftDeletes, Notifiable;
 
     protected $table = 'utilisateurs';
     protected $primaryKey = 'idUser';
+    
+
+    public $timestamps = true;
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
 
     protected $fillable = [
         'nom',
@@ -27,7 +34,19 @@ class Utilisateur extends Model
         'idAdmin'
     ];
 
-    
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'dateNaissance' => 'date',
+        'note' => 'float',
+        'nbrAvis' => 'integer',
+    ];
 
     public function admin()
     {

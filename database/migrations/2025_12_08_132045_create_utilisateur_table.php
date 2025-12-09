@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('photo')->nullable();
             $table->unsignedInteger('nbrAvis')->default(0);
             $table->date('dateNaissance');
-            $table->integer('idAdmin');
+            $table->integer('idAdmin')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
