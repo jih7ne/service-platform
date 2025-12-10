@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -16,6 +17,14 @@ return new class extends Migration
             $table->string('categorie', 255);
             $table->timestamps();
         });
+        // Données pré-remplies (basées sur l'image)
+        DB::table('categorie_enfants')->insert([
+            ['categorie' => 'Nourrisson(0-12 mois)'],
+            ['categorie' => 'Bambin(1-3 ans)'],
+            ['categorie' => 'Maternelle(4-5 ans)'],
+            ['categorie' => 'Écolier(6-12 ans)'],
+            ['categorie' => 'Adolescent(13-18 ans)'],
+        ]);
     }
 
     /**

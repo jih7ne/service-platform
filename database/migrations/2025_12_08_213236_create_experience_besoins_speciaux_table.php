@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-
+use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
@@ -14,8 +14,27 @@ return new class extends Migration
         Schema::create('experience_besoins_speciaux', function (Blueprint $table) {
             $table->id('idExperience');
             $table->string('experience', 255);
-            $table->timestamps();
         });
+        // Données pré-remplies
+        DB::table('experience_besoins_speciaux')->insert([
+            ['experience' => 'Troubles de l\'anxiété'],
+            ['experience' => 'Trouble du Déficit de l\'Attention avec ou sans Hyperactivité (TDAH)'],
+            ['experience' => 'Trouble du Spectre de l\'Autisme (TSA)'],
+            ['experience' => 'Asthme'],
+            ['experience' => 'Trouble Oppositionnel avec Provocation et Troubles du Comportement (TOP/TC)'],
+            ['experience' => 'Sourds et malentendants'],
+            ['experience' => 'Retard Global de Développement (RGD)'],
+            ['experience' => 'Diabète'],
+            ['experience' => 'Troubles du langage'],
+            ['experience' => 'Épilepsie'],
+            ['experience' => 'Allergies alimentaires'],
+            ['experience' => 'Hémophilie'],
+            ['experience' => 'Troubles Obsessionnels Compulsifs (TOC)'],
+            ['experience' => 'Handicap physique'],
+            ['experience' => 'Troubles du sommeil'],
+            ['experience' => 'Tics'],
+            ['experience' => 'Déficience visuelle'],
+        ]);
     }
 
     /**
