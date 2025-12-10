@@ -19,8 +19,6 @@ class BabysitterBooking extends Component
     public $agreedToTerms = false;
     public $showSuccess = false;
     public $message = '';
-    public $isTimeValid = null; // null = pas encore testé / true / false
-
 
     protected $queryString = ['babysitterId'];
 
@@ -29,62 +27,26 @@ class BabysitterBooking extends Component
         $this->babysitterId = $id ?? 1;
     }
 
-    public function toggleService($serviceId)
+    public function toggleService($serviceName)
     {
-        if (in_array($serviceId, $this->selectedServices)) {
-            $this->selectedServices = array_values(array_diff($this->selectedServices, [$serviceId]));
+        if (in_array($serviceName, $this->selectedServices)) {
+            $this->selectedServices = array_values(array_diff($this->selectedServices, [$serviceName]));
         } else {
-            $this->selectedServices[] = $serviceId;
+            $this->selectedServices[] = $serviceName;
         }
     }
-    public function validateTime()
-{
-    if (!$this->selectedDay || !$this->startTime || !$this->endTime) {
-        $this->isTimeValid = null;
-        return;
-    }
-
-    if (strtotime($this->startTime) >= strtotime($this->endTime)) {
-        $this->isTimeValid = false;
-        return;
-    }
-
-    $babysitter = $this->getBabysitter();
-    $availability = $babysitter['availability'] ?? [];
-
-    if (!isset($availability[$this->selectedDay])) {
-        $this->isTimeValid = false;
-        return;
-    }
-
-    foreach ($availability[$this->selectedDay] as $slot) {
-        $slot = trim($slot);
-
-        if (!str_contains($slot, '-')) continue;
-
-        [$slotStart, $slotEnd] = array_map('trim', explode('-', $slot));
-
-        if (
-            strtotime($this->startTime) >= strtotime($slotStart) &&
-            strtotime($this->endTime) <= strtotime($slotEnd)
-        ) {
-            $this->isTimeValid = true;
-            return;
-        }
-    }
-
-    $this->isTimeValid = false;
-}
-
 
     public function addChild()
     {
-        if (!empty($this->currentChild['nom']) && !empty($this->currentChild['age'])) {
+        $nom = trim($this->currentChild['nom']);
+        $age = trim($this->currentChild['age']);
+        
+        if (!empty($nom) && !empty($age) && is_numeric($age)) {
             $this->children[] = [
                 'id' => time() . rand(1000, 9999),
-                'nom' => $this->currentChild['nom'],
-                'age' => (int)$this->currentChild['age'],
-                'besoins' => $this->currentChild['besoins']
+                'nom' => $nom,
+                'age' => (int)$age,
+                'besoins' => trim($this->currentChild['besoins'])
             ];
             $this->currentChild = ['nom' => '', 'age' => '', 'besoins' => ''];
         }
@@ -134,62 +96,30 @@ class BabysitterBooking extends Component
         }
     }
 
-   public function isTimeSlotValid()
-{
-    
-    if (!$this->startTime || !$this->endTime || !$this->selectedDay) {
-        return false;
-    }
-
-    // start < end obligatoire
-    if (strtotime($this->startTime) >= strtotime($this->endTime)) {
-        return false;
-    }
-
-    $babysitter = $this->getBabysitter();
-    $availability = $babysitter['availability'] ?? [];
-
-    if (!isset($availability[$this->selectedDay])) {
-        return false;
-    }
-
-    foreach ($availability[$this->selectedDay] as $slot) {
-
-        // Nettoyage des espaces invisibles éventuels
-        $slot = trim($slot);
-
-        if (!str_contains($slot, '-')) continue;
-
-        [$slotStart, $slotEnd] = array_map('trim', explode('-', $slot));
-
-        $slotStartTs = strtotime($slotStart);
-        $slotEndTs = strtotime($slotEnd);
-        $selectedStartTs = strtotime($this->startTime);
-        $selectedEndTs = strtotime($this->endTime);
-
-        // ➜ INCLUSIF SUR LES LIMITES
-        if ($selectedStartTs >= $slotStartTs && $selectedEndTs <= $slotEndTs) {
-            return true;
+    public function isTimeSlotValid()
+    {
+        if (!$this->startTime || !$this->endTime || !$this->selectedDay) {
+            return false;
         }
+
+        $babysitter = $this->getBabysitter();
+        $availableSlots = $babysitter['availability'][$this->selectedDay] ?? [];
+
+        foreach ($availableSlots as $slot) {
+            [$slotStart, $slotEnd] = explode('-', $slot);
+            
+            $slotStartVal = (int)str_replace(':', '', $slotStart);
+            $slotEndVal = (int)str_replace(':', '', $slotEnd);
+            $selectedStartVal = (int)str_replace(':', '', $this->startTime);
+            $selectedEndVal = (int)str_replace(':', '', $this->endTime);
+
+            if ($selectedStartVal >= $slotStartVal && $selectedEndVal <= $slotEndVal) {
+                return true;
+            }
+        }
+
+        return false;
     }
-
-    return false;
-}
-public function updatedSelectedDay()
-{
-    $this->validateTime();
-}
-
-public function updatedStartTime()
-{
-    $this->validateTime();
-}
-
-public function updatedEndTime()
-{
-    $this->validateTime();
-}
-
 
     private function getBabysitter()
     {
@@ -216,20 +146,27 @@ public function updatedEndTime()
     {
         $babysitter = $this->getBabysitter();
 
-        $allServices = [
-            ['id' => 'Cuisine', 'name' => 'Cuisine', 'icon' => '🍳', 'color' => '#5B4E9E'],
-            ['id' => 'Tâches ménagères', 'name' => 'Tâches ménagères', 'icon' => '🧹', 'color' => '#E87548'],
-            ['id' => 'Aide aux devoirs', 'name' => 'Aide aux devoirs', 'icon' => '📚', 'color' => '#4A9E6D'],
-            ['id' => 'Faire la lecture', 'name' => 'Faire la lecture', 'icon' => '📖', 'color' => '#4A9ECF'],
-            ['id' => 'Musique', 'name' => 'Musique', 'icon' => '🎵', 'color' => '#7E5BA6'],
-            ['id' => 'Dessin', 'name' => 'Dessin', 'icon' => '✏️', 'color' => '#E87548'],
-            ['id' => 'Jeux créatifs', 'name' => 'Jeux créatifs', 'icon' => '🎨', 'color' => '#E8A548'],
-            ['id' => 'Travaux manuels', 'name' => 'Travaux manuels', 'icon' => '🛠️', 'color' => '#6B9E4A']
+        // CORRECTION: Utiliser directement les noms des services de la babysitter
+        $serviceData = [
+            'Cuisine' => ['icon' => '🍳', 'color' => '#5B4E9E'],
+            'Tâches ménagères' => ['icon' => '🧹', 'color' => '#E87548'],
+            'Aide aux devoirs' => ['icon' => '📚', 'color' => '#4A9E6D'],
+            'Faire la lecture' => ['icon' => '📖', 'color' => '#4A9ECF'],
+            'Musique' => ['icon' => '🎵', 'color' => '#7E5BA6'],
+            'Dessin' => ['icon' => '✏️', 'color' => '#E87548'],
         ];
 
-        $availableServices = array_values(array_filter($allServices, function($service) use ($babysitter) {
-            return in_array($service['name'], $babysitter['services']);
-        }));
+        // Créer un tableau simple des services disponibles
+        $availableServices = [];
+        foreach ($babysitter['services'] as $serviceName) {
+            if (isset($serviceData[$serviceName])) {
+                $availableServices[] = [
+                    'name' => $serviceName,
+                    'icon' => $serviceData[$serviceName]['icon'],
+                    'color' => $serviceData[$serviceName]['color']
+                ];
+            }
+        }
 
         $daysOfWeek = [
             ['id' => 'lundi', 'label' => 'Lundi'],
@@ -249,7 +186,7 @@ public function updatedEndTime()
             ['number' => 5, 'label' => 'Confirmation']
         ];
 
-        return view('livewire.shared.babysitter-booking', [
+        return view('livewire.babysitter.babysitter-booking', [
             'babysitter' => $babysitter,
             'availableServices' => $availableServices,
             'daysOfWeek' => $daysOfWeek,

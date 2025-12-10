@@ -46,8 +46,8 @@ class RegisterIntervenantPage extends Component
             return redirect('/inscriptionClient');
         }
 
-        // Valider le type de service
-        $this->validate();
+    // Valider le type de service
+    $this->validate();
 
         // Redirection selon le type de service
         switch ($this->serviceType) {

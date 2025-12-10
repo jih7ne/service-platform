@@ -8,6 +8,6 @@ class ListeBabysitter extends Component
 {
     public function render()
     {
-        return view('livewire.shared.liste-babysitter');
+        return view('livewire.babysitter.liste-babysitter');
     }
 }

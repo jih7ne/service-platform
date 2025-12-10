@@ -103,29 +103,38 @@
 
             {{-- Content --}}
             <div class="bg-white rounded-2xl p-8 border border-gray-100 mb-8" style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06)">
-                {{-- Step 1: Service --}}
-                @if($currentStep === 1)
-                    <div>
-                        <h2 class="text-2xl mb-6 text-black font-extrabold">
-                            Quel service souhaitez-vous ?
-                        </h2>
-                        <div class="grid grid-cols-2 gap-4">
-                            @foreach($availableServices as $service)
-                                <button wire:click="toggleService('{{ $service['id'] }}')" type="button"
-                                    class="p-6 rounded-2xl border-2 transition-all text-center
-                                    {{ in_array($service['id'], $selectedServices) ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-gray-300 bg-white' }}">
-                                    <div class="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center"
-                                         style="background-color: {{ in_array($service['id'], $selectedServices) ? '#B82E6E' : ($service['color'] ?? '#E5E7EB') }}; opacity: {{ in_array($service['id'], $selectedServices) ? 1 : 0.15 }}">
-                                        <span class="text-4xl">{{ $service['icon'] }}</span>
-                                    </div>
-                                    <h4 class="text-black font-bold">
-                                        {{ $service['name'] }}
-                                    </h4>
-                                </button>
-                            @endforeach
-                        </div>
+               {{-- Step 1: Service --}}
+@if($currentStep === 1)
+    <div>
+        <h2 class="text-2xl mb-6 text-black font-extrabold">
+            Quel service souhaitez-vous ?
+        </h2>
+        <div class="grid grid-cols-2 gap-4">
+            @foreach($availableServices as $service)
+                <button wire:click="toggleService('{{ $service['name'] }}')" type="button"
+                    class="p-6 rounded-2xl border-2 transition-all text-center
+                    {{ in_array($service['name'], $selectedServices) ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-gray-300 bg-white' }}">
+                    <div class="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+                         style="background-color: {{ in_array($service['name'], $selectedServices) ? '#B82E6E' : ($service['color'] ?? '#E5E7EB') }}; opacity: {{ in_array($service['name'], $selectedServices) ? 1 : 0.15 }}">
+                        <span class="text-4xl">{{ $service['icon'] }}</span>
                     </div>
-                @endif
+                    <h4 class="text-black font-bold">
+                        {{ $service['name'] }}
+                    </h4>
+                </button>
+            @endforeach
+        </div>
+        
+        {{-- Debug: Afficher les services sélectionnés --}}
+        @if(count($selectedServices) > 0)
+            <div class="mt-6 p-4 bg-blue-50 rounded-xl">
+                <p class="text-sm text-blue-600 font-semibold">
+                    Services sélectionnés: {{ implode(', ', $selectedServices) }}
+                </p>
+            </div>
+        @endif
+    </div>
+@endif
 
                 {{-- Step 2: Date & Horaires --}}
                 @if($currentStep === 2)
@@ -206,7 +215,7 @@
                                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                <input type="time" wire:model="startTime"
+                                                <input type="time" wire:model.live="startTime"
                                                     class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                             </div>
                                         </div>
@@ -218,7 +227,7 @@
                                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                <input type="time" wire:model="endTime"
+                                                <input type="time" wire:model.live="endTime"
                                                     class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                             </div>
                                         </div>
@@ -243,7 +252,7 @@
                                                     echo $duration > 0 ? number_format($duration, 1) . ' heure' . ($duration > 1 ? 's' : '') : 'Invalide';
                                                 @endphp
                                             </p>
-                                            @if($isTimeValid === false)
+                                            @if(!$this->isTimeSlotValid())
                                                 <div class="mt-3 p-3 bg-red-50 rounded-lg flex items-start gap-2">
                                                     <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
@@ -285,7 +294,7 @@
                                         23 Rue des Fleurs, Maârif - Casablanca
                                     </p>
                                 </div>
-                                <input type="checkbox" wire:model="useRegisteredAddress"
+                                <input type="checkbox" wire:model.live="useRegisteredAddress"
                                     class="w-5 h-5 text-[#B82E6E] rounded" style="accent-color: #B82E6E" />
                             </div>
                         </button>
@@ -309,7 +318,7 @@
                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                                 </svg>
-                                <input type="text" wire:model="address"
+                                <input type="text" wire:model.live="address"
                                     placeholder="Numéro et nom de rue, quartier, ville"
                                     class="w-full pl-10 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                             </div>
@@ -367,7 +376,7 @@
                                     <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
                                         Nom de l'enfant
                                     </label>
-                                    <input type="text" wire:model="currentChild.nom"
+                                    <input type="text" wire:model.live="currentChild.nom"
                                         placeholder="Prénom de l'enfant"
                                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                 </div>
@@ -375,7 +384,7 @@
                                     <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
                                         Âge
                                     </label>
-                                    <input type="number" wire:model="currentChild.age"
+                                    <input type="number" wire:model.live="currentChild.age"
                                         placeholder="Âge en années" min="0" max="18"
                                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                 </div>
@@ -383,12 +392,12 @@
                                     <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
                                         Besoins spécifiques (optionnel)
                                     </label>
-                                    <textarea wire:model="currentChild.besoins"
+                                    <textarea wire:model.live="currentChild.besoins"
                                         placeholder="Allergies, routines, particularités..." rows="3"
                                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E] resize-none"></textarea>
                                 </div>
                                 <button wire:click="addChild" type="button"
-                                    @if(empty($currentChild['nom']) || empty($currentChild['age'])) disabled @endif
+                                    wire:loading.attr="disabled"
                                     class="w-full px-6 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-bold">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -412,50 +421,33 @@
                 @endif
 
                 {{-- Step 5: Confirmation --}}
-                @if($currentStep === 5)
+        {{-- Step 5: Confirmation --}}
+@if($currentStep === 5)
+    <div>
+        <h2 class="text-2xl mb-6 text-center text-black font-extrabold">
+            Récapitulatif de votre demande
+        </h2>
+
+        <div class="bg-[#F9E0ED] rounded-2xl p-6 mb-6">
+            {{-- ... reste du code inchangé ... --}}
+            
+            <div class="space-y-4">
+                {{-- Service --}}
+                <div class="flex items-start gap-3 p-4 bg-white rounded-xl">
+                    <span class="text-2xl">🎯</span>
                     <div>
-                        <h2 class="text-2xl mb-6 text-center text-black font-extrabold">
-                            Récapitulatif de votre demande
-                        </h2>
-
-                        <div class="bg-[#F9E0ED] rounded-2xl p-6 mb-6">
-                            <div class="flex items-center gap-4 mb-6">
-                                <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-white">
-                                    <img src="{{ $babysitter['photo'] }}" alt="{{ $babysitter['prenom'] }}" class="w-full h-full object-cover" />
-                                </div>
-                                <div>
-                                    <h4 class="text-black font-extrabold">
-                                        {{ $babysitter['prenom'] }} {{ $babysitter['nom'] }}
-                                    </h4>
-                                    <p class="text-sm text-[#B82E6E] font-bold">
-                                        ⭐ {{ $babysitter['rating'] }} • Vérifiée ✓
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="space-y-4">
-                                {{-- Service --}}
-                                <div class="flex items-start gap-3 p-4 bg-white rounded-xl">
-                                    <span class="text-2xl">🎯</span>
-                                    <div>
-                                        <p class="text-xs mb-1 text-gray-500 font-semibold">
-                                            Service(s) demandé(s)
-                                        </p>
-                                        <p class="text-black font-bold">
-                                            @if(count($selectedServices) > 0)
-                                                @foreach($selectedServices as $index => $serviceId)
-                                                    @foreach($availableServices as $service)
-                                                        @if($service['id'] === $serviceId)
-                                                            {{ $service['name'] }}{{ $index < count($selectedServices) - 1 ? ', ' : '' }}
-                                                        @endif
-                                                    @endforeach
-                                                @endforeach
-                                            @else
-                                                Non sélectionné
-                                            @endif
-                                        </p>
-                                    </div>
-                                </div>
+                        <p class="text-xs mb-1 text-gray-500 font-semibold">
+                            Service(s) demandé(s)
+                        </p>
+                        <p class="text-black font-bold">
+                            @if(count($selectedServices) > 0)
+                                {{ implode(', ', $selectedServices) }}
+                            @else
+                                Non sélectionné
+                            @endif
+                        </p>
+                    </div>
+                </div>
 
                                 {{-- Date & Heure --}}
                                 <div class="flex items-start gap-3 p-4 bg-white rounded-xl">
@@ -539,18 +531,19 @@
                                     Ajouter un message (optionnel)
                                 </label>
                                 <span class="text-xs text-gray-500 font-medium">
-                                        {{ strlen($message) }}/300
-                                    </span>
+                                    {{ strlen($message) }}/300
+                                </span>
                             </div>
-                            <textarea wire:model="message" maxlength="300" rows="4"
+                            <textarea wire:model.live="message" maxlength="300" rows="4"
                                 placeholder="Présentez-vous, expliquez vos attentes..."
                                 class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E] resize-none"></textarea>
                         </div>
 
                         <div class="flex items-start gap-3 mb-6">
-                            <input type="checkbox" id="terms" wire:model="agreedToTerms"
-                                class="w-5 h-5 text-[#B82E6E] rounded mt-1" style="accent-color: #B82E6E" />
-                            <label for="terms" class="text-sm text-gray-500 font-semibold">
+                            <input type="checkbox" id="terms" wire:model.live="agreedToTerms"
+                                class="w-5 h-5 text-[#B82E6E] rounded mt-1 focus:ring-[#B82E6E] focus:ring-2"
+                                style="accent-color: #B82E6E" />
+                            <label for="terms" class="text-sm text-gray-500 font-semibold cursor-pointer">
                                 J'accepte les conditions générales d'utilisation et je comprends que cette demande
                                 n'est pas encore confirmée
                             </label>

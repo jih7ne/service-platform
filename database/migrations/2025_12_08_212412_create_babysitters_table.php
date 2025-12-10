@@ -27,7 +27,13 @@ return new class extends Migration
             $table->boolean('permisConduite')->default(false);
             $table->text('description')->nullable();
             $table->string('niveauEtudes', 255)->nullable();
-            $table->timestamps();
+            
+            // NOUVELLE COLONNE - remplace la table preference_domicils
+            $table->enum('preference_domicil', [
+                'domicil_babysitter',
+                'domicil_client',
+                'les_deux'
+            ])->nullable();
 
             // Foreign key
             $table->foreign('idBabysitter')

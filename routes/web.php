@@ -33,3 +33,4 @@ Route::post('/register-client', [RegisterController::class, 'store'])->name('reg
 Route::post('/connexion', [LoginController::class, 'store'])->name('login.store');
 Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 Route::get('/inscriptionBabysitter', BabysitterRegistration::class)->name('inscription.babysitter');
+Route::get('/inscriptionProfesseur', \App\Livewire\Tutoring\RegisterProfesseur::class);

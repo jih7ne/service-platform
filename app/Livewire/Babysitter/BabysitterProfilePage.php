@@ -8,6 +8,6 @@ class BabysitterProfilePage extends Component
 {
     public function render()
     {
-        return view('livewire.shared.babysitter-profile-page');
+        return view('livewire.babysitter.babysitter-profile-page');
     }
 }
