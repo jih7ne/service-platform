@@ -83,6 +83,14 @@
                         </button>
                     </div>
 
+                    <!-- reCAPTCHA -->
+                    <div class="flex justify-center">
+                        <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}"></div>
+                    </div>
+                    @error('g-recaptcha-response') 
+                        <span class="text-red-500 text-sm mt-1 block text-center">{{ $message }}</span>
+                    @enderror
+
                     <!-- Submit Button -->
                     <button
                         type="submit"
@@ -100,8 +108,8 @@
                 </div>
 
                 <!-- Google Button -->
-                <button
-                    type="button"
+                <a
+                    href="{{ route('auth.google') }}"
                     class="w-full py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-3 shadow-sm"
                 >
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -123,7 +131,7 @@
                         />
                     </svg>
                     <span class="text-gray-700 font-medium">Google</span>
-                </button>
+                </a>
 
                 <!-- Register Link -->
                 <div class="mt-6 text-center">
@@ -143,3 +151,7 @@
 
     <livewire:shared.footer />
 </div>
+
+@push('scripts')
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+@endpush

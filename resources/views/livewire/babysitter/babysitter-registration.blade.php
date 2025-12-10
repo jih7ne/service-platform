@@ -529,6 +529,21 @@
                         Suivant
                     </button>
                 @else
+                    <!-- Debug: Étape actuelle: {{ $currentStep }} / {{ $totalSteps }} -->
+                    <!-- reCAPTCHA v2 "Je ne suis pas un robot" -->
+                    <div class="mb-4">
+                        <div class="g-recaptcha" 
+                             data-sitekey="6LfMticsAAAAAMv4EoA3iz9dIahddzxIpKSzJ0k0"
+                             data-theme="light"
+                             data-size="normal"
+                             data-callback="onRecaptchaSuccess"
+                             data-expired-callback="onRecaptchaExpired">
+                        </div>
+                        @error('g-recaptcha-response')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    
                     <button wire:click="finaliser" type="button"
                         class="px-4 py-2 text-sm text-white bg-pink-600 rounded-lg hover:bg-pink-700 transition">
                         Finaliser l'inscription
@@ -553,8 +568,11 @@
 </div>
 
 @push('scripts')
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script>
     document.addEventListener('livewire:init', () => {
+        console.log('reCAPTCHA site key:', '{{ config('recaptcha.site_key') }}');
+        
         Livewire.on('getLocation', () => {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -584,5 +602,21 @@
             }
         });
     });
+
+    // Fonctions reCAPTCHA
+    function onRecaptchaSuccess(token) {
+        console.log('reCAPTCHA validé avec succès');
+        // Vous pouvez ajouter une validation supplémentaire ici si nécessaire
+    }
+
+    function onRecaptchaExpired() {
+        console.log('reCAPTCHA expiré');
+        alert('Veuillez cocher à nouveau la case reCAPTCHA');
+    }
+
+    function onRecaptchaError() {
+        console.log('Erreur reCAPTCHA');
+        alert('Erreur de validation reCAPTCHA. Veuillez réessayer.');
+    }
 </script>
 @endpush

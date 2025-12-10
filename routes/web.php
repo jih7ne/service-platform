@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Babysitter\BabysitterRegistration;
+use App\Http\Controllers\Api\Auth\GoogleAuthController;
 
 
 Route::get('/', LandingPage::class);
@@ -29,3 +30,5 @@ Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 Route::get('/inscriptionProfesseur', \App\Livewire\Tutoring\RegisterProfesseur::class);
 Route::get('/inscriptionBabysitter', BabysitterRegistration::class)->name('inscription.babysitter');
 Route::get('/inscriptionProfesseur', \App\Livewire\Tutoring\RegisterProfesseur::class);
+Route::get('auth/google', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);

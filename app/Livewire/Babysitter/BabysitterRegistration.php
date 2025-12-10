@@ -137,7 +137,7 @@ class BabysitterRegistration extends Component
             $rules = [
                 'telephone' => 'required|string|max:20',
                 'adresse' => 'required|string|max:500',
-                'photo_profil' => 'nullable|image|max:5120',
+                'photo_profil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             ];
         }
 
@@ -151,6 +151,11 @@ class BabysitterRegistration extends Component
                 'langues' => 'required|array|min:1',
                 'preferences_domicile' => 'required|string|in:domicile_babysitter,domicile_client,les_deux',
             ];
+        }
+
+        // Ajouter la validation reCAPTCHA seulement à la dernière étape
+        if ($this->currentStep == $this->totalSteps) {
+            $rules['g-recaptcha-response'] = 'required|recaptcha';
         }
 
         if ($this->currentStep == 5) {
@@ -232,12 +237,16 @@ class BabysitterRegistration extends Component
 
     public function finaliser()
     {
-        $this->validate();
-
-        DB::beginTransaction();
+        // Rafraîchir le token reCAPTCHA avant la validation
+        if (request()->has('g-recaptcha-response')) {
+            $this->validate();
+        } else {
+            // Générer un nouveau token reCAPTCHA
+            return $this->dispatch('refreshRecaptcha');
+        }
 
         try {
-            // 1. Upload photo profil
+            DB::beginTransaction();
             $photoPath = null;
             if ($this->photo_profil) {
                 $photoPath = $this->photo_profil->store('babysitters/photos', 'public');
