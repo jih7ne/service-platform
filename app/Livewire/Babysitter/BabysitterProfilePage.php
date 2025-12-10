@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Shared;
+namespace App\Livewire\Babysitter;
 
 use Livewire\Component;
 

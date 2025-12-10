@@ -38,6 +38,7 @@ class BabysitterRegistration extends Component
     public $description, $experience_detaillee;
     public $langues = [];
     public $categories_enfants = [];
+    public $preferences_domicile = [];
 
     // Étape 4
     public $certifications = [];
@@ -270,7 +271,20 @@ class BabysitterRegistration extends Component
                 }
             }
 
-            // 7. Associer les formations/certifications
+            // 7. Associer les préférences de domicile
+            if (!empty($this->preferences_domicile)) {
+                foreach ($this->preferences_domicile as $domicileNom) {
+                    $domicile = PreferenceDomicil::firstOrCreate(['domicil' => $domicileNom]);
+                    DB::table('choisir_domicils')->insert([
+                        'idDomicil' => $domicile->idDomicil,
+                        'idBabysitter' => $idBabysitter,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+
+            // 8. Associer les formations/certifications
             if (!empty($this->certifications)) {
                 foreach ($this->certifications as $formationNom) {
                     $formation = Formation::firstOrCreate(['formation' => $formationNom]);
@@ -283,7 +297,7 @@ class BabysitterRegistration extends Component
                 }
             }
 
-            // 8. Associer les superpourvoirs
+            // 9. Associer les superpourvoirs
             if (!empty($this->superpowers)) {
                 foreach ($this->superpowers as $superpouvoirNom) {
                     $superpouvoir = Superpouvoir::firstOrCreate(['superpouvoir' => $superpouvoirNom]);
@@ -296,7 +310,7 @@ class BabysitterRegistration extends Component
                 }
             }
 
-            // 9. Créer les disponibilités
+            // 10. Créer les disponibilités
             $jourMapping = [
                 'lundi' => 'Lundi',
                 'mardi' => 'Mardi',

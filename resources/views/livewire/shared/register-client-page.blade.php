@@ -241,7 +241,7 @@
                 <div class="mt-6 text-center">
                     <p class="text-sm text-[#6b7280]">
                         Vous avez déjà un compte ?
-                        <a href="/login" class="text-[#2B5AA8] hover:underline font-semibold ml-1">
+                        <a href="/connexion" class="text-[#2B5AA8] hover:underline font-semibold ml-1">
                             Se connecter
                         </a>
                     </p>

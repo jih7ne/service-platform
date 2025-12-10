@@ -130,4 +130,5 @@ class Babysitter extends Model
     {
         return $query->whereJsonContains('langues', $langue);
     }
+    
 }

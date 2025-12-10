@@ -10,18 +10,15 @@ class Utilisateur extends Authenticatable
 {
     use SoftDeletes, Notifiable;
 
-    // ✅ Nom correct de la table
     protected $table = 'utilisateurs';
-    
-    // ✅ Clé primaire
     protected $primaryKey = 'idUser';
     
-    // ✅ Timestamps Laravel
+
     public $timestamps = true;
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    // ✅ Champs fillable
+
     protected $fillable = [
         'nom',
         'prenom',
@@ -37,13 +34,11 @@ class Utilisateur extends Authenticatable
         'idAdmin'
     ];
 
-    // ✅ Champs cachés (pour la sécurité)
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    // ✅ Cast des attributs
     protected $casts = [
         'email_verified_at' => 'datetime',
         'created_at' => 'datetime',
@@ -53,7 +48,6 @@ class Utilisateur extends Authenticatable
         'nbrAvis' => 'integer',
     ];
 
-    // Relations
     public function admin()
     {
         return $this->belongsTo(Admin::class, 'idAdmin', 'idAdmin');

@@ -318,9 +318,23 @@
                             <p class="text-xs text-gray-600">Mettez en valeur vos atouts</p>
                         </div>
                     </div>
+                         <div>
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Certifications</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            @foreach(['Premiers secours', 'PSCI', 'CAP Petite Enfance', 'BAFA', 'Formation Montessori', 'BCP'] as $cert)
+                                <label class="flex items-center p-2 border-2 rounded-lg cursor-pointer transition text-sm
+                                    {{ in_array($cert, $certifications ?? []) ? 'border-purple-600 bg-purple-50' : 'border-gray-300 hover:border-purple-300' }}">
+                                    <input type="checkbox" wire:model="certifications" value="{{ $cert }}" class="hidden">
+                                    <span class="{{ in_array($cert, $certifications ?? []) ? 'text-purple-600 font-medium' : 'text-gray-700' }}">
+                                        {{ $cert }}
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
 
                     <div>
-                        <h4 class="text-sm font-medium text-gray-900 mb-2">Certifications</h4>
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                             @foreach(['Premiers secours', 'PSCI', 'CAP Petite Enfance', 'BAFA', 'Formation Montessori', 'BCP'] as $cert)
                                 <label class="flex items-center p-2 border-2 rounded-lg cursor-pointer transition text-sm
