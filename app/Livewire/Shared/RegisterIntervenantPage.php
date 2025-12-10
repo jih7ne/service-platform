@@ -29,23 +29,25 @@ class RegisterIntervenantPage extends Component
         }
     }
 
-    // Méthode d'inscription
-    public function register()
-    {
-        // Si le compte est client, rediriger
-        if ($this->accountType === 'client') {
-            return redirect('/inscriptionClient');
-        }
-
-        // Valider le type de service
-        $this->validate();
-
-        // Rediriger vers la page de formulaire avec le type de service
-        // Vous pouvez passer le serviceType en session ou en paramètre
-        session(['serviceType' => $this->serviceType]);
-        
-        return redirect('/inscriptionIntervenant/formulaire');
+public function register()
+{
+    // Si le compte est client, rediriger
+    if ($this->accountType === 'client') {
+        return redirect('/inscriptionClient');
     }
+
+    // Valider le type de service
+    $this->validate();
+
+    // Rediriger vers la page appropriée selon le service
+    if ($this->serviceType === 'professeur') {
+        return redirect('/inscriptionProfesseur');
+    } elseif ($this->serviceType === 'babysitter') {
+        return redirect('/inscriptionBabysitter');
+    } elseif ($this->serviceType === 'petkeeper') {
+        return redirect('/inscriptionPetkeeper');
+    }
+}
 
     // Méthode de rendu
     public function render()

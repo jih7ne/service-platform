@@ -3,10 +3,12 @@
 namespace App\Livewire\Shared;
 
 use Livewire\Component;
-use App\Models\User;
+use App\Models\Shared\Utilisateur;
+use App\Models\Shared\Admin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class RegisterClientPage extends Component
 {
@@ -15,14 +17,21 @@ class RegisterClientPage extends Component
     public $lastName = '';
     public $email = '';
     public $password = '';
+    public $telephone = '';
+    public $dateNaissance = '';
 
     // Règles de validation
-    protected $rules = [
-        'firstName' => 'required|min:2|max:50',
-        'lastName' => 'required|min:2|max:50',
-        'email' => 'required|email|unique:users,email',
-        'password' => 'required|min:8',
-    ];
+    protected function rules()
+    {
+        return [
+            'firstName' => 'required|min:2|max:50',
+            'lastName' => 'required|min:2|max:50',
+            'email' => 'required|email|unique:utilisateur,email',
+            'password' => 'required|min:8',
+            'telephone' => 'required|min:10|max:20',
+            'dateNaissance' => 'required|date|before:today',
+        ];
+    }
 
     // Messages de validation personnalisés
     protected $messages = [
@@ -37,6 +46,12 @@ class RegisterClientPage extends Component
         'email.unique' => 'Cet email est déjà utilisé',
         'password.required' => 'Le mot de passe est requis',
         'password.min' => 'Le mot de passe doit contenir au moins 8 caractères',
+        'telephone.required' => 'Le numéro de téléphone est requis',
+        'telephone.min' => 'Le numéro de téléphone est invalide',
+        'telephone.max' => 'Le numéro de téléphone est invalide',
+        'dateNaissance.required' => 'La date de naissance est requise',
+        'dateNaissance.date' => 'La date de naissance est invalide',
+        'dateNaissance.before' => 'La date de naissance doit être dans le passé',
     ];
 
     // Validation en temps réel
@@ -52,12 +67,35 @@ class RegisterClientPage extends Component
         $validatedData = $this->validate();
 
         try {
-            // Créer l'utilisateur
-            $user = User::create([
-                'name' => $validatedData['firstName'] . ' ' . $validatedData['lastName'],
+            DB::beginTransaction();
+
+            // ✅ Récupérer ou créer un admin par défaut
+            $admin = Admin::first();
+            
+            if (!$admin) {
+                // Si aucun admin n'existe, en créer un par défaut
+                $admin = Admin::create([
+                    'emailAdmin' => 'admin@helpora.com',
+                    'passwordAdmin' => Hash::make('admin123456')
+                ]);
+            }
+
+            // ✅ Créer l'utilisateur avec idAdmin
+            $user = Utilisateur::create([
+                'nom' => $validatedData['lastName'],
+                'prenom' => $validatedData['firstName'],
                 'email' => $validatedData['email'],
                 'password' => Hash::make($validatedData['password']),
+                'telephone' => $validatedData['telephone'],
+                'dateNaissance' => $validatedData['dateNaissance'],
+                'role' => 'client',
+                'statut' => 'actif',
+                'note' => 0,
+                'nbrAvis' => 0,
+                'idAdmin' => $admin->idAdmin  // ✅ Ajout de idAdmin
             ]);
+
+            DB::commit();
 
             // Connecter automatiquement l'utilisateur
             Auth::login($user);
@@ -69,11 +107,14 @@ class RegisterClientPage extends Component
             return redirect('/');
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             // En cas d'erreur
-            session()->flash('error', 'Une erreur est survenue lors de la création du compte. Veuillez réessayer.');
+            session()->flash('error', 'Une erreur est survenue : ' . $e->getMessage());
             
             // Log l'erreur pour le débogage
             Log::error('Erreur création compte client: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
         }
     }
 

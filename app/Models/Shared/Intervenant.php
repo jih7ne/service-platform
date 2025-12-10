@@ -1,0 +1,42 @@
+<?php
+
+namespace App\Models\Shared;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Intervenant extends Model
+{
+    protected $table = 'intervenants';
+    protected $primaryKey = 'id';
+
+    protected $fillable = [
+        'statut',
+        'idIntervenant',
+        'idAdmin',
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(Utilisateur::class, 'idIntervenant', 'idUser');
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(Admin::class, 'idAdmin', 'idAdmin');
+    }
+
+    public function demandes()
+    {
+        return $this->hasMany(DemandesIntervention::class, 'idIntervenant', 'idIntervenant');
+    }
+
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'offres_services', 'idIntervenant', 'idService');
+    }
+
+    public function disponibilites()
+    {
+        return $this->hasMany(Disponibilite::class, 'idIntervenant', 'idIntervenant');
+    }
+}
