@@ -40,6 +40,11 @@ class PetKeeping extends Model
         'statut',
     ];
 
+    public function services()
+    {
+        return $this->hasMany(\App\Models\Shared\Service::class, 'idService', 'idPetKeeping');
+    }
+
     public function service()
     {
         return $this->belongsTo(\App\Models\Shared\Service::class, 'idPetKeeping', 'idService');
@@ -47,7 +52,7 @@ class PetKeeping extends Model
 
     public function petKeeper()
     {
-        return $this->belongsTo(\App\Models\Shared\Intervenant::class, 'idPetKeeping', 'idIntervenant');
+        return $this->belongsTo(\App\Models\PetKeeping\PetKeeper::class, 'idPetKeeper', 'idPetKeeper');
     }
 
     public function who(){
