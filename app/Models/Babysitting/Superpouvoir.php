@@ -8,6 +8,7 @@ class Superpouvoir extends Model
 {
     protected $table = 'superpouvoirs';
     protected $primaryKey = 'idSuperpouvoir';
+    public $timestamps = false;
     
     protected $fillable = ['superpouvoir'];
 
