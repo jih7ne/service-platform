@@ -84,8 +84,8 @@ class ListeBabysitter extends Component
         $query = Babysitter::with([
             'intervenant.utilisateur.localisations',
             'intervenant.disponibilites',
-            'superpourvoirs'
-        ])->valide();
+            'superpouvoirs'
+        ]);
 
         // Filtre par prix
         if ($this->priceMin && $this->priceMin > 0) {
@@ -116,9 +116,9 @@ class ListeBabysitter extends Component
             $query->where('permisConduite', true);
         }
 
-        // Filtre par services (superpourvoirs)
+        // Filtre par services (superpouvoirs)
         if (!empty($this->selectedServices)) {
-            $query->whereHas('superpourvoirs', function ($q) {
+            $query->whereHas('superpouvoirs', function ($q) {
                 $q->whereIn('idSuperpouvoir', $this->selectedServices);
             }, '=', count($this->selectedServices));
         }
@@ -145,7 +145,7 @@ class ListeBabysitter extends Component
         $villes = ['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fes', 'Agadir'];
 
         // Compter le nombre total de babysitters disponibles
-        $totalBabysitters = Babysitter::valide()->count();
+        $totalBabysitters = Babysitter::count();
 
         return view('livewire.babysitter.liste-babysitter', [
             'babysitters' => $babysitters,

@@ -16,7 +16,6 @@ class Babysitter extends Model
     
     protected $table = 'babysitters';
     protected $primaryKey = 'idBabysitter';
-    public $timestamps = false;
     
     protected $fillable = [
         'idBabysitter',
@@ -66,7 +65,7 @@ class Babysitter extends Model
         );
     }
 
-    public function superpourvoirs()
+    public function superpouvoirs()
     {
         return $this->belongsToMany(
             Superpouvoir::class,
