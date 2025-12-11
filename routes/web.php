@@ -7,6 +7,7 @@ use App\Livewire\Shared\LoginPage;
 use App\Livewire\Shared\Register;
 use App\Livewire\Shared\RegisterClientPage;
 use App\Livewire\Shared\RegisterIntervenantPage;
+use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 
 use App\Livewire\Tutoring\Dashboard;
 use App\Livewire\Shared\IntervenantHub;
@@ -30,9 +31,12 @@ Route::post('/connexion', [LoginController::class, 'store'])->name('login.store'
 Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 Route::get('/inscriptionProfesseur', \App\Livewire\Tutoring\RegisterProfesseur::class);
 
+Route::prefix('pet-keeping')->group(function (){
+    Route::get('search-service', PetKeepingService::class);
+});
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/tutoring/dashboard', Dashboard::class)->name('tutoring.dashboard');
+    // Route::get('/tutoring/dashboard', Dashboard::class)->name('tutoring.dashboard');
     Route::get('/intervenant/hub', IntervenantHub::class)->name('intervenant.hub');
 });
 

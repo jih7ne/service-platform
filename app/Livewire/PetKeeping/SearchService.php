@@ -4,6 +4,7 @@ namespace App\Livewire\PetKeeping;
 
 use App\Models\PetKeeping\PetKeeper;
 use App\Models\PetKeeping\PetKeeping as PetKeepingService;
+use App\Constants\PetKeeping\Constants;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -16,6 +17,12 @@ class SearchService extends Component
     public $minPrice = 0;
     public $maxPrice = 100;
     public $minRating = 0;
+    public $minRatingPetKeeper = 0;
+    public $serviceCategory = '';
+    public $criteria = '';
+    public $vaccinationRequired = false;
+    public $acceptsUntrainedPets = false;
+    public $acceptsAggressivePets = false;
 
     public $services = [];
 
@@ -38,7 +45,7 @@ class SearchService extends Component
         ->join('utilisateurs as ut', 'ut.idUser', '=', 'pk.idPetKeeper')
         ->select();
 
-        // 🔍 Search
+        // Search
         if (!empty($this->searchQuery)) {
             $query->where(function ($q) {
                 $q->where('s.nomService', 'like', "%{$this->searchQuery}%")
@@ -46,17 +53,28 @@ class SearchService extends Component
             });
         }
 
-        // 🐾 Pet Type
+        //  Pet Type
         if ($this->petType !== 'all') {
             $query->where('pk.pet_type', 'like', "%{$this->petType}%");
         }
 
-        // 🧼 Petkeeping Category Filter (serviceType)
-        if ($this->serviceType !== 'all') {
-            $query->where('pk.categorie_petkeeping', $this->serviceType);
+        
+
+        //  Petkeeping Category 
+        if ($this->serviceCategory !== 'all') {
+            $query->where('pk.categorie_petkeeping', 'like', "%{$this->serviceCategory}%");
+            
         }
 
-        // 💰 Price Range
+        
+
+
+
+        if ($this->criteria !== 'all') {
+            $query->where('pk.payment_criteria', 'like', "%{$this->criteria}%");
+        }
+
+        //  Price Range
         if (!empty($this->minPrice)) {
             $query->where('pk.base_price', '>=', $this->minPrice);
         }
@@ -64,9 +82,28 @@ class SearchService extends Component
             $query->where('pk.base_price', '<=', $this->maxPrice);
         }
 
-        // ⭐ Rating
+        // Service Rating
         if (!empty($this->minRating)) {
             $query->where('pk.note', '>=', $this->minRating);
+        }
+
+        // PetKeeper Rating
+        if (!empty($this->minRatingPetKeeper)) {
+            $query->where('ut.note', '>=', $this->minRatingPetKeeper);
+        }
+
+
+        
+        if ($this->vaccinationRequired) {
+            $query->where('pk.vaccination_required', '=', 1);
+        }
+
+        if ($this->acceptsAggressivePets) {
+            $query->where('pk.accepts_aggressive_pets', '=', 1);
+        }
+
+        if ($this->acceptsUntrainedPets) {
+            $query->where('pk.accepts_untrained_pets', '=', 1);
         }
 
         // Fetch and map results
@@ -90,11 +127,11 @@ class SearchService extends Component
                 "providerId" => $service->idUser,
                 "serviceId" => $service->idService,
                 "serviceType" => $service->nomService,
-                "category" => $service->categorie_petkeeping,
+                "category" => Constants::getCategoryLabel($service->categorie_petkeeping),
                 "acceptsAggressivePets" => (bool)$service->accepts_aggressive_pets,
                 "acceptsUntrainedPets" => (bool)$service->accepts_untrained_pets,
                 "vaccinationRequired" => (bool)$service->vaccination_required,
-                "paymentCriteria" => $service->payment_criteria,
+                "paymentCriteria" => Constants::getCriteriaLabel($service->payment_criteria),
                 "speciality" => $service->specialite ?? '',
                 "nombres_services_demandes" => $service->nombres_services_demandes,
             ];
@@ -119,6 +156,8 @@ class SearchService extends Component
 
     public function render()
     {
-        return view('livewire.pet-keeping.search-service')->with('services', $this->services);
+        return view('livewire.pet-keeping.search-service')->with([
+            'services' => $this->services,
+        ]);
     }
 }
