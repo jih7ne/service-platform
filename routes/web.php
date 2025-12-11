@@ -4,18 +4,19 @@ use App\Livewire\Shared\Register;
 use App\Livewire\Shared\LoginPage;
 use App\Livewire\Shared\ContactPage;
 use App\Livewire\Shared\LandingPage;
+use App\Livewire\Tutoring\Dashboard;
 use App\Livewire\Shared\ServicesPage;
 use Illuminate\Support\Facades\Route;
+use App\Livewire\Shared\IntervenantHub;
 use App\Livewire\Tutoring\TutorDetails;
+use App\Livewire\Tutoring\BookingProcess;
 use App\Livewire\Tutoring\ProfessorsList;
+
 use App\Livewire\Shared\RegisterClientPage;
 use App\Livewire\Shared\RegisterIntervenantPage;
-use App\Livewire\PetKeeping\SearchService as PetKeepingService;
-
-use App\Livewire\Tutoring\Dashboard;
-use App\Livewire\Shared\IntervenantHub;
 use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 
 
 Route::get('/', LandingPage::class);
@@ -41,6 +42,8 @@ Route::prefix('pet-keeping')->group(function (){
 // Tutoring routes (client side)
 Route::get('/services/professors-list', ProfessorsList::class)->name('professors-list');
 Route::get('/professeurs/{id}', TutorDetails::class)->name('professeurs.details');
+Route::get('/reservation/{service}', BookingProcess::class)->name('reservation.create');
+
 
 Route::middleware(['auth'])->group(function () {
    // Route::get('/tutoring/dashboard', Dashboard::class)->name('tutoring.dashboard');
