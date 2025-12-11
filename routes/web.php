@@ -5,6 +5,8 @@ use App\Livewire\Shared\LoginPage;
 use App\Livewire\Shared\ContactPage;
 use App\Livewire\Shared\LandingPage;
 use App\Livewire\Tutoring\Dashboard;
+use App\Livewire\Tutoring\DemandeDetails;
+use App\Livewire\Tutoring\MesDemandes;
 use App\Livewire\Shared\ServicesPage;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Shared\IntervenantHub;
@@ -12,9 +14,11 @@ use App\Livewire\Tutoring\TutorDetails;
 use App\Livewire\Tutoring\BookingProcess;
 use App\Livewire\Tutoring\ProfessorsList;
 
+
 use App\Livewire\Shared\RegisterClientPage;
 use App\Livewire\Shared\RegisterIntervenantPage;
-use App\Http\Controllers\Api\Auth\LoginController;
+
+
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 
@@ -46,7 +50,9 @@ Route::get('/reservation/{service}', BookingProcess::class)->name('reservation.c
 
 
 Route::middleware(['auth'])->group(function () {
-   // Route::get('/tutoring/dashboard', Dashboard::class)->name('tutoring.dashboard');
+    Route::get('/tutoring/dashboard', Dashboard::class)->name('tutoring.dashboard');
     Route::get('/intervenant/hub', IntervenantHub::class)->name('intervenant.hub');
+    Route::get('/tutoring/demande/{id}', DemandeDetails::class)->name('tutoring.request.details');
+    Route::get('/tutoring/requests', MesDemandes::class)->name('tutoring.requests');
 });
 
