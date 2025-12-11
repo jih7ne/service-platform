@@ -239,16 +239,16 @@
 
                             <!-- Services Tags -->
                             <div class="flex flex-wrap gap-1.5 mb-5 h-16 overflow-hidden content-start">
-                                @forelse($services->take(3) as $service)
+                                @forelse($babysitter->superpouvoirs->take(3) as $service)
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-pink-50 text-pink-700 border border-pink-100">
                                     {{ $service->superpouvoir }}
                                 </span>
                                 @empty
                                 <span class="text-xs text-gray-400 italic">Aucun service spécifié</span>
                                 @endforelse
-                                @if($services->count() > 3)
+                                @if($babysitter->superpouvoirs->count() > 3)
                                 <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-600 border border-gray-100">
-                                    +{{ $services->count() - 3 }}
+                                    +{{ $babysitter->superpouvoirs->count() - 3 }}
                                 </span>
                                 @endif
                             </div>

@@ -12,9 +12,10 @@ use App\Models\Babysitting\ExperienceBesoinSpeciaux;
 
 class Babysitter extends Model
 {
+    public $timestamps = false;
+    
     protected $table = 'babysitters';
     protected $primaryKey = 'idBabysitter';
-    public $timestamps = false;
     
     protected $fillable = [
         'idBabysitter',
@@ -48,6 +49,12 @@ class Babysitter extends Model
         return $this->belongsTo(Intervenant::class, 'idBabysitter', 'IdIntervenant');
     }
 
+    // TODO: Ajouter les relations pour les disponibilités et autres données
+    // public function disponibilites()
+    // {
+    //     return $this->hasMany(Disponibilite::class, 'idIntervenant', 'idBabysitter');
+    // }
+
     public function preferencesDomicil()
     {
         return $this->belongsToMany(
@@ -58,7 +65,7 @@ class Babysitter extends Model
         );
     }
 
-    public function superpourvoirs()
+    public function superpouvoirs()
     {
         return $this->belongsToMany(
             Superpouvoir::class,

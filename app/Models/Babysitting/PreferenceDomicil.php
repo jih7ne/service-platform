@@ -1,4 +1,5 @@
 <?php
+// App/Models/Babysitting/PreferenceDomicil.php
 
 namespace App\Models\Babysitting;
 
@@ -9,7 +10,9 @@ class PreferenceDomicil extends Model
     protected $table = 'preference_domicils';
     protected $primaryKey = 'idDomicil';
     
-    protected $fillable = ['domicil'];
+    protected $fillable = [
+        'domicil',
+    ];
 
     public function babysitters()
     {

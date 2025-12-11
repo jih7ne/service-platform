@@ -161,6 +161,26 @@
                         @error('telephone') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
+                    <!-- Géolocalisation automatique -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" wire:model.live="auto_localisation"
+                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <div class="ml-3">
+                                <span class="text-sm font-medium text-gray-900">🌍 Activer la géolocalisation automatique</span>
+                                <p class="text-xs text-gray-600 mt-1">Nous utiliserons votre position pour remplir automatiquement votre ville</p>
+                            </div>
+                        </label>
+                        @if($auto_localisation && $ville)
+                            <div class="mt-2 text-xs text-green-600 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Position détectée : {{ $ville }}
+                            </div>
+                        @endif
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Adresse complète <span class="text-red-500">*</span>
@@ -271,7 +291,7 @@
                         </label>
                         <p class="text-xs text-gray-600 mb-2">Sélectionnez plusieurs langues</p>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            @foreach(['Arabe', 'Francais', 'Anglais', 'Espagnol', 'Allemand', 'Italien'] as $langue)
+                            @foreach($langues_list as $langue)
                                 <label class="flex items-center p-2 border-2 rounded-lg cursor-pointer transition text-sm
                                     {{ in_array($langue, $langues ?? []) ? 'border-pink-600 bg-pink-50' : 'border-gray-300 hover:border-pink-300' }}">
                                     <input type="checkbox" wire:model.live="langues" value="{{ $langue }}" class="hidden">
@@ -284,19 +304,61 @@
                         @error('langues') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
+                    <!-- Préférences de domicile -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Préférence de domicile <span class="text-red-500">*</span>
+                        </label>
+                        <p class="text-xs text-gray-600 mb-2">Où souhaitez-vous travailler ?</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            @foreach([
+                                ['value' => 'domicile_babysitter', 'label' => 'À mon domicile', 'icon' => '🏠'],
+                                ['value' => 'domicile_client', 'label' => 'Au domicile du client', 'icon' => '🚗'],
+                                ['value' => 'les_deux', 'label' => 'Les deux', 'icon' => '✨']
+                            ] as $pref)
+                                <label class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition
+                                    {{ ($preferences_domicile ?? '') == $pref['value'] ? 'border-teal-600 bg-teal-50' : 'border-gray-300 hover:border-teal-300' }}">
+                                    <input type="radio" wire:model.live="preferences_domicile" value="{{ $pref['value'] }}" class="hidden">
+                                    <span class="text-2xl mr-2">{{ $pref['icon'] }}</span>
+                                    <span class="text-sm {{ ($preferences_domicile ?? '') == $pref['value'] ? 'text-teal-600 font-medium' : 'text-gray-700' }}">
+                                        {{ $pref['label'] }}
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('preferences_domicile') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Catégories d'enfants
                         </label>
                         <p class="text-xs text-gray-600 mb-2">Tranches d'âge avec lesquelles vous êtes à l'aise</p>
                         <div class="grid grid-cols-2 gap-2">
-                            @foreach(['0-1 ans', '1-3 ans', '3-6 ans', '6-12 ans', '12+ ans'] as $cat)
+                            @foreach($categories_enfants_list as $cat)
                                 <label class="flex items-center p-2 border-2 rounded-lg cursor-pointer transition text-sm
                                     {{ in_array($cat, $categories_enfants ?? []) ? 'border-pink-600 bg-pink-50' : 'border-gray-300 hover:border-pink-300' }}">
                                     <input type="checkbox" wire:model.live="categories_enfants" value="{{ $cat }}" class="hidden">
                                     <span class="{{ in_array($cat, $categories_enfants ?? []) ? 'text-pink-600 font-medium' : 'text-gray-700' }}">
                                         {{ $cat }}
                                     </span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Besoins spéciaux -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Expérience avec des besoins spéciaux
+                        </label>
+                        <p class="text-xs text-gray-600 mb-2">Avez-vous de l'expérience avec des enfants ayant des besoins spéciaux ?</p>
+                        <div class="max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                            @foreach($besoins_list as $besoin)
+                                <label class="flex items-center p-2 hover:bg-gray-50 rounded text-sm cursor-pointer">
+                                    <input type="checkbox" wire:model.live="besoins_speciaux" value="{{ $besoin }}"
+                                        class="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                                    <span class="ml-2 text-gray-700">{{ $besoin }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -318,25 +380,11 @@
                             <p class="text-xs text-gray-600">Mettez en valeur vos atouts</p>
                         </div>
                     </div>
-                         <div>
-                        <h4 class="text-sm font-medium text-gray-900 mb-2">Certifications</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            @foreach(['Premiers secours', 'PSCI', 'CAP Petite Enfance', 'BAFA', 'Formation Montessori', 'BCP'] as $cert)
-                                <label class="flex items-center p-2 border-2 rounded-lg cursor-pointer transition text-sm
-                                    {{ in_array($cert, $certifications ?? []) ? 'border-purple-600 bg-purple-50' : 'border-gray-300 hover:border-purple-300' }}">
-                                    <input type="checkbox" wire:model="certifications" value="{{ $cert }}" class="hidden">
-                                    <span class="{{ in_array($cert, $certifications ?? []) ? 'text-purple-600 font-medium' : 'text-gray-700' }}">
-                                        {{ $cert }}
-                                    </span>
-                                </label>
-                            @endforeach
-                        </div>
-                    </div>
 
                     <div>
-                        
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Certifications</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            @foreach(['Premiers secours', 'PSCI', 'CAP Petite Enfance', 'BAFA', 'Formation Montessori', 'BCP'] as $cert)
+                            @foreach($certifications_list as $cert)
                                 <label class="flex items-center p-2 border-2 rounded-lg cursor-pointer transition text-sm
                                     {{ in_array($cert, $certifications ?? []) ? 'border-purple-600 bg-purple-50' : 'border-gray-300 hover:border-purple-300' }}">
                                     <input type="checkbox" wire:model.live="certifications" value="{{ $cert }}" class="hidden">
@@ -351,17 +399,7 @@
                     <div>
                         <h4 class="text-sm font-medium text-gray-900 mb-2">Mes talents 🎨</h4>
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            @php
-                                $superpouvoirs = [
-                                    ['name' => 'Dessin', 'icon' => '🎨'],
-                                    ['name' => 'Travaux manuels', 'icon' => '🔧'],
-                                    ['name' => 'Langues', 'icon' => '🌍'],
-                                    ['name' => 'Lecture', 'icon' => '📚'],
-                                    ['name' => 'Jeux', 'icon' => '🎲'],
-                                    ['name' => 'Musique', 'icon' => '🎵'],
-                                ];
-                            @endphp
-                            @foreach($superpouvoirs as $sp)
+                            @foreach($superpouvoirs_list as $sp)
                                 <label class="flex flex-col items-center p-3 border-2 rounded-lg cursor-pointer transition
                                     {{ in_array($sp['name'], $superpowers ?? []) ? 'border-purple-600 bg-purple-50' : 'border-gray-300 hover:border-purple-300' }}">
                                     <input type="checkbox" wire:model.live="superpowers" value="{{ $sp['name'] }}" class="hidden">
@@ -378,8 +416,9 @@
                         <h4 class="text-sm font-medium text-gray-900 mb-2">Disponibilités</h4>
                         <p class="text-xs text-gray-600 mb-3">Ajoutez plusieurs créneaux par jour selon votre disponibilité</p>
                         
-                        @foreach(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'] as $jour)
-                            <div class="mb-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                        <div class="space-y-3">
+                            @foreach(['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'] as $jour)
+                            <div class="p-3 border border-gray-200 rounded-lg bg-gray-50">
                                 <div class="flex justify-between items-center mb-2">
                                     <h5 class="text-sm font-medium text-gray-900 capitalize">{{ $jour }}</h5>
                                     <button type="button" wire:click="ajouterDisponibilite('{{ $jour }}')"
@@ -391,26 +430,42 @@
                                 @if(empty($disponibilites[$jour]))
                                     <p class="text-xs text-gray-500 italic">Pas de créneau</p>
                                 @else
-                                    <div class="space-y-2">
+                                    <div class="space-y-3">
                                         @foreach($disponibilites[$jour] as $index => $creneau)
-                                            <div class="flex gap-2 items-center">
+                                        <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                            <div class="flex items-center gap-2 flex-1">
                                                 <input type="time" wire:model="disponibilites.{{ $jour }}.{{ $index }}.debut"
-                                                    class="flex-1 px-2 py-1 text-sm border border-gray-300 rounded">
-                                                <span class="text-xs text-gray-500">à</span>
+                                                    class="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                                <span class="text-xs text-gray-400 font-medium">→</span>
                                                 <input type="time" wire:model="disponibilites.{{ $jour }}.{{ $index }}.fin"
-                                                    class="flex-1 px-2 py-1 text-sm border border-gray-300 rounded">
+                                                    class="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                            </div>
+                                            
+                                            <div class="flex items-center gap-2">
+                                                <label class="flex items-center gap-2 px-3 py-1.5 text-xs rounded-full border cursor-pointer transition-all
+                                                    {{ ($disponibilites[$jour][$index]['est_reccurent'] ?? false) 
+                                                        ? 'bg-green-100 border-green-500 text-green-700' 
+                                                        : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200' }}">
+                                                    <input type="checkbox" 
+                                                        wire:model="disponibilites.{{ $jour }}.{{ $index }}.est_reccurent"
+                                                        class="w-3 h-3 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                                                    <span class="font-medium">Récurrent</span>
+                                                </label>
+                                                
                                                 <button type="button" wire:click="supprimerDisponibilite('{{ $jour }}', {{ $index }})"
-                                                    class="text-red-600 hover:text-red-800">
+                                                    class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                     </svg>
                                                 </button>
                                             </div>
+                                        </div>
                                         @endforeach
                                     </div>
                                 @endif
                             </div>
-                        @endforeach
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             @endif
@@ -429,15 +484,6 @@
                             <p class="text-xs text-gray-600">Dernière étape</p>
                         </div>
                     </div>
-
-                    @php
-                        $documents = [
-                            ['name' => 'casier_judiciaire', 'label' => 'Casier judiciaire', 'required' => true],
-                            ['name' => 'radiographie_thorax', 'label' => 'Radiographie thorax', 'required' => false],
-                            ['name' => 'coproculture_selles', 'label' => 'Coproculture des selles', 'required' => false],
-                            ['name' => 'certificat_aptitude', 'label' => 'Certificat d\'aptitude mentale', 'required' => false],
-                        ];
-                    @endphp
 
                     @foreach($documents as $doc)
                         <div>
@@ -505,3 +551,38 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('getLocation', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        
+                        // Utiliser l'API de géocodage inversé (Nominatim OpenStreetMap)
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const ville = data.address.city || data.address.town || data.address.village || '';
+                                @this.call('setLocation', lat, lon, ville);
+                            })
+                            .catch(error => {
+                                console.error('Erreur de géocodage:', error);
+                                @this.call('setLocation', lat, lon, '');
+                            });
+                    },
+                    (error) => {
+                        console.error('Erreur de géolocalisation:', error);
+                        alert('Impossible d\'obtenir votre position. Veuillez vérifier vos paramètres de localisation.');
+                    }
+                );
+            } else {
+                alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+            }
+        });
+    });
+</script>
+@endpush

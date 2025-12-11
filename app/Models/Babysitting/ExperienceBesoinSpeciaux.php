@@ -9,7 +9,11 @@ class ExperienceBesoinSpeciaux extends Model
     protected $table = 'experience_besoins_speciaux';
     protected $primaryKey = 'idExperience';
     
-    protected $fillable = ['experience'];
+    public $timestamps = false;
+    
+    protected $fillable = [
+        'experience',
+    ];
 
     public function babysitters()
     {
