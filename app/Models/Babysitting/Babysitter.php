@@ -49,11 +49,6 @@ class Babysitter extends Model
         return $this->belongsTo(Intervenant::class, 'idBabysitter', 'IdIntervenant');
     }
 
-    // TODO: Ajouter les relations pour les disponibilités et autres données
-    // public function disponibilites()
-    // {
-    //     return $this->hasMany(Disponibilite::class, 'idIntervenant', 'idBabysitter');
-    // }
 
     public function preferencesDomicil()
     {
@@ -138,5 +133,7 @@ class Babysitter extends Model
     {
         return $query->whereJsonContains('langues', $langue);
     }
+
+    
     
 }

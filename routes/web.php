@@ -20,6 +20,8 @@ use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 use App\Livewire\Babysitter\ListeBabysitter;
+use App\Livewire\Babysitter\BabysitterProfilePage;
+use App\Livewire\Babysitter\BabysitterBooking;
 use App\Livewire\Babysitter\BabysitterRegistration;
 
 
@@ -30,8 +32,9 @@ Route::get('/connexion', LoginPage::class);
 Route::get('/inscription', Register::class);
 Route::get('/inscriptionIntervenant', RegisterIntervenantPage::class);
 Route::get('/inscriptionClient', RegisterClientPage::class);
-Route::get('/liste-babysitter', ListeBabysitter::class);
-
+Route::get('/liste-babysitter', ListeBabysitter::class)->name('liste.babysitter');
+Route::get('/babysitter-profile/{id}', BabysitterProfilePage::class);
+Route::get('/babysitter-booking/{id}', BabysitterBooking::class);
 // Client registration POST route
 Route::post('/register-client', [RegisterController::class, 'store'])->name('register.store');
 Route::post('/connexion', [LoginController::class, 'store'])->name('login.store');

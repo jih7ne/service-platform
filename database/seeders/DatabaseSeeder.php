@@ -24,7 +24,6 @@ class DatabaseSeeder extends Seeder
         // Seed superpourvoirs first
         
 
-        // Then seed babysitters
-        $this->call(BabysitterSeeder::class);
+       
     }
 }

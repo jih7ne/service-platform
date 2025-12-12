@@ -8,7 +8,7 @@ class Formation extends Model
 {
     protected $table = 'formations';
     protected $primaryKey = 'idFormation';
-    public $timestamps = false;
+    public $timestamps = true;
     
     protected $fillable = ['formation'];
 

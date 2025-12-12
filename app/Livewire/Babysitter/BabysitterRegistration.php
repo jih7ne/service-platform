@@ -242,7 +242,7 @@ class BabysitterRegistration extends Component
             // 1. Upload photo profil
             $photoPath = null;
             if ($this->photo_profil) {
-                $photoPath = $this->photo_profil->store('babysitters/photos', 'public');
+                $photoPath = $this->photo_profil->store('images', 'public');
             }
 
             // 2. Créer l'utilisateur

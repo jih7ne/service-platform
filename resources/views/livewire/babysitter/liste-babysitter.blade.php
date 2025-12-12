@@ -28,8 +28,8 @@
                     </p>
                 </div>
                 
-                <!-- Search Bar -->
-                <div class="w-full md:w-auto md:min-w-[400px]">
+                <!-- Search Bar and Toggle -->
+                <div class="w-full md:w-auto md:min-w-[400px] flex flex-col gap-4">
                     <div class="relative group">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400 group-focus-within:text-[#B82E6E] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,6 +45,26 @@
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                             <div wire:loading wire:target="search" class="animate-spin rounded-full h-5 w-5 border-b-2 border-[#B82E6E]"></div>
                         </div>
+                    </div>
+                    
+                    <!-- Toggle Map/List Button -->
+                    <div class="flex justify-center md:justify-end">
+                        <button
+                            wire:click="toggleMap"
+                            class="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all {{ $showMap ? 'bg-[#B82E6E] text-white' : 'bg-white text-[#B82E6E] border border-[#B82E6E]' }}"
+                        >
+                            @if($showMap)
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                            </svg>
+                            Liste
+                            @else
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                            </svg>
+                            Carte
+                            @endif
+                        </button>
                     </div>
                 </div>
             </div>
@@ -89,6 +109,7 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<<<<<<< HEAD
         
         <!-- MAP VIEW -->
         @if($showMap && count($babysittersMap) > 0)
@@ -101,12 +122,36 @@
                     </svg>
                     Carte des babysitters ({{ count($babysittersMap) }} profils)
                 </h3>
+=======
+        <!-- Map Section -->
+        @if($showMap && $babysittersWithLocation->count() > 0)
+        <div class="mb-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-4 bg-[#B82E6E] text-white">
+                    <h3 class="font-bold flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                        </svg>
+                        Carte des babysitters disponibles
+                    </h3>
+                </div>
+                <div id="babysitters-map" style="height: 400px; width: 100%;"></div>
+                <script>
+                    initializeMap(@json($babysittersWithLocation));
+                </script>
+>>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
             </div>
             <div id="babysitters-map" style="height: 600px; width: 100%;"></div>
         </div>
+<<<<<<< HEAD
         
         <!-- LIST VIEW -->
         @elseif(!$showMap)
+=======
+        @endif
+
+        @if(!$showMap)
+>>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
         <div class="flex flex-col lg:flex-row gap-8">
             <!-- Filters Sidebar -->
             <aside class="hidden lg:block w-80 flex-shrink-0" id="filtersSidebar">
@@ -154,14 +199,14 @@
                             <input
                                 type="range"
                                 min="30"
-                                max="150"
+                                max="250"
                                 step="5"
                                 wire:model.live="priceMax"
                                 class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#B82E6E]"
                             />
                             <div class="flex justify-between mt-2 text-xs text-gray-500 font-medium">
                                 <span>30 DH</span>
-                                <span>150 DH</span>
+                                <span>250 DH</span>
                             </div>
                         </div>
 
@@ -189,6 +234,24 @@
                                     </div>
                                     <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">Permis de conduire</span>
                                 </label>
+                                <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors group">
+                                    <div class="relative flex items-center">
+                                        <input type="checkbox" wire:model.live="voiture" class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-[#B82E6E] checked:bg-[#B82E6E]" />
+                                        <svg class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 w-3.5 h-3.5" viewBox="0 0 14 14" fill="none">
+                                            <path d="M3 8L6 11L11 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">A une voiture</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors group">
+                                    <div class="relative flex items-center">
+                                        <input type="checkbox" wire:model.live="possede_enfant" class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-[#B82E6E] checked:bg-[#B82E6E]" />
+                                        <svg class="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 w-3.5 h-3.5" viewBox="0 0 14 14" fill="none">
+                                            <path d="M3 8L6 11L11 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-700 group-hover:text-gray-900">A des enfants</span>
+                                </label>
                             </div>
                         </div>
 
@@ -210,6 +273,60 @@
                             </div>
                         </div>
 
+                        <!-- Formations -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-3">
+                                Formations
+                            </label>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($allFormations as $formation)
+                                <button
+                                    wire:click="toggleFormation({{ $formation->idFormation }})"
+                                    type="button"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border {{ in_array($formation->idFormation, $selectedFormations) ? 'bg-[#B82E6E] text-white border-[#B82E6E] shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50' }}"
+                                >
+                                    {{ $formation->formation }}
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- Catégories d'enfants -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-3">
+                                Âge des enfants
+                            </label>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($allCategories as $categorie)
+                                <button
+                                    wire:click="toggleCategorie({{ $categorie->idCategorie }})"
+                                    type="button"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border {{ in_array($categorie->idCategorie, $selectedCategories) ? 'bg-[#B82E6E] text-white border-[#B82E6E] shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50' }}"
+                                >
+                                    {{ $categorie->categorie }}
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <!-- Expériences besoins spéciaux -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-3">
+                                Expérience besoins spéciaux
+                            </label>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($allExperiences as $experience)
+                                <button
+                                    wire:click="toggleExperience({{ $experience->idExperience }})"
+                                    type="button"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border {{ in_array($experience->idExperience, $selectedExperiences) ? 'bg-[#B82E6E] text-white border-[#B82E6E] shadow-sm' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50' }}"
+                                >
+                                    {{ $experience->experience }}
+                                </button>
+                                @endforeach
+                            </div>
+                        </div>
+
                         <!-- Expérience -->
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-2">
@@ -221,6 +338,24 @@
                                     <option value="1">1 an minimum</option>
                                     <option value="3">3 ans minimum</option>
                                     <option value="5">5 ans minimum</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Préférence domicile -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">
+                                Lieu de garde
+                            </label>
+                            <div class="relative">
+                                <select wire:model.live="preference_domicile" class="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]/20 focus:border-[#B82E6E] appearance-none cursor-pointer transition-all hover:bg-white">
+                                    <option value="">Peu importe</option>
+                                    <option value="domicil_babysitter">Chez la babysitter</option>
+                                    <option value="domicil_client">Chez le client</option>
+                                    <option value="les_deux">Les deux</option>
                                 </select>
                                 <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -246,12 +381,16 @@
                     @php
                         $utilisateur = $babysitter->intervenant->utilisateur;
                         $localisation = $utilisateur->localisations()->first();
+<<<<<<< HEAD
+=======
+                        $services = $babysitter->superpouvoirs;
+>>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
                     @endphp
                     <div class="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1">
                         <!-- Card Header / Image -->
                         <div class="relative h-48 overflow-hidden bg-gray-100">
-                            <img
-                                src="{{ $utilisateur->photo ?? 'https://ui-avatars.com/api/?name='.urlencode($utilisateur->prenom.' '.$utilisateur->nom).'&background=random' }}"
+                           <img
+                                src="{{ $utilisateur->photo ? asset('storage/' . $utilisateur->photo) : 'https://ui-avatars.com/api/?name='.urlencode($utilisateur->prenom.' '.$utilisateur->nom).'&background=random' }}"
                                 alt="{{ $utilisateur->prenom }}"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
@@ -326,20 +465,119 @@
                     </div>
                     @endforelse
                 </div>
-
-                <!-- Pagination -->
-                <div class="mt-10">
-                    {{ $babysitters->links() }}
-                </div>
             </div>
         </div>
+<<<<<<< HEAD
         @endif
+=======
+    </div>
+
+    @endif
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="mobileSidebar" class="fixed inset-0 z-40 hidden lg:hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="toggleFilters()"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-xl font-bold text-gray-900">Filtres</h3>
+                    <button onclick="toggleFilters()" class="p-2 -mr-2 text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <!-- Mobile Filters Content (Clone of Desktop) -->
+                <!-- Note: In a real app, we'd extract this to a component to avoid duplication. For now, we'll just rely on the desktop sidebar being hidden and this one being shown when toggled. 
+                     Actually, to avoid ID conflicts and state issues, it's better to just style the main sidebar to be fixed on mobile.
+                -->
+            </div>
+        </div>
+>>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
     </div>
 
     @push('styles')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
           crossorigin=""/>
+<<<<<<< HEAD
+=======
+@endpush
+
+@push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+        
+        <script>
+            let mapInstance = null;
+            let markersLayer = null;
+
+            function destroyMap() {
+                if (mapInstance) {
+                    mapInstance.remove();
+                    mapInstance = null;
+                    markersLayer = null;
+                }
+            }
+
+            function initializeMap(babysitters) {
+                const mapElement = document.getElementById('babysitters-map');
+                if (!mapElement) return;
+
+                if (babysitters.length === 0) {
+                    mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 400px; color: #666;">Aucun babysitter avec localisation</div>';
+                    return;
+                }
+
+                destroyMap();
+
+                mapInstance = L.map('babysitters-map').setView([33.5731, -7.5898], 10);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(mapInstance);
+
+                babysitters.forEach((babysitter) => {
+                    const marker = L.marker([babysitter.latitude, babysitter.longitude]).addTo(mapInstance);
+                    
+                    const popupContent = `
+                        <div style="padding: 8px; text-align: center;">
+                            <h4 style="margin: 0 0 8px 0;">${babysitter.prenom} ${babysitter.nom}</h4>
+                            <p style="margin: 4px 0; color: #666;">${babysitter.ville}</p>
+                            <p style="margin: 4px 0; font-weight: bold; color: #B82E6E;">${babysitter.prixHeure} DH/h</p>
+                            <a href="/babysitter-profile/${babysitter.idBabysitter}" style="color: #B82E6E; text-decoration: none;">Voir profil</a>
+                        </div>`;
+                    
+                    marker.bindPopup(popupContent);
+                });
+            }
+
+           
+            
+            function toggleFilters() {
+                const sidebar = document.getElementById('filtersSidebar');
+                
+                if (sidebar.classList.contains('hidden')) {
+                    sidebar.classList.remove('hidden');
+                    sidebar.classList.add('fixed', 'inset-0', 'z-50', 'w-full', 'h-full', 'bg-white', 'p-4', 'overflow-y-auto');
+                    if (!document.getElementById('closeFiltersBtn')) {
+                        const closeBtn = document.createElement('button');
+                        closeBtn.id = 'closeFiltersBtn';
+                        closeBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                        closeBtn.className = 'absolute top-4 right-4 p-2 text-gray-500';
+                        closeBtn.onclick = toggleFilters;
+                        sidebar.prepend(closeBtn);
+                    }
+                } else {
+                    sidebar.classList.add('hidden');
+                    sidebar.classList.remove('fixed', 'inset-0', 'z-50', 'w-full', 'h-full', 'bg-white', 'p-4', 'overflow-y-auto');
+                    const closeBtn = document.getElementById('closeFiltersBtn');
+                    if (closeBtn) closeBtn.remove();
+                }
+            }
+        </script>
+     @endpush
+    
+>>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
     <style>
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;

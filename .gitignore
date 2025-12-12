@@ -1,4 +1,5 @@
 *.log
+.qodo
 .DS_Store
 .env
 .env.backup
