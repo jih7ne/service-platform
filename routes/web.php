@@ -19,6 +19,9 @@ use App\Http\Controllers\Api\Auth\LoginController;
 use App\Livewire\Shared\RegisterClientPage;
 use App\Livewire\Shared\RegisterIntervenantPage;
 use App\Livewire\PetKeeping\SearchService as PetKeepingService;
+use App\Livewire\PetKeeping\PetkeeperBooking;
+use App\Livewire\PetKeeping\PetKeeperProfile;
+use App\Livewire\PetKeeping\PetKeeperDashboard;
 use App\Livewire\PetKeeping\PetKeeperRegistration;
 
 
@@ -26,9 +29,6 @@ use App\Livewire\PetKeeping\PetKeeperRegistration;
 use App\Http\Controllers\Api\Auth\RegisterController;
 
 
-use App\Livewire\PetKeeperDashboard;
-
-Route::get('/dashboard-petkeeper', PetKeeperDashboard::class)->name('dashboard.petkeeper');
 Route::get('/', LandingPage::class);
 Route::get('/services', ServicesPage::class);
 Route::get('/contact', ContactPage::class);
@@ -45,10 +45,13 @@ Route::get('/inscriptionProfesseur', \App\Livewire\Tutoring\RegisterProfesseur::
 
 Route::prefix('pet-keeping')->group(function (){
     Route::get('search-service', PetKeepingService::class);
+    Route::get('book', PetkeeperBooking::class);
 });
 
 Route::prefix('pet-keeper')->group(function(){
     Route::get('inscription', PetKeeperRegistration::class);
+    Route::get('profile', PetKeeperProfile::class);
+    Route::get('dashboard', PetKeeperDashboard::class);
 });
 
 //Route::middleware(['auth'])->group(function () {

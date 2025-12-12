@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\PetKeeping;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\DemandeAccepteeMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon; // Ajout pour la gestion des dates
+use Carbon\Carbon; 
 
 class PetKeeperDashboard extends Component
 {
@@ -91,6 +91,7 @@ class PetKeeperDashboard extends Component
             dd("ERREUR CRITIQUE : Le champ 'email' est vide pour l'utilisateur ID " . $client->idUser);
         }
     }
+
     public function render()
     {
         $intervenantId = $this->user->idUser ?? 1;
@@ -172,11 +173,11 @@ class PetKeeperDashboard extends Component
             'revenu' => 4800
         ];
 
-        return view('livewire.pet-keeper-dashboard', [
+        return view('livewire.pet-keeping.pet-keeper-dashboard', [
             'stats' => $stats,
             'demandesUrgentes' => $demandesUrgentes,
             'missionsAVenir' => $missionsAVenir,
             'avisRecents' => $avisRecents
-        ])->layout('components.layouts.app');
+        ]);
     }
 }
