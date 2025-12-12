@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\Shared\Localisation;
+use App\Observers\LocalisationObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Enregistrer l'observer pour le géocodage automatique 
+        Localisation::observe(LocalisationObserver::class);
     }
 }

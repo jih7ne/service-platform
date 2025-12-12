@@ -35,13 +35,13 @@
                     Trouvez des professeurs qualifiés pour tous niveaux et matières
                 </p>
 
-                <!-- Button -->
-                <button class="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 group-hover:gap-3 transition-all text-sm bg-[#2B5AA8] text-white font-bold shadow-md hover:shadow-lg">
+               <!-- Button -->
+                <a href="{{ route('professors-list') }}" wire:navigate class="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 group-hover:gap-3 transition-all text-sm bg-[#2B5AA8] text-white font-bold shadow-md hover:shadow-lg">
                     Découvrir
                     <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
-                </button>
+                </a>
             </div>
 
             <!-- Service 2: Babysitters -->

@@ -102,6 +102,7 @@ class RegisterProfesseur extends Component
         $this->showPassword = !$this->showPassword;
     }
 
+    
     public function nextStep()
     {
         $this->validate();

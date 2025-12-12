@@ -38,4 +38,18 @@ class Professeur extends Model
     {
         return $this->hasMany(ServiceProf::class, 'professeur_id', 'id_professeur');
     }
+    /**
+ * Relation avec l'intervenant -> utilisateur (pour accéder à la note)
+ */
+public function utilisateur()
+{
+    return $this->hasOneThrough(
+        \App\Models\Shared\Utilisateur::class,
+        \App\Models\Shared\Intervenant::class,
+        'IdIntervenant', // Foreign key sur intervenants (lié à utilisateurs)
+        'idUser', // Foreign key sur utilisateurs (primary key)
+        'intervenant_id', // Local key sur professeurs
+        'idIntervenant' // Local key sur intervenants (lié à utilisateurs)
+    );
+}
 }
