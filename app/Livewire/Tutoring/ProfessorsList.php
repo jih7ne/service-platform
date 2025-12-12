@@ -24,12 +24,25 @@ class ProfessorsList extends Component
 
     protected $paginationTheme = 'tailwind';
 
-    public function updatingSearchTerm() { $this->resetPage(); }
-    public function updatingSelectedVille() { $this->resetPage(); }
-    public function updatingSelectedNote() { $this->resetPage(); }
-    public function updatingSelectedMatiere() { $this->resetPage(); }
-    public function updatingSelectedNiveau() { $this->resetPage(); }
-    public function updatingSortBy() { $this->resetPage(); }
+    public function updatingSearchTerm() { 
+        $this->resetPage(); 
+    }
+    
+    public function updatingSelectedVille() { 
+        $this->resetPage(); 
+    }
+    
+    public function updatingSelectedNote() { 
+        $this->resetPage(); 
+    }
+    
+    public function updatingSelectedMatiere() { 
+        $this->resetPage(); 
+    }
+    
+    public function updatingSelectedNiveau() { 
+        $this->resetPage(); 
+    }
 
     public function sortByField($field)
     {
@@ -43,30 +56,10 @@ class ProfessorsList extends Component
     }
 
     public function toggleMap()
-{
-    $this->showMap = !$this->showMap;
-    
-    if ($this->showMap) {
-        // Test avec des données hardcodées
-        $testData = [[
-            'id_professeur' => 1,
-            'surnom' => 'Test Prof',
-            'nom' => 'Doe',
-            'prenom' => 'John',
-            'photo' => null,
-            'note' => 4.5,
-            'nbrAvis' => 10,
-            'ville' => 'Fes',
-            'latitude' => 34.0331,
-            'longitude' => -5.0003,
-            'min_prix' => 100,
-            'services' => []
-        ]];
-        
-        Log::info('🧪 TEST avec données hardcodées');
-        $this->dispatch('map-update', professors: $testData);
+    {
+        $this->showMap = !$this->showMap;
+        Log::info('🔄 Toggle map', ['showMap' => $this->showMap]);
     }
-}
 
     private function getProfesseursQuery()
     {
@@ -193,11 +186,7 @@ class ProfessorsList extends Component
 
     private function enrichWithServices($professeurs)
     {
-        Log::info('🔧 enrichWithServices - Début', [
-            'nombre_professeurs' => $professeurs->count()
-        ]);
-
-        $result = $professeurs->map(function($profData) {
+        return $professeurs->map(function($profData) {
             $services = DB::table('services_prof')
                 ->join('matieres', 'services_prof.matiere_id', '=', 'matieres.id_matiere')
                 ->join('niveaux', 'services_prof.niveau_id', '=', 'niveaux.id_niveau')
@@ -213,38 +202,20 @@ class ProfessorsList extends Component
             $profData->services = $services;
             return $profData;
         });
-
-        Log::info('✅ enrichWithServices - Terminé');
-        
-        return $result;
     }
 
     private function prepareMapData($professeurs)
     {
-        Log::info('🗺 prepareMapData - Début', [
-            'nombre_professeurs' => $professeurs->count()
-        ]);
-
         $filtered = $professeurs->filter(function($prof) {
-            $hasCoords = !empty($prof->latitude) && !empty($prof->longitude);
-            
-            if (!$hasCoords) {
-                Log::info('⚠ Professeur sans coordonnées', [
-                    'id' => $prof->id_professeur,
-                    'nom' => $prof->nom,
-                    'ville' => $prof->ville
-                ]);
-            }
-            
-            return $hasCoords;
+            return !empty($prof->latitude) && !empty($prof->longitude);
         });
 
         Log::info('📍 Professeurs avec coordonnées', [
-            'nombre_avec_coords' => $filtered->count(),
-            'nombre_sans_coords' => $professeurs->count() - $filtered->count()
+            'total' => $professeurs->count(),
+            'avec_coords' => $filtered->count()
         ]);
 
-        $mapped = $filtered->map(function($prof) {
+        return $filtered->map(function($prof) {
             return [
                 'id_professeur' => $prof->id_professeur,
                 'surnom' => $prof->surnom,
@@ -265,23 +236,13 @@ class ProfessorsList extends Component
                 })->toArray()
             ];
         })->values()->toArray();
-
-        Log::info('✅ prepareMapData - Terminé', [
-            'nombre_final' => count($mapped)
-        ]);
-
-        return $mapped;
     }
 
     public function render()
     {
-        Log::info('🎨 render() appelé', [
-            'showMap' => $this->showMap,
-            'searchTerm' => $this->searchTerm,
-            'selectedVille' => $this->selectedVille
-        ]);
+        Log::info('🎨 render()', ['showMap' => $this->showMap]);
 
-        // Récupérer TOUS les professeurs pour enrichissement
+        // Récupérer TOUS les professeurs enrichis
         $query = $this->getProfesseursQuery();
         $allProfesseurs = $this->enrichWithServices($query->get());
 
@@ -300,18 +261,10 @@ class ProfessorsList extends Component
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
-        // Préparer les données pour la carte
+        // Préparer les données carte
         $professeursMap = $this->prepareMapData($allProfesseurs);
 
-        // Si on est en mode carte, dispatcher l'événement
-        if ($this->showMap) {
-            Log::info('🗺 Mode carte activé - dispatch event', [
-                'nombre_professeurs' => count($professeursMap)
-            ]);
-            $this->dispatch('map-update', professors: $professeursMap);
-        }
-
-        // Récupération des villes, matières et niveaux
+        // Récupération des filtres
         $villes = DB::table('localisations')
             ->select('ville')
             ->distinct()
@@ -324,8 +277,8 @@ class ProfessorsList extends Component
         $niveaux = Niveau::orderBy('id_niveau')->get();
 
         Log::info('✅ render() terminé', [
-            'total_professeurs' => $total,
-            'professeurs_carte' => count($professeursMap)
+            'total' => $total,
+            'carte_profs' => count($professeursMap)
         ]);
 
         return view('livewire.tutoring.professors-list', [
@@ -339,8 +292,6 @@ class ProfessorsList extends Component
 
     public function resetFilters()
     {
-        Log::info('🔄 resetFilters appelé');
-        
         $this->searchTerm = '';
         $this->selectedVille = '';
         $this->selectedNote = '';
@@ -349,7 +300,5 @@ class ProfessorsList extends Component
         $this->sortBy = 'note';
         $this->sortDirection = 'desc';
         $this->resetPage();
-        
-        Log::info('✅ Filtres réinitialisés');
     }
 }

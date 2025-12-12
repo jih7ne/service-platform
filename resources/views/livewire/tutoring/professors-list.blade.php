@@ -181,193 +181,42 @@
     @if($showMap)
         <section class="bg-gray-50 py-8" wire:loading.remove>
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+                    <!-- En-tête de la carte -->
+                    <div class="bg-gradient-to-r from-[#2B5AA8] to-[#1e3a8a] px-6 py-4">
+                        <div class="flex items-center justify-between text-white">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                </svg>
+                                <h3 class="text-xl font-bold">Carte des Professeurs</h3>
+                            </div>
+                            <div class="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg">
+                                <div class="h-2 w-2 bg-green-400 rounded-full animate-pulse"></div>
+                                <span class="text-sm font-semibold">{{ count($professeursMap) }} professeurs localisés</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Carte -->
                     <div wire:ignore id="map" style="height: 600px; width: 100%;"></div>
+                    
+                    <!-- Légende -->
+                    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                        <div class="flex items-center justify-center gap-6 text-sm text-gray-600">
+                            <div class="flex items-center gap-2">
+                                <div class="w-4 h-4 bg-gradient-to-br from-[#2B5AA8] to-[#1e3a8a] rounded-full border-2 border-white"></div>
+                                <span>Professeur disponible</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-yellow-500">⭐</span>
+                                <span>Note élevée (4.5+)</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
-
-        @push('styles')
-            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-                  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
-                  crossorigin=""/>
-        @endpush
-
-        <!-- Remplace le @push('scripts') dans ta vue Blade par ceci -->
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""></script>
-
-<script>
-    console.log('🔵 DÉBUT - Script carte chargé');
-    console.log('📚 Leaflet disponible:', typeof L !== 'undefined' ? 'OUI' : 'NON');
-    console.log('📚 Livewire disponible:', typeof Livewire !== 'undefined' ? 'OUI' : 'NON');
-
-    // Attendre que Livewire soit prêt
-    document.addEventListener('livewire:init', () => {
-        console.log('🟢 Livewire initialisé - Enregistrement listener');
-        
-        let mapInstance = null;
-
-        // Écouter l'événement map-update
-        Livewire.on('map-update', (event) => {
-            console.log('🎯 Event map-update REÇU:', event);
-            console.log('Type de event:', typeof event, Array.isArray(event) ? 'Array' : 'Objet');
-            
-            // Extraire les données
-            let professors = null;
-            
-            // Cas 1: event = {professors: [...]}
-            if (event && event.professors) {
-                professors = event.professors;
-                console.log('✅ Cas 1: event.professors trouvé');
-            }
-            // Cas 2: event = [{professors: [...]}]
-            else if (Array.isArray(event) && event[0] && event[0].professors) {
-                professors = event[0].professors;
-                console.log('✅ Cas 2: event[0].professors trouvé');
-            }
-            // Cas 3: event = [...]
-            else if (Array.isArray(event)) {
-                professors = event;
-                console.log('✅ Cas 3: event est un array direct');
-            }
-            // Cas 4: erreur
-            else {
-                console.error('❌ Format event non reconnu:', event);
-                return;
-            }
-
-            console.log('📊 Professors extraits:', professors);
-            console.log('📊 Nombre:', Array.isArray(professors) ? professors.length : 'N/A');
-            
-            // Vérifications
-            const mapElement = document.getElementById('map');
-            console.log('🗺 Element map:', mapElement ? 'TROUVÉ' : 'INTROUVABLE');
-            
-            if (!mapElement) {
-                console.error('❌ Element #map introuvable dans le DOM');
-                console.log('🔍 DOM actuel:', document.body.innerHTML.substring(0, 500));
-                return;
-            }
-            
-            if (typeof L === 'undefined') {
-                console.error('❌ Leaflet (L) non disponible');
-                return;
-            }
-
-            if (!Array.isArray(professors)) {
-                console.error('❌ professors n\'est pas un array:', typeof professors);
-                return;
-            }
-            
-            if (professors.length === 0) {
-                console.warn('⚠ Aucun professeur dans le tableau');
-                mapElement.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">Aucun professeur avec coordonnées GPS disponibles</div>';
-                return;
-            }
-
-            console.log('🔄 Destruction ancienne carte...');
-            if (mapInstance) {
-                mapInstance.remove();
-                console.log('✅ Ancienne carte détruite');
-            }
-
-            console.log('🗺 Création nouvelle carte...');
-            console.log('📍 Centre:', professors[0].latitude, professors[0].longitude);
-            
-            try {
-                // Créer la carte
-                mapInstance = L.map('map').setView(
-                    [professors[0].latitude, professors[0].longitude], 
-                    12
-                );
-                console.log('✅ Carte créée');
-
-                // Ajouter les tuiles
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19
-                }).addTo(mapInstance);
-                console.log('✅ Tuiles ajoutées');
-
-                // Ajouter les marqueurs
-                console.log('📌 Ajout de', professors.length, 'marqueurs...');
-                professors.forEach((prof, index) => {
-                    console.log(`📌 Marqueur ${index + 1}:`, {
-                        id: prof.id_professeur,
-                        lat: prof.latitude,
-                        lng: prof.longitude,
-                        ville: prof.ville
-                    });
-                    
-                    const marker = L.marker([prof.latitude, prof.longitude]).addTo(mapInstance);
-                    
-                    const photoUrl = prof.photo ? `/storage/${prof.photo}` : '/images/default-avatar.png';
-                    const services = prof.services.slice(0, 2).map(s => 
-                        `<span style="background: #E1EAF7; color: #2B5AA8; padding: 2px 8px; border-radius: 10px; font-size: 11px; display: inline-block; margin: 2px;">${s.nom_matiere}</span>`
-                    ).join(' ');
-                    const stars = '⭐'.repeat(Math.floor(prof.note));
-                    
-                    const popupContent = `
-                        <div style="min-width: 250px; text-align: center; font-family: system-ui;">
-                            <img src="${photoUrl}" 
-                                 style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin: 0 auto 8px;"
-                                 onerror="this.src='/images/default-avatar.png'">
-                            <h3 style="font-weight: bold; font-size: 16px; margin: 8px 0;">
-                                ${prof.surnom || prof.prenom + ' ' + prof.nom}
-                            </h3>
-                            <div style="margin: 8px 0;">
-                                <span style="color: #f59e0b;">${stars}</span> 
-                                <strong>${prof.note}/5</strong> 
-                                <span style="color: #666;">(${prof.nbrAvis} avis)</span>
-                            </div>
-                            <div style="margin: 8px 0; color: #666;">📍 ${prof.ville}</div>
-                            <div style="margin: 10px 0;">${services}</div>
-                            <div style="font-size: 20px; font-weight: bold; color: #2B5AA8; margin: 10px 0;">
-                                ${prof.min_prix} DH
-                                <span style="font-size: 14px; color: #666;">/h</span>
-                            </div>
-                            <a href="/professeurs/${prof.id_professeur}" 
-                               style="display: block; background: #2B5AA8; color: white; padding: 10px; 
-                                      border-radius: 8px; text-decoration: none; font-weight: bold; 
-                                      margin-top: 10px;">
-                                Voir le profil
-                            </a>
-                        </div>`;
-                    
-                    marker.bindPopup(popupContent);
-                });
-                console.log('✅ Tous les marqueurs ajoutés');
-
-                // Ajuster la vue
-                if (professors.length > 1) {
-                    console.log('🔍 Ajustement bounds...');
-                    const bounds = L.latLngBounds(professors.map(p => [p.latitude, p.longitude]));
-                    mapInstance.fitBounds(bounds, { padding: [50, 50] });
-                    console.log('✅ Bounds ajustés');
-                }
-
-                // Invalider la taille
-                setTimeout(() => {
-                    console.log('🔄 Invalidation taille carte...');
-                    mapInstance.invalidateSize();
-                    console.log('✅ Carte complètement initialisée!');
-                }, 200);
-                
-            } catch (error) {
-                console.error('❌ ERREUR création carte:', error);
-                console.error('Stack:', error.stack);
-            }
-        });
-        
-        console.log('✅ Listener map-update enregistré');
-    });
-
-    console.log('🔵 FIN - Script exécuté');
-</script>
-        @endpush
     @else
         <!-- VUE LISTE -->
         <section class="bg-gray-50 py-8" wire:loading.remove>
@@ -484,3 +333,283 @@
 
     <livewire:shared.footer />
 </div>
+
+<!-- Styles Leaflet (chargés toujours) -->
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin=""/>
+
+<style>
+    /* Styles pour les popups et marqueurs */
+    .custom-popup .leaflet-popup-content-wrapper {
+        border-radius: 16px;
+        padding: 0;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .custom-popup .leaflet-popup-content {
+        margin: 0;
+        width: auto !important;
+    }
+    
+    .custom-popup .leaflet-popup-tip {
+        background: white;
+    }
+    
+    .custom-professor-marker {
+        background: transparent !important;
+        border: none !important;
+    }
+    
+    /* Animation pour le chargement */
+    #map {
+        position: relative;
+    }
+    
+    #map:empty::before {
+        content: 'Chargement de la carte...';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #6b7280;
+        font-size: 16px;
+        font-weight: 500;
+    }
+</style>
+@endpush
+
+<!-- Scripts Leaflet (chargés toujours, mais n'exécutent que si nécessaire) -->
+@push('scripts')
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
+<script>
+let mapInstance = null;
+let markersLayer = null;
+
+function destroyMap() {
+    if (mapInstance) {
+        console.log('🗑 Destruction de la carte');
+        mapInstance.remove();
+        mapInstance = null;
+        markersLayer = null;
+    }
+}
+
+function initializeMap(professors) {
+    console.log('🗺 Initialisation carte avec', professors.length, 'professeurs');
+    
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        console.error('❌ Element #map introuvable');
+        return;
+    }
+
+    if (typeof L === 'undefined') {
+        console.error('❌ Leaflet non disponible');
+        return;
+    }
+
+    if (professors.length === 0) {
+        mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 600px; color: #666; font-size: 16px;">Aucun professeur avec coordonnées GPS disponibles</div>';
+        return;
+    }
+
+    // Détruire l'ancienne carte si elle existe
+    destroyMap();
+
+    try {
+        // Créer la carte
+        mapInstance = L.map('map').setView(
+            [professors[0].latitude, professors[0].longitude], 
+            12
+        );
+
+        // Ajouter les tuiles OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(mapInstance);
+
+        // Créer un groupe de marqueurs
+        markersLayer = L.layerGroup().addTo(mapInstance);
+
+        // Icône personnalisée pour les professeurs
+        const professorIcon = L.divIcon({
+            className: 'custom-professor-marker',
+            html: `<div style="background: linear-gradient(135deg, #2B5AA8 0%, #1e3a8a 100%); 
+                           width: 45px; height: 45px; border-radius: 50%; 
+                           border: 4px solid white; 
+                           display: flex; align-items: center; justify-content: center;
+                           box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                           cursor: pointer;
+                           transition: transform 0.2s;">
+                    <svg style="width: 22px; height: 22px; color: white;" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                    </svg>
+                  </div>`,
+            iconSize: [45, 45],
+            iconAnchor: [22.5, 22.5]
+        });
+
+        // Ajouter les marqueurs pour chaque professeur
+        professors.forEach((prof) => {
+            const photoUrl = prof.photo ? `/storage/${prof.photo}` : '/images/default-avatar.png';
+            
+            // Créer les badges de matières
+            const services = prof.services.slice(0, 3).map(s => 
+                `<span style="background: #E1EAF7; color: #2B5AA8; padding: 4px 10px; border-radius: 12px; font-size: 11px; display: inline-block; margin: 3px; font-weight: 600;">${s.nom_matiere}</span>`
+            ).join(' ');
+
+            const moreServices = prof.services.length > 3 
+                ? `<span style="background: #f3f4f6; color: #6b7280; padding: 4px 10px; border-radius: 12px; font-size: 11px; display: inline-block; margin: 3px; font-weight: 600;">+${prof.services.length - 3} autres</span>` 
+                : '';
+
+            // Créer les étoiles
+            const stars = '⭐'.repeat(Math.floor(prof.note));
+            
+            // Contenu du popup
+            const popupContent = `
+                <div class="professor-popup" style="min-width: 280px; max-width: 320px; font-family: system-ui; padding: 8px;">
+                    <div style="text-align: center; margin-bottom: 12px;">
+                        <div style="position: relative; display: inline-block; margin-bottom: 10px;">
+                            <img src="${photoUrl}" 
+                                 style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 4px solid #E1EAF7;"
+                                 onerror="this.src='/images/default-avatar.png'">
+                            ${prof.note >= 4.5 ? '<div style="position: absolute; bottom: -5px; right: -5px; background: #fbbf24; color: white; font-size: 10px; font-weight: bold; padding: 4px 8px; border-radius: 12px; border: 2px solid white;">⭐ TOP</div>' : ''}
+                        </div>
+                        
+                        <h3 style="font-weight: bold; font-size: 18px; margin: 8px 0; color: #111;">
+                            ${prof.surnom || prof.prenom + ' ' + prof.nom}
+                        </h3>
+                        
+                        <div style="margin: 8px 0;">
+                            <span style="color: #fbbf24; font-size: 16px;">${stars}</span> 
+                            <strong style="font-size: 15px;">${prof.note}/5</strong> 
+                            <span style="color: #6b7280; font-size: 13px;">(${prof.nbrAvis} avis)</span>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin: 8px 0; color: #6b7280; font-size: 14px;">
+                            <svg style="width: 16px; height: 16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            ${prof.ville}
+                        </div>
+                    </div>
+                    
+                    <div style="margin: 12px 0; padding: 12px; background: #f9fafb; border-radius: 10px;">
+                        <div style="text-align: center; margin-bottom: 8px;">
+                            <span style="font-size: 12px; color: #6b7280; text-transform: uppercase; font-weight: 600;">À partir de</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <span style="font-size: 32px; font-weight: bold; color: #2B5AA8;">${prof.min_prix}</span>
+                            <span style="font-size: 16px; color: #6b7280; font-weight: 500;"> DH/h</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin: 12px 0;">
+                        <div style="font-size: 12px; color: #6b7280; margin-bottom: 6px; font-weight: 600;">MATIÈRES ENSEIGNÉES</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                            ${services}
+                            ${moreServices}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <a href="/professeurs/${prof.id_professeur}" 
+                           style="display: block; background: linear-gradient(135deg, #2B5AA8 0%, #1e3a8a 100%); color: white; padding: 12px; 
+                                  border-radius: 10px; text-decoration: none; font-weight: bold; text-align: center;
+                                  box-shadow: 0 4px 6px rgba(43, 90, 168, 0.3); transition: all 0.3s;"
+                           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(43, 90, 168, 0.4)';"
+                           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(43, 90, 168, 0.3)';">
+                            📚 Voir le profil complet
+                        </a>
+                    </div>
+                </div>`;
+
+            // Créer le marqueur
+            const marker = L.marker([prof.latitude, prof.longitude], {
+                icon: professorIcon
+            }).addTo(markersLayer);
+
+            // Ajouter le popup
+            marker.bindPopup(popupContent, {
+                maxWidth: 340,
+                className: 'custom-popup'
+            });
+
+            // Effet hover sur le marqueur
+            marker.on('mouseover', function(e) {
+                this.getElement().querySelector('div').style.transform = 'scale(1.15)';
+            });
+            
+            marker.on('mouseout', function(e) {
+                this.getElement().querySelector('div').style.transform = 'scale(1)';
+            });
+        });
+
+        // Ajuster la vue pour afficher tous les marqueurs
+        if (professors.length > 1) {
+            const bounds = L.latLngBounds(professors.map(p => [p.latitude, p.longitude]));
+            mapInstance.fitBounds(bounds, { 
+                padding: [60, 60],
+                maxZoom: 15
+            });
+        }
+
+        // Invalider la taille après un court délai
+        setTimeout(() => {
+            if (mapInstance) {
+                mapInstance.invalidateSize();
+                console.log('✅ Carte initialisée avec succès');
+            }
+        }, 250);
+
+    } catch (error) {
+        console.error('❌ Erreur lors de la création de la carte:', error);
+    }
+}
+
+// Données des professeurs passées depuis le backend
+const professeursData = @json($professeursMap);
+
+// Écouter les changements du composant Livewire
+document.addEventListener('livewire:init', () => {
+    console.log('🎯 Livewire init - Configuration des listeners');
+    
+    // Écouter les mises à jour du composant
+    Livewire.hook('morph.updated', ({ el, component }) => {
+        console.log('🔄 Livewire morph.updated détecté');
+        
+        // Attendre que le DOM soit mis à jour
+        setTimeout(() => {
+            const mapElement = document.getElementById('map');
+            if (mapElement && window.getComputedStyle(mapElement).display !== 'none') {
+                console.log('✅ Carte visible après update, initialisation...');
+                initializeMap(professeursData);
+            } else if (mapElement) {
+                console.log('⏹ Carte cachée après update, destruction...');
+                destroyMap();
+            }
+        }, 100);
+    });
+});
+
+// Vérifier l'état initial au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📦 DOM chargé, vérification état initial');
+    
+    setTimeout(() => {
+        const mapElement = document.getElementById('map');
+        if (mapElement && window.getComputedStyle(mapElement).display !== 'none') {
+            console.log('🎯 Carte visible au chargement, initialisation...');
+            initializeMap(professeursData);
+        }
+    }, 300);
+});
+</script>
+@endpush
