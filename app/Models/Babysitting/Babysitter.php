@@ -4,7 +4,6 @@ namespace App\Models\Babysitting;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\shared\Intervenant;
-use App\Models\Babysitting\PreferenceDomicil;
 use App\Models\Babysitting\Superpouvoir;
 use App\Models\Babysitting\Formation;
 use App\Models\Babysitting\CategorieEnfant;
@@ -33,6 +32,7 @@ class Babysitter extends Model
         'permisConduite',
         'description',
         'niveauEtudes',
+        'preference_domicil'
     ];
 
     protected $casts = [
@@ -40,29 +40,12 @@ class Babysitter extends Model
         'mobilite' => 'boolean',
         'possedeEnfant' => 'boolean',
         'permisConduite' => 'boolean',
-        'langues' => 'array',
     ];
 
     // Relations
     public function intervenant()
     {
         return $this->belongsTo(Intervenant::class, 'idBabysitter', 'IdIntervenant');
-    }
-
-    // TODO: Ajouter les relations pour les disponibilités et autres données
-    // public function disponibilites()
-    // {
-    //     return $this->hasMany(Disponibilite::class, 'idIntervenant', 'idBabysitter');
-    // }
-
-    public function preferencesDomicil()
-    {
-        return $this->belongsToMany(
-            PreferenceDomicil::class,
-            'choisir_domicils',
-            'idBabysitter',
-            'idDomicil'
-        );
     }
 
     public function superpouvoirs()
@@ -105,6 +88,77 @@ class Babysitter extends Model
         );
     }
 
+        // Accesseurs pour gérer les différents formats de données
+    
+    /**
+     * Getter pour les langues - gère les différents formats
+     */
+    public function getLanguesAttribute($value)
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        // Si c'est déjà un array (depuis le cast), retourner tel quel
+        if (is_array($value)) {
+            return $value;
+        }
+
+        // Essayer de décoder comme JSON
+        $decoded = json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        // Essayer de décoder une deuxième fois (cas du double-encodage)
+        if (is_string($decoded)) {
+            $doubleDecoded = json_decode($decoded, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($doubleDecoded)) {
+                return $doubleDecoded;
+            }
+        }
+
+        // Si c'est une chaîne avec des virgules, la séparer
+        if (is_string($value) && strpos($value, ',') !== false) {
+            return array_map('trim', explode(',', $value));
+        }
+
+        // Retourner en tant qu'array avec un seul élément
+        return [$value];
+    }
+
+    /**
+     * Setter pour les langues
+     */
+    public function setLanguesAttribute($value)
+    {
+        if (is_array($value)) {
+            $this->attributes['langues'] = json_encode($value);
+        } else {
+            $this->attributes['langues'] = $value;
+        }
+    }
+
+    /**
+     * Getter pour les maladies sous forme de liste
+     */
+    public function getMaladiesListAttribute()
+    {
+        if (empty($this->maladies)) {
+            return [];
+        }
+
+        // Si séparé par des virgules ou des points
+        $separators = [',', '.', ';', '|'];
+        foreach ($separators as $sep) {
+            if (strpos($this->maladies, $sep) !== false) {
+                return array_filter(array_map('trim', explode($sep, $this->maladies)));
+            }
+        }
+
+        return [$this->maladies];
+    }
+
     // Scopes
     public function scopeValide($query)
     {
@@ -136,7 +190,25 @@ class Babysitter extends Model
 
     public function scopeAvecLangue($query, $langue)
     {
-        return $query->whereJsonContains('langues', $langue);
+        return $query->where(function($q) use ($langue) {
+            $q->where('langues', 'LIKE', "%{$langue}%")
+              ->orWhereRaw("JSON_CONTAINS(langues, ?)", [json_encode($langue)]);
+        });
+    }
+
+    public function getPreferenceDomicilLabelAttribute()
+    {
+        return match($this->preference_domicil) {
+            'domicil_babysitter' => 'Au domicile de la babysitter',
+            'domicil_client' => 'Au domicile du client',
+            'les_deux' => 'Les deux options',
+            default => 'Non spécifié'
+        };
+    }
+
+    public function disponibilites()
+    {
+        return $this->hasMany(Disponibilite::class, 'idIntervenant', 'idBabysitter');
     }
     
 }
