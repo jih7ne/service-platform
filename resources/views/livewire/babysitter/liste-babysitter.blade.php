@@ -71,24 +71,7 @@
             
          <!-- Toggle List/Map Button -->
             @if(count($babysittersMap) > 0)
-            <div class="flex justify-center mb-6">
-                <button
-                    wire:click="toggleMap"
-                    class="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#B82E6E] text-[#B82E6E] font-bold rounded-xl hover:bg-[#B82E6E] hover:text-white transition-all shadow-sm"
-                >
-                    @if($showMap)
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                        </svg>
-                        Voir la liste
-                    @else
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                        </svg>
-                        Voir la carte
-                    @endif
-                </button>
-            </div>
+           
             @endif
             
             <!-- Mobile Filter Toggle (Only in List Mode) -->
@@ -111,7 +94,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <!-- MAP VIEW -->
-        @if($showMap && count($babysittersMap) > 0)
+        @if($showMap)
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             <div class="p-4 bg-gradient-to-r from-[#B82E6E] to-[#D94686] text-white">
                 <h3 class="font-bold flex items-center gap-2">
@@ -526,12 +509,12 @@
 
             // Ajouter les marqueurs
             babysitters.forEach((babysitter, index) => {
-                console.log(`Création marqueur ${index + 1}:`, babysitter);
+                console.log(Création marqueur ${index + 1}:, babysitter);
                 
                 // Marqueur simple sans icône personnalisée
                 const marker = L.marker([babysitter.latitude, babysitter.longitude]).addTo(mapInstance);
                 
-                console.log(`Marqueur ${index + 1} ajouté à [${babysitter.latitude}, ${babysitter.longitude}]`);
+                console.log(Marqueur ${index + 1} ajouté à [${babysitter.latitude}, ${babysitter.longitude}]);
                 
                 const popupContent = `
                     <div style="padding: 8px; text-align: center; min-width: 150px;">
@@ -547,32 +530,33 @@
             console.log('Tous les marqueurs ajoutés');
         }
 
-        // Initialiser la carte si en mode carte
+        // Initialiser la carte si en mode carte au chargement
         document.addEventListener('DOMContentLoaded', function() {
-            @if($showMap)
+            if (document.getElementById('babysitters-map')) {
                 const babysittersData = @json($babysittersMap);
-                console.log('Données babysitters pour carte:', babysittersData);
-                initializeMap(babysittersData);
-            @else
-                // Forcer l'initialisation de la carte pour debugging
-                const babysittersData = @json($babysittersMap);
+                console.log('Initialisation au chargement - données:', babysittersData);
                 if (babysittersData && babysittersData.length > 0) {
-                    console.log('Forcing map initialization with data:', babysittersData);
                     initializeMap(babysittersData);
                 }
-            @endif
+            }
         });
 
         // Réinitialiser la carte lors du toggle
         document.addEventListener('livewire:init', () => {
             Livewire.on('map-toggled', () => {
-                @if($showMap)
+                const mapElement = document.getElementById('babysitters-map');
+                if (mapElement) {
                     const babysittersData = @json($babysittersMap);
                     console.log('Toggle map - données:', babysittersData);
-                    initializeMap(babysittersData);
-                @else
+                    if (babysittersData && babysittersData.length > 0) {
+                        initializeMap(babysittersData);
+                    } else {
+                        console.log('Aucune donnée de babysitters disponible');
+                        mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 600px; color: #666;">Aucun babysitter avec localisation disponible</div>';
+                    }
+                } else {
                     destroyMap();
-                @endif
+                }
             });
         });
 
