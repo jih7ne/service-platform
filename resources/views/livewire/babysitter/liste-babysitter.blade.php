@@ -94,7 +94,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <!-- MAP VIEW -->
-        @if($showMap && count($babysittersMap) > 0)
+        @if($showMap)
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
             <div class="p-4 bg-gradient-to-r from-[#B82E6E] to-[#D94686] text-white">
                 <h3 class="font-bold flex items-center gap-2">
@@ -530,25 +530,33 @@
             console.log('Tous les marqueurs ajoutés');
         }
 
-        // Initialiser la carte si en mode carte
+        // Initialiser la carte si en mode carte au chargement
         document.addEventListener('DOMContentLoaded', function() {
-            @if($showMap)
+            if (document.getElementById('babysitters-map')) {
                 const babysittersData = @json($babysittersMap);
-                console.log('Données babysitters pour carte:', babysittersData);
-                initializeMap(babysittersData);
-            @endif
+                console.log('Initialisation au chargement - données:', babysittersData);
+                if (babysittersData && babysittersData.length > 0) {
+                    initializeMap(babysittersData);
+                }
+            }
         });
 
         // Réinitialiser la carte lors du toggle
         document.addEventListener('livewire:init', () => {
             Livewire.on('map-toggled', () => {
-                @if($showMap)
+                const mapElement = document.getElementById('babysitters-map');
+                if (mapElement) {
                     const babysittersData = @json($babysittersMap);
                     console.log('Toggle map - données:', babysittersData);
-                    initializeMap(babysittersData);
-                @else
+                    if (babysittersData && babysittersData.length > 0) {
+                        initializeMap(babysittersData);
+                    } else {
+                        console.log('Aucune donnée de babysitters disponible');
+                        mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 600px; color: #666;">Aucun babysitter avec localisation disponible</div>';
+                    }
+                } else {
                     destroyMap();
-                @endif
+                }
             });
         });
 

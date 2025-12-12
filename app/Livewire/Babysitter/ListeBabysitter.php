@@ -158,6 +158,7 @@ class ListeBabysitter extends Component
     public function toggleMap()
     {
         $this->showMap = !$this->showMap;
+        $this->dispatch('map-toggled');
     }
 
     public function render()
@@ -277,6 +278,9 @@ class ListeBabysitter extends Component
                      'babysitters.prixHeure', 'utilisateurs.photo', 'utilisateurs.note')
             ->get();
 
+        // Debug: Afficher le nombre total de babysitters récupérés
+        \Log::info('Total babysitters récupérés pour carte: ' . $locationData->count());
+
         $this->babysittersWithLocation = $locationData->filter(function($babysitter) {
             return $babysitter->latitude && $babysitter->longitude;
         });
@@ -322,6 +326,9 @@ $babysittersMap = $limitedLocationData->map(function($babysitter) use ($defaultC
         'prixHeure' => (float) $babysitter->prixHeure
     ];
 })->toArray();
+
+// Debug: Afficher les données de la carte
+\Log::info('Babysitters pour carte:', $babysittersMap);
 
 // Compter le nombre total de babysitters disponibles
 $totalBabysitters = Babysitter::valide()->count();
