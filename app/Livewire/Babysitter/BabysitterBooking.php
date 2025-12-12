@@ -3,6 +3,12 @@
 namespace App\Livewire\Babysitter;
 
 use Livewire\Component;
+use App\Models\Babysitting\Babysitter;
+use App\Models\Babysitting\Disponibilite;
+use App\Models\Babysitting\DemandeIntervention;
+use App\Models\Babysitting\Enfant;
+use App\Models\Babysitting\Superpouvoir;
+use Illuminate\Support\Facades\DB;
 
 class BabysitterBooking extends Component
 {
@@ -75,7 +81,53 @@ class BabysitterBooking extends Component
 
     public function confirmBooking()
     {
-        $this->showSuccess = true;
+        \Log::info('confirmBooking appelé');
+        
+        try {
+            // Pour les tests, on utilise directement l'ID 1
+            $clientId = 1;
+            \Log::info('Client ID: ' . $clientId);
+            
+            \Log::info('Début de la transaction');
+            DB::beginTransaction();
+            
+            // Créer la demande d'intervention
+            $demande = DemandeIntervention::create([
+                'dateDemande' => now(),
+                'dateSouhaitee' => $this->getDateFromDay($this->selectedDay),
+                'heureDebut' => $this->startTime,
+                'heureFin' => $this->endTime,
+                'lieu' => $this->getSelectedAddress(),
+                'note_speciales' => $this->message,
+                'idIntervenant' => $this->babysitterId,
+                'idClient' => $clientId,
+                'statut' => 'en_attente'
+            ]);
+            
+            \Log::info('Demande créée: ' . $demande->idDemande);
+            
+            // Ajouter les enfants
+            foreach ($this->children as $child) {
+                Enfant::create([
+                    'nomComplet' => $child['nom'],
+                    'dateNaissance' => $this->calculateBirthDate($child['age']),
+                    'besoinsSpecifiques' => $child['besoins'],
+                    'idDemande' => $demande->idDemande
+                ]);
+            }
+            
+            \Log::info('Enfants ajoutés');
+            DB::commit();
+            $this->showSuccess = true;
+            
+            session()->flash('success', 'Votre demande de réservation a été envoyée avec succès !');
+            \Log::info('Réservation réussie');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('error', 'Une erreur est survenue lors de la réservation. Veuillez réessayer.');
+            \Log::error('Erreur lors de la réservation: ' . $e->getMessage());
+        }
     }
 
     public function canProceed()
@@ -123,28 +175,259 @@ class BabysitterBooking extends Component
 
     private function getBabysitter()
     {
-        return [
-            'id' => 1,
-            'nom' => 'Bennani',
-            'prenom' => 'Khadija',
-            'photo' => 'https://images.unsplash.com/photo-1758525862933-73398157e165?w=400',
-            'rating' => 4.9,
-            'services' => ['Cuisine', 'Tâches ménagères', 'Aide aux devoirs', 'Faire la lecture', 'Musique', 'Dessin'],
-            'availability' => [
-                'lundi' => ['09:00-11:00', '14:00-16:00', '17:00-19:00'],
-                'mardi' => ['08:00-10:00', '14:00-16:00', '18:00-20:00'],
-                'mercredi' => [],
-                'jeudi' => ['14:00-16:00', '17:00-19:00'],
-                'vendredi' => ['09:00-11:00', '15:00-17:00'],
-                'samedi' => ['09:00-11:00', '14:00-16:00', '18:00-20:00'],
-                'dimanche' => ['18:00-20:00']
-            ]
+        try {
+            $babysitter = Babysitter::with([
+                'intervenant',
+                'utilisateur',
+                'disponibilites',
+                'superpouvoirs'
+            ])->find($this->babysitterId);
+            
+            if (!$babysitter) {
+                return null;
+            }
+            
+            // Debug: Vérifier les relations
+            \Log::info('Babysitter trouvé: ' . $babysitter->idBabysitter);
+            \Log::info('Intervenant: ' . ($babysitter->intervenant ? 'OK' : 'NULL'));
+            \Log::info('Utilisateur: ' . ($babysitter->utilisateur ? 'OK' : 'NULL'));
+            \Log::info('Superpouvoirs count: ' . $babysitter->superpouvoirs->count());
+            \Log::info('Disponibilites count: ' . $babysitter->disponibilites->count());
+            
+            // Récupérer les créneaux déjà réservés
+            $reservedSlots = $this->getReservedSlots($babysitter->idBabysitter);
+            \Log::info('Créneaux réservés: ' . json_encode($reservedSlots));
+            
+            // Filtrer les disponibilités pour exclure les créneaux réservés
+            $availableDispos = $babysitter->disponibilites->flatMap(function($dispo) use ($reservedSlots) {
+                $jour = strtolower($dispo->jourFormatted);
+                $originalRange = $dispo->plageHoraire;
+                
+                // Récupérer les créneaux réservés pour ce jour
+                $dayReservedSlots = $reservedSlots[$jour] ?? [];
+                
+                if (empty($dayReservedSlots)) {
+                    // Pas de réservation ce jour, garder le créneau original
+                    return collect([$dispo]);
+                }
+                
+                // Diviser le créneau original en créneaux disponibles
+                $availableRanges = $this->splitAvailableTime($originalRange, $dayReservedSlots);
+                
+                if (empty($availableRanges)) {
+                    // Tout le créneau est réservé
+                    return collect([]);
+                }
+                
+                // Créer de nouvelles disponibilités pour chaque créneau disponible
+                $newDispos = collect([]);
+                foreach ($availableRanges as $range) {
+                    $newDispo = new \stdClass();
+                    $newDispo->idDispo = $dispo->idDispo;
+                    $newDispo->jourSemaine = $dispo->jourSemaine;
+                    $newDispo->est_reccurent = $dispo->est_reccurent;
+                    $newDispo->date_specifique = $dispo->date_specifique;
+                    $newDispo->idIntervenant = $dispo->idIntervenant;
+                    $newDispo->plageHoraire = $range;
+                    $newDispo->heureDebut = \Carbon\Carbon::createFromFormat('H:i', explode('-', $range)[0]);
+                    $newDispo->heureFin = \Carbon\Carbon::createFromFormat('H:i', explode('-', $range)[1]);
+                    $newDispo->jourFormatted = $dispo->jourFormatted;
+                    $newDispos->push($newDispo);
+                }
+                
+                return $newDispos;
+            })->filter(function($dispo) {
+                // Garder seulement les créneaux qui ne sont pas vides
+                return $dispo !== null && isset($dispo->plageHoraire);
+            });
+            
+            // Transformer les données pour compatibilité avec la vue
+            return [
+                'id' => $babysitter->idBabysitter,
+                'nom' => $babysitter->utilisateur->nom ?? $babysitter->intervenant->nom ?? 'Nom par défaut',
+                'prenom' => $babysitter->utilisateur->prenom ?? $babysitter->intervenant->prenom ?? 'Prénom par défaut',
+                'photo' => $babysitter->utilisateur->photo ?? $babysitter->intervenant->photo ?? null,
+                'rating' => 4.9,
+                'services' => $babysitter->superpouvoirs->isNotEmpty() 
+                    ? $babysitter->superpouvoirs->pluck('superpouvoir')->toArray()
+                    : ['Cuisine', 'Tâches ménagères', 'Aide aux devoirs'],
+                'availability' => $this->formatDisponibilites($availableDispos)
+            ];
+        } catch (\Exception $e) {
+            \Log::error('Erreur getBabysitter: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    private function getReservedSlots($babysitterId)
+    {
+        // Récupérer toutes les demandes validées pour ce babysitter
+        $validatedDemands = DemandeIntervention::where('idIntervenant', $babysitterId)
+            ->where('statut', 'validee')
+            ->where('dateSouhaitee', '>=', now()->format('Y-m-d'))
+            ->get();
+
+        $reservedSlots = [];
+        
+        foreach ($validatedDemands as $demand) {
+            $dayName = strtolower(date('l', strtotime($demand->dateSouhaitee)));
+            $dayMap = [
+                'monday' => 'lundi',
+                'tuesday' => 'mardi',
+                'wednesday' => 'mercredi',
+                'thursday' => 'jeudi',
+                'friday' => 'vendredi',
+                'saturday' => 'samedi',
+                'sunday' => 'dimanche'
+            ];
+            
+            $jour = $dayMap[$dayName] ?? 'lundi';
+            $plage = $demand->heureDebut->format('H:i') . '-' . $demand->heureFin->format('H:i');
+            
+            if (!isset($reservedSlots[$jour])) {
+                $reservedSlots[$jour] = [];
+            }
+            $reservedSlots[$jour][] = $plage;
+        }
+        
+        return $reservedSlots;
+    }
+
+    private function timeRangesOverlap($range1, $range2)
+    {
+        [$start1, $end1] = explode('-', $range1);
+        [$start2, $end2] = explode('-', $range2);
+        
+        // Convertir en minutes pour comparaison
+        $start1Min = $this->timeToMinutes($start1);
+        $end1Min = $this->timeToMinutes($end1);
+        $start2Min = $this->timeToMinutes($start2);
+        $end2Min = $this->timeToMinutes($end2);
+        
+        // Vérifier si les plages se chevauchent
+        return !($end1Min <= $start2Min || $end2Min <= $start1Min);
+    }
+
+    private function timeToMinutes($time)
+    {
+        [$hours, $minutes] = explode(':', $time);
+        return $hours * 60 + $minutes;
+    }
+
+    private function splitAvailableTime($originalRange, $reservedSlots)
+    {
+        [$start, $end] = explode('-', $originalRange);
+        $startMin = $this->timeToMinutes($start);
+        $endMin = $this->timeToMinutes($end);
+        
+        // Convertir les créneaux réservés en minutes
+        $reservedRanges = [];
+        foreach ($reservedSlots as $slot) {
+            [$slotStart, $slotEnd] = explode('-', $slot);
+            $reservedStart = $this->timeToMinutes($slotStart);
+            $reservedEnd = $this->timeToMinutes($slotEnd);
+            
+            // Vérifier si ce créneau réservé chevauche notre créneau original
+            if ($reservedStart < $endMin && $reservedEnd > $startMin) {
+                $reservedRanges[] = [
+                    'start' => max($reservedStart, $startMin),
+                    'end' => min($reservedEnd, $endMin)
+                ];
+            }
+        }
+        
+        // S'il n'y a pas de chevauchement, retourner le créneau original
+        if (empty($reservedRanges)) {
+            return [$originalRange];
+        }
+        
+        // Trier les créneaux réservés par heure de début
+        usort($reservedRanges, function($a, $b) {
+            return $a['start'] - $b['start'];
+        });
+        
+        $availableRanges = [];
+        $currentStart = $startMin;
+        
+        foreach ($reservedRanges as $reserved) {
+            // Ajouter le créneau disponible avant la réservation
+            if ($reserved['start'] > $currentStart) {
+                $availableRanges[] = $this->minutesToTime($currentStart) . '-' . $this->minutesToTime($reserved['start']);
+            }
+            
+            // Mettre à jour notre position actuelle après la réservation
+            $currentStart = max($currentStart, $reserved['end']);
+        }
+        
+        // Ajouter le créneau disponible après la dernière réservation
+        if ($currentStart < $endMin) {
+            $availableRanges[] = $this->minutesToTime($currentStart) . '-' . $this->minutesToTime($endMin);
+        }
+        
+        return $availableRanges;
+    }
+
+    private function minutesToTime($minutes)
+    {
+        $hours = floor($minutes / 60);
+        $mins = $minutes % 60;
+        return sprintf('%02d:%02d', $hours, $mins);
+    }
+
+    // Méthodes utilitaires
+    private function formatDisponibilites($disponibilites)
+    {
+        $formatted = [];
+        foreach ($disponibilites as $dispo) {
+            $jour = strtolower($dispo->jourFormatted);
+            if (!isset($formatted[$jour])) {
+                $formatted[$jour] = [];
+            }
+            $formatted[$jour][] = $dispo->plageHoraire;
+        }
+        return $formatted;
+    }
+
+    private function getDateFromDay($day)
+    {
+        $daysMap = [
+            'lundi' => 'Monday',
+            'mardi' => 'Tuesday', 
+            'mercredi' => 'Wednesday',
+            'jeudi' => 'Thursday',
+            'vendredi' => 'Friday',
+            'samedi' => 'Saturday',
+            'dimanche' => 'Sunday'
         ];
+        
+        $dayName = $daysMap[$day] ?? 'Monday';
+        return now()->next($dayName)->format('Y-m-d');
+    }
+
+    private function getSelectedAddress()
+    {
+        if ($this->useRegisteredAddress) {
+            return "23 Rue des Fleurs, Maârif - Casablanca"; // Adresse par défaut
+        }
+        return $this->address;
+    }
+
+    private function calculateBirthDate($age)
+    {
+        return now()->subYears($age)->format('Y-m-d');
     }
 
     public function render()
     {
         $babysitter = $this->getBabysitter();
+        
+        // Si le babysitter n'existe pas, afficher une page d'erreur
+        if (!$babysitter) {
+            return view('livewire.babysitter.babysitter-booking', [
+                'babysitter' => null,
+                'error' => 'Babysitter non trouvé'
+            ]);
+        }
 
         // CORRECTION: Utiliser directement les noms des services de la babysitter
         $serviceData = [

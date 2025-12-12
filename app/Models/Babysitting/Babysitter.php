@@ -3,12 +3,14 @@
 namespace App\Models\Babysitting;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\shared\Intervenant;
+use App\Models\Shared\Intervenant;
 use App\Models\Babysitting\PreferenceDomicil;
 use App\Models\Babysitting\Superpouvoir;
 use App\Models\Babysitting\Formation;
 use App\Models\Babysitting\CategorieEnfant;
 use App\Models\Babysitting\ExperienceBesoinSpeciaux;
+use App\Models\Babysitting\Disponibilite;
+use App\Models\Babysitting\DemandeIntervention;
 
 class Babysitter extends Model
 {
@@ -49,11 +51,20 @@ class Babysitter extends Model
         return $this->belongsTo(Intervenant::class, 'idBabysitter', 'IdIntervenant');
     }
 
-    // TODO: Ajouter les relations pour les disponibilités et autres données
-    // public function disponibilites()
-    // {
-    //     return $this->hasMany(Disponibilite::class, 'idIntervenant', 'idBabysitter');
-    // }
+    public function utilisateur()
+    {
+        return $this->belongsTo(\App\Models\Shared\Utilisateur::class, 'idBabysitter', 'idUser')->where('role', 'intervenant');
+    }
+
+    public function disponibilites()
+    {
+        return $this->hasMany(Disponibilite::class, 'idIntervenant', 'idBabysitter');
+    }
+
+    public function demandes()
+    {
+        return $this->hasMany(DemandeIntervention::class, 'idIntervenant', 'idBabysitter');
+    }
 
     public function preferencesDomicil()
     {

@@ -4,9 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Babysitting\Babysitter;
+use App\Models\Babysitting\DemandeIntervention;
+use App\Models\Babysitting\Enfant;
+use App\Models\Babysitting\Disponibilite;
 use App\Models\Intervenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class BabysitterController extends Controller
 {
@@ -241,6 +245,192 @@ class BabysitterController extends Controller
         return response()->json([
             'success' => true,
             'data' => $stats
+        ]);
+    }
+
+    /**
+     * Créer une demande de réservation (booking)
+     */
+    public function createBooking(Request $request, $babysitterId)
+    {
+        $validator = Validator::make($request->all(), [
+            'dateSouhaitee' => 'required|date|after:today',
+            'heureDebut' => 'required|date_format:H:i',
+            'heureFin' => 'required|date_format:H:i|after:heureDebut',
+            'lieu' => 'required|string|max:255',
+            'enfants' => 'required|array|min:1',
+            'enfants.*.nomComplet' => 'required|string|max:255',
+            'enfants.*.dateNaissance' => 'required|date|before:today',
+            'enfants.*.besoinsSpecifiques' => 'nullable|string|max:500',
+            'services' => 'required|array|min:1',
+            'services.*' => 'exists:superpouvoirs,idSuperpouvoir',
+            'message' => 'nullable|string|max:300'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Vérifier si le babysitter existe et est valide
+            $babysitter = Babysitter::with(['intervenant', 'disponibilites'])->findOrFail($babysitterId);
+            
+            // Vérifier la disponibilité
+            $dayOfWeek = ucfirst(strftime('%A', strtotime($request->dateSouhaitee)));
+            $isAvailable = $babysitter->disponibilites()
+                ->where('jourSemaine', $dayOfWeek)
+                ->where('heureDebut', '<=', $request->heureDebut)
+                ->where('heureFin', '>=', $request->heureFin)
+                ->exists();
+
+            if (!$isAvailable) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Le babysitter n\'est pas disponible à cette date et heure'
+                ], 422);
+            }
+
+            // Créer la demande d'intervention
+            $demande = DemandeIntervention::create([
+                'dateSouhaitee' => $request->dateSouhaitee,
+                'heureDebut' => $request->heureDebut,
+                'heureFin' => $request->heureFin,
+                'lieu' => $request->lieu,
+                'note_speciales' => $request->message,
+                'idIntervenant' => $babysitterId,
+                'idClient' => auth()->id(),
+                'statut' => 'en_attente'
+            ]);
+
+            // Ajouter les enfants
+            foreach ($request->enfants as $enfantData) {
+                Enfant::create([
+                    'nomComplet' => $enfantData['nomComplet'],
+                    'dateNaissance' => $enfantData['dateNaissance'],
+                    'besoinsSpecifiques' => $enfantData['besoinsSpecifiques'] ?? null,
+                    'idDemande' => $demande->idDemande
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Demande de réservation envoyée avec succès',
+                'data' => [
+                    'idDemande' => $demande->idDemande,
+                    'statut' => $demande->statut,
+                    'babysitter' => [
+                        'nom' => $babysitter->intervenant->nom,
+                        'prenom' => $babysitter->intervenant->prenom
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors de la réservation',
+                'error' => config('app.debug') ? $e->getMessage() : 'Veuillez réessayer'
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtenir les demandes d'un babysitter
+     */
+    public function getMyRequests(Request $request)
+    {
+        $babysitterId = auth()->user()->babysitter->idBabysitter ?? null;
+        
+        if (!$babysitterId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous n\'êtes pas un babysitter'
+            ], 403);
+        }
+
+        $demandes = DemandeIntervention::with([
+            'client',
+            'enfants',
+            'intervenant'
+        ])
+        ->where('idIntervenant', $babysitterId)
+        ->orderBy('dateDemande', 'desc')
+        ->paginate($request->get('per_page', 15));
+
+        return response()->json([
+            'success' => true,
+            'data' => $demandes
+        ]);
+    }
+
+    /**
+     * Répondre à une demande de réservation
+     */
+    public function respondToRequest(Request $request, $demandeId)
+    {
+        $validator = Validator::make($request->all(), [
+            'statut' => 'required|in:validée,refusée',
+            'raisonAnnulation' => 'required_if:statut,refusée|string|max:255'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $babysitterId = auth()->user()->babysitter->idBabysitter ?? null;
+        
+        if (!$babysitterId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vous n\'êtes pas un babysitter'
+            ], 403);
+        }
+
+        $demande = DemandeIntervention::where('idIntervenant', $babysitterId)
+            ->where('idDemande', $demandeId)
+            ->where('statut', 'en_attente')
+            ->firstOrFail();
+
+        $demande->update([
+            'statut' => $request->statut,
+            'raisonAnnulation' => $request->raisonAnnulation
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Demande ' . $request->statut . ' avec succès',
+            'data' => $demande->fresh()
+        ]);
+    }
+
+    /**
+     * Obtenir les disponibilités d'un babysitter
+     */
+    public function getDisponibilites($babysitterId)
+    {
+        $babysitter = Babysitter::findOrFail($babysitterId);
+        
+        $disponibilites = $babysitter->disponibilites()
+            ->where('est_reccurent', true)
+            ->orderByRaw("FIELD(jourSemaine, 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche')")
+            ->get()
+            ->groupBy('jourFormatted');
+
+        return response()->json([
+            'success' => true,
+            'data' => $disponibilites
         ]);
     }
 }

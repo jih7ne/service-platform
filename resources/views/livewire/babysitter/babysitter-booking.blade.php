@@ -1,5 +1,34 @@
 <div class="min-h-screen bg-[#F7F7F7]">
-    @if($showSuccess)
+    @if(isset($error))
+        {{-- Message d'erreur --}}
+        <div class="min-h-screen bg-[#F7F7F7] flex items-center justify-center p-4">
+            <div class="max-w-2xl w-full">
+                <div class="bg-white rounded-3xl p-10 border border-gray-100 text-center" style="box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08)">
+                    <div class="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                    
+                    <h2 class="text-3xl mb-3 text-black font-extrabold">
+                        Babysitter non trouvé
+                    </h2>
+                    <p class="text-lg mb-8 text-[#3a3a3a] font-medium">
+                        {{ $error }}
+                    </p>
+
+                    <div class="flex gap-4">
+                        <a href="/liste-babysitter" wire:navigate class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold text-center">
+                            Retour à la recherche
+                        </a>
+                        <a href="/" wire:navigate class="flex-1 px-6 py-4 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center" style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
+                            Retour à l'accueil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @elseif($showSuccess)
         {{-- Success Screen --}}
         <div class="min-h-screen bg-[#F7F7F7] flex items-center justify-center p-4">
             <div class="max-w-2xl w-full">
@@ -42,6 +71,35 @@
                 </div>
             </div>
         </div>
+    @elseif(!$babysitter)
+        {{-- Message d'erreur si babysitter null --}}
+        <div class="min-h-screen bg-[#F7F7F7] flex items-center justify-center p-4">
+            <div class="max-w-2xl w-full">
+                <div class="bg-white rounded-3xl p-10 border border-gray-100 text-center" style="box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08)">
+                    <div class="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                    
+                    <h2 class="text-3xl mb-3 text-black font-extrabold">
+                        Babysitter non trouvé
+                    </h2>
+                    <p class="text-lg mb-8 text-[#3a3a3a] font-medium">
+                        Le babysitter demandé n'existe pas.
+                    </p>
+
+                    <div class="flex gap-4">
+                        <a href="/liste-babysitter" wire:navigate class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold text-center">
+                            Retour à la recherche
+                        </a>
+                        <a href="/" wire:navigate class="flex-1 px-6 py-4 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center" style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
+                            Retour à l'accueil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     @else
         {{-- Header --}}
         <div class="bg-white border-b border-gray-100">
@@ -54,8 +112,14 @@
                 </a>
 
                 <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-[#B82E6E]">
-                        <img src="{{ $babysitter['photo'] }}" alt="{{ $babysitter['prenom'] }}" class="w-full h-full object-cover" />
+                    <div class="w-20 h-20 rounded-full overflow-hidden border-3 border-white shadow-lg flex items-center justify-center bg-[#B82E6E]">
+                        @if($babysitter['photo'])
+                            <img src="{{ $babysitter['photo'] }}" alt="{{ $babysitter['prenom'] }}" class="w-full h-full object-cover" />
+                        @else
+                            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                        @endif
                     </div>
                     <div>
                         <h1 class="text-2xl mb-1 text-black font-extrabold">
