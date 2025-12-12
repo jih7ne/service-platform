@@ -111,7 +111,7 @@
         <!-- LIST VIEW -->
         @elseif(!$showMap)
         <div class="flex flex-col lg:flex-row gap-8">
-            <!-- Filters Sidebar -->
+         
             <aside class="hidden lg:block w-80 flex-shrink-0" id="filtersSidebar">
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
                     <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-50">
