@@ -138,9 +138,13 @@ class BabysitterRegistration extends Component
         if ($this->currentStep == 2) {
             $rules = [
                 'telephone' => 'required|string|max:20',
-                'adresse' => 'required|string|max:500',
                 'photo_profil' => 'nullable|image|max:5120',
             ];
+            
+            // L'adresse n'est requise que si la géolocalisation automatique n'est pas activée
+            if (!$this->auto_localisation) {
+                $rules['adresse'] = 'required|string|max:500';
+            }
         }
 
         if ($this->currentStep == 3) {

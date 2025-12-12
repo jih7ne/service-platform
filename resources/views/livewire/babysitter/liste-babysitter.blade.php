@@ -109,7 +109,6 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-<<<<<<< HEAD
         
         <!-- MAP VIEW -->
         @if($showMap && count($babysittersMap) > 0)
@@ -122,36 +121,12 @@
                     </svg>
                     Carte des babysitters ({{ count($babysittersMap) }} profils)
                 </h3>
-=======
-        <!-- Map Section -->
-        @if($showMap && $babysittersWithLocation->count() > 0)
-        <div class="mb-8">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-4 bg-[#B82E6E] text-white">
-                    <h3 class="font-bold flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                        </svg>
-                        Carte des babysitters disponibles
-                    </h3>
-                </div>
-                <div id="babysitters-map" style="height: 400px; width: 100%;"></div>
-                <script>
-                    initializeMap(@json($babysittersWithLocation));
-                </script>
->>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
             </div>
             <div id="babysitters-map" style="height: 600px; width: 100%;"></div>
         </div>
-<<<<<<< HEAD
         
         <!-- LIST VIEW -->
         @elseif(!$showMap)
-=======
-        @endif
-
-        @if(!$showMap)
->>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
         <div class="flex flex-col lg:flex-row gap-8">
             <!-- Filters Sidebar -->
             <aside class="hidden lg:block w-80 flex-shrink-0" id="filtersSidebar">
@@ -381,10 +356,7 @@
                     @php
                         $utilisateur = $babysitter->intervenant->utilisateur;
                         $localisation = $utilisateur->localisations()->first();
-<<<<<<< HEAD
-=======
                         $services = $babysitter->superpouvoirs;
->>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
                     @endphp
                     <div class="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1">
                         <!-- Card Header / Image -->
@@ -467,12 +439,8 @@
                 </div>
             </div>
         </div>
-<<<<<<< HEAD
         @endif
-=======
     </div>
-
-    @endif
 
     <!-- Mobile Sidebar Overlay -->
     <div id="mobileSidebar" class="fixed inset-0 z-40 hidden lg:hidden">
@@ -491,93 +459,13 @@
                 -->
             </div>
         </div>
->>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
     </div>
 
     @push('styles')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
           crossorigin=""/>
-<<<<<<< HEAD
-=======
 @endpush
-
-@push('scripts')
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
-        
-        <script>
-            let mapInstance = null;
-            let markersLayer = null;
-
-            function destroyMap() {
-                if (mapInstance) {
-                    mapInstance.remove();
-                    mapInstance = null;
-                    markersLayer = null;
-                }
-            }
-
-            function initializeMap(babysitters) {
-                const mapElement = document.getElementById('babysitters-map');
-                if (!mapElement) return;
-
-                if (babysitters.length === 0) {
-                    mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 400px; color: #666;">Aucun babysitter avec localisation</div>';
-                    return;
-                }
-
-                destroyMap();
-
-                mapInstance = L.map('babysitters-map').setView([33.5731, -7.5898], 10);
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
-                }).addTo(mapInstance);
-
-                babysitters.forEach((babysitter) => {
-                    const marker = L.marker([babysitter.latitude, babysitter.longitude]).addTo(mapInstance);
-                    
-                    const popupContent = `
-                        <div style="padding: 8px; text-align: center;">
-                            <h4 style="margin: 0 0 8px 0;">${babysitter.prenom} ${babysitter.nom}</h4>
-                            <p style="margin: 4px 0; color: #666;">${babysitter.ville}</p>
-                            <p style="margin: 4px 0; font-weight: bold; color: #B82E6E;">${babysitter.prixHeure} DH/h</p>
-                            <a href="/babysitter-profile/${babysitter.idBabysitter}" style="color: #B82E6E; text-decoration: none;">Voir profil</a>
-                        </div>`;
-                    
-                    marker.bindPopup(popupContent);
-                });
-            }
-
-           
-            
-            function toggleFilters() {
-                const sidebar = document.getElementById('filtersSidebar');
-                
-                if (sidebar.classList.contains('hidden')) {
-                    sidebar.classList.remove('hidden');
-                    sidebar.classList.add('fixed', 'inset-0', 'z-50', 'w-full', 'h-full', 'bg-white', 'p-4', 'overflow-y-auto');
-                    if (!document.getElementById('closeFiltersBtn')) {
-                        const closeBtn = document.createElement('button');
-                        closeBtn.id = 'closeFiltersBtn';
-                        closeBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
-                        closeBtn.className = 'absolute top-4 right-4 p-2 text-gray-500';
-                        closeBtn.onclick = toggleFilters;
-                        sidebar.prepend(closeBtn);
-                    }
-                } else {
-                    sidebar.classList.add('hidden');
-                    sidebar.classList.remove('fixed', 'inset-0', 'z-50', 'w-full', 'h-full', 'bg-white', 'p-4', 'overflow-y-auto');
-                    const closeBtn = document.getElementById('closeFiltersBtn');
-                    if (closeBtn) closeBtn.remove();
-                }
-            }
-        </script>
-     @endpush
-    
->>>>>>> 0f9282453088980d212d2600d3015ff0d1d22760
     <style>
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
