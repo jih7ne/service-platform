@@ -37,52 +37,12 @@ class PetKeeperRegistration extends Component
     public $adresse;
     public $ville;
     public $code_postal;
-    public $pays = 'France';
+    public $pays = '';
     public $profile_photo;
     
     // Étape 3: Professionnel
     public $specialite;
     public $years_experience = 0;
-    public $accepted_animal_types = [];
-    public $accepted_animal_sizes = [];
-    public $services = [];
-    public $description;
-    public $hourly_rate;
-    
-    // Étape 4: Compétences
-    public $certifications = [];
-    public $special_skills = [];
-    public $housing_type;
-    public $has_outdoor_space = false;
-    public $availabilities = [];
-    
-    // Étape 5: Documents
-    public $criminal_record;
-    public $proof_of_address;
-    public $animal_certificates = [];
-    
-    // Constantes
-    public $animalTypes = [
-        'Chiens', 'Chats', 'Rongeurs', 'Oiseaux', 'Reptiles', 'Autres'
-    ];
-    
-    public $animalSizes = [
-        'Petit' => 'Petit',
-        'Moyen' => 'Moyen', 
-        'Grand' => 'Grand'
-    ];
-    
-    public $serviceTypes = [
-        'Garde à domicile (chez le client)',
-        'Garde à domicile (chez moi)',
-        'Promenade',
-        'Visite à domicile',
-        'Transport',
-        'Garde de nuit',
-        'Administration de médicaments',
-        'Garde de jour'
-    ];
-    
     public $certificationList = [
         'Certificat de capacité animaux domestiques',
         'Formation première secours animaliers',
@@ -91,29 +51,28 @@ class PetKeeperRegistration extends Component
         'Formation éducation canine',
         'ACACED (Attestation de connaissances)'
     ];
+   
     
-    public $specialSkillsList = [
-        'Administration médicamenteuse',
-        'Médication',
-        'Toilettage',
-        'Éducation/Comportement',
-        'Animaux à besoins spéciaux',
-        'Garde animaux multiples'
-    ];
+    // Étape 4: Compétences
+    public $certifications = [];
+    public $special_skills = [];
+    public $availabilities = [];
     
-    public $housingTypes = [
-        'Appartement',
-        'Maison',
-        'Villa',
-        'Ferme'
-    ];
+    // Étape 5: Documents
+    public $criminal_record;
+    public $proof_of_address;
+    public $animal_certificates = [];
+
+    
+    
+    
     
     public $days = [
         'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 
         'Vendredi', 'Samedi', 'Dimanche'
     ];
     
-    // Méthodes de navigation
+    
     public function nextStep()
     {
         $this->validateCurrentStep();
@@ -167,15 +126,10 @@ class PetKeeperRegistration extends Component
             3 => [
                 'specialite' => 'required|string|max:255',
                 'years_experience' => 'required|integer|min:0|max:50',
-                'accepted_animal_types' => 'required|array|min:1',
-                'services' => 'required|array|min:1',
-                'description' => 'required|string|min:50|max:2000',
-                'hourly_rate' => 'required|numeric|min:0',
+                'certifications' => 'array',
             ],
             4 => [
-                'certifications' => 'array',
-                'special_skills' => 'array',
-                'housing_type' => 'required|string',
+                'availabilities' => 'array'
             ],
             5 => [
                 'criminal_record' => 'required|file|mimes:pdf,jpg,jpeg,png|max:15360',
@@ -209,182 +163,83 @@ class PetKeeperRegistration extends Component
     
     public function submit()
     {
-        $this->validateAll();
         
+        $this->validateAll();
+
+      
         if (!$this->validateFileUploads()) {
             return;
         }
-        
-        // DÉSACTIVER FK POUR SQLITE
-        DB::statement('PRAGMA foreign_keys = OFF;');
-        
+
         try {
             DB::beginTransaction();
-            
-            // 1. Créer ou récupérer admin
-            $admin = \App\Models\Shared\Admin::first();
-            if (!$admin) {
-                $admin = \App\Models\Shared\Admin::create([
-                    'emailAdmin' => 'admin@helpora.com',
-                    'passwordAdmin' => Hash::make('admin123456')
-                ]);
-            }
-            
-            // 2. Créer l'utilisateur
+
             $utilisateur = Utilisateur::create([
-                'nom' => $this->nom,
-                'prenom' => $this->prenom,
-                'email' => $this->email,
-                'password' => Hash::make($this->password),
-                'telephone' => $this->telephone,
+                'nom'         => $this->nom,
+                'prenom'      => $this->prenom,
+                'email'       => $this->email,
+                'password'    => Hash::make($this->password),
+                'telephone'   => $this->telephone,
                 'dateNaissance' => $this->dateNaissance,
-                'role' => 'intervenant',
-                'statut' => 'actif',
-                'note' => 0,
-                'nbrAvis' => 0,
-                'idAdmin' => $admin->idAdmin
+                'role'        => 'intervenant',
+                'statut'      => 'actif',
+                'note'        => 0,
+                'nbrAvis'     => 0,
+                'idAdmin'     => null,
             ]);
+
             
-            Log::info('Utilisateur créé', [
-                'idUser' => $utilisateur->idUser,
-                'email' => $utilisateur->email
-            ]);
-            
-            // 3. Créer l'intervenant
             $intervenant = Intervenant::create([
-                'statut' => 'EN_ATTENTE',
                 'idIntervenant' => $utilisateur->idUser,
-                'idAdmin' => $admin->idAdmin,
+                'statut'        => 'EN_ATTENTE',
+                'idAdmin'       => null,
             ]);
+
             
-            Log::info('Intervenant créé', [
-                'id' => $intervenant->id,
-                'idIntervenant' => $intervenant->idIntervenant,
-                'user_id' => $utilisateur->idUser
-            ]);
-            
-            // 4. Ajouter la localisation
             Localisation::create([
-                'ville' => $this->ville,
-                'adresse' => $this->adresse,
-                'idUser' => $utilisateur->idUser,
-                'latitude' => 0.0,
-                'longitude' => 0.0,
+                'idUser'   => $utilisateur->idUser,
+                'ville'    => $this->ville,
+                'adresse'  => $this->adresse,
+                'latitude' => 0,
+                'longitude'=> 0,
             ]);
+
             
-            Log::info('Localisation créée', ['user_id' => $utilisateur->idUser]);
-            
-            // 5. Créer le pet keeper
-            $petKeeperId = $utilisateur->idUser;
-            
-            DB::table('petkeepers')->insert([
-                'idPetKeeper' => $petKeeperId,
-                'nombres_services_demandes' => 0,
-                'specialite' => $this->specialite,
-                'created_at' => now(),
-                'updated_at' => now(),
+            $petKeeper = PetKeeper::create([
+                'idPetKeeper'              => $utilisateur->idUser,
+                'nombres_services_demandes'=> 0,
+                'specialite'               => $this->specialite,
+                'years_of_experience'      => $this->years_experience
             ]);
+
             
-            $petKeeper = PetKeeper::find($petKeeperId);
-            
-            if (!$petKeeper) {
-                throw new \Exception('Impossible de créer le pet keeper');
+            if (!$this->handleFileUploads($utilisateur, $petKeeper)) {
+                throw new \Exception("Erreur lors de l'upload des fichiers");
             }
+
             
-            Log::info('PetKeeper créé', [
-                'idPetKeeper' => $petKeeper->idPetKeeper,
-                'specialite' => $petKeeper->specialite
-            ]);
-            
-            // 6. Créer le service petkeeping (SANS idIntervenant car colonne n'existe pas)
-            $petKeepingService = \App\Models\Shared\Service::create([
-                'nomService' => 'PetKeeping - ' . $this->specialite,
-                'description' => $this->description,
-                'statut' => 'ACTIVE',
-                // Note: idIntervenant n'existe pas dans la table services
-            ]);
-            
-            Log::info('Service créé', [
-                'idService' => $petKeepingService->idService,
-                'nomService' => $petKeepingService->nomService
-            ]);
-            
-            // 7. Créer l'entrée petkeeping (si la table existe avec les bonnes colonnes)
-            try {
-                // Vérifier si la table petkeeping existe
-                if (\Schema::hasTable('petkeeping')) {
-                    // Vérifier les colonnes existantes
-                    $hasIdPetKeeping = \Schema::hasColumn('petkeeping', 'idPetKeeping');
-                    $hasIdPetKeeper = \Schema::hasColumn('petkeeping', 'idPetKeeper');
-                    
-                    if ($hasIdPetKeeping && $hasIdPetKeeper) {
-                        \App\Models\PetKeeping\PetKeeping::create([
-                            'idPetKeeping' => $petKeepingService->idService,
-                            'idPetKeeper' => $intervenant->idIntervenant,
-                            'categorie_petkeeping' => 'A_DOMICILE',
-                            'accepts_aggressive_pets' => in_array('Administration médicamenteuse', $this->special_skills) ? 1 : 0,
-                            'accepts_untrained_pets' => in_array('Éducation/Comportement', $this->special_skills) ? 1 : 0,
-                            'vaccination_required' => 1,
-                            'pet_type' => implode(',', $this->accepted_animal_types),
-                            'statut' => 'ACTIVE',
-                        ]);
-                        
-                        Log::info('PetKeeping créé', [
-                            'idPetKeeping' => $petKeepingService->idService,
-                            'idPetKeeper' => $intervenant->idIntervenant
-                        ]);
-                    } else {
-                        Log::warning('Table petkeeping existe mais colonnes manquantes');
-                    }
-                } else {
-                    Log::warning('Table petkeeping n\'existe pas');
-                }
-            } catch (\Exception $e) {
-                Log::error('Erreur création petkeeping: ' . $e->getMessage());
-                // Continuer même si petkeeping échoue
-            }
-            
-            // 8. GÉRER LES UPLOADS DE FICHIERS
-            $uploadSuccess = $this->handleFileUploads($utilisateur, $petKeeper);
-            
-            if (!$uploadSuccess && !empty($this->uploadErrors)) {
-                throw new \Exception(implode(', ', $this->uploadErrors));
-            }
-            
-            // 9. Ajouter les certifications
-            foreach ($this->certifications as $certification) {
-                if (!empty($certification)) {
-                    \App\Models\PetKeeping\PetKeeperCertification::create([
-                        'idPetKeeper' => $petKeeper->idPetKeeper,
-                        'certification' => $certification,
-                        'document' => '',
+            foreach ($this->certifications as $cert) {
+                if (!empty($cert)) {
+                    PetKeeperCertification::create([
+                        'idPetKeeper'   => $petKeeper->idPetKeeper,
+                        'certification' => $cert,
+                        'document'      => '',
                     ]);
                 }
             }
-            
-            // 10. Ajouter les critères de paiement
-            \App\Models\PetKeeping\PaymentCriteria::create([
-                'idPetKeeper' => $petKeeper->idPetKeeper,
-                'criteria' => 'PER_HOUR',
-                'description' => 'Tarif horaire',
-                'base_price' => $this->hourly_rate,
-            ]);
-            
+
+
             DB::commit();
-            
-            // RÉACTIVER FK
-            DB::statement('PRAGMA foreign_keys = ON;');
-            
-            $this->showSuccessMessage($utilisateur, $petKeeper, $petKeepingService);
-            
+            $this->showSuccessMessage($utilisateur, $petKeeper);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            // Réactiver FK même en cas d'erreur
-            DB::statement('PRAGMA foreign_keys = ON;');
-            $this->addError('submit', 'Erreur lors de l\'inscription: ' . $e->getMessage());
-            Log::error('Registration error: ' . $e->getMessage());
+
+            $this->addError('submit', 'Erreur lors de l\'inscription: '.$e->getMessage());
+            Log::error('Registration error: '.$e->getMessage());
         }
     }
+
     
     private function validateAll()
     {
@@ -508,36 +363,31 @@ class PetKeeperRegistration extends Component
         }
     }
     
-    private function showSuccessMessage($utilisateur, $petKeeper, $service = null)
+    private function showSuccessMessage($utilisateur, $petKeeper)
     {
-        // Récupérer tous les documents sauvegardés
-        $documents = PetKeeperCertification::where('idPetKeeper', $petKeeper->idPetKeeper)->get();
         
+        $documents = PetKeeperCertification::where('idPetKeeper', $petKeeper->idPetKeeper)->get();
+
         $documentList = [];
         foreach ($documents as $doc) {
-            $hasFile = !empty($doc->document) && $doc->document !== '';
+            $hasFile = !empty($doc->document);
             $documentList[] = [
-                'type' => $doc->certification,
-                'has_file' => $hasFile ? '✅ AVEC FICHIER' : '✅ SANS FICHIER',
+                'type'      => $doc->certification,
+                'has_file'  => $hasFile ? 'Avec fichier' : 'Sans fichier',
                 'file_name' => $hasFile ? basename($doc->document) : 'Aucun fichier'
             ];
         }
+
         
-        // Construire le message
-        $message = "🎉 <strong>Inscription PetKeeper réussie !</strong><br><br>";
-        $message .= "📋 <strong>Résumé :</strong><br>";
-        $message .= "• ID Utilisateur : <strong>{$utilisateur->idUser}</strong><br>";
+        $message  = "<strong>Inscription PetKeeper effectuée avec succès.</strong><br><br>";
+        $message .= "<strong>Résumé :</strong><br>";
         $message .= "• Email : <strong>{$utilisateur->email}</strong><br>";
-        $message .= "• ID PetKeeper : <strong>{$petKeeper->idPetKeeper}</strong><br>";
+
         
-        if ($service) {
-            $message .= "• ID Service : <strong>{$service->idService}</strong><br>";
-            $message .= "• Nom Service : <strong>{$service->nomService}</strong><br>";
-        }
-        
-        $message .= "• Documents enregistrés : <strong>" . count($documentList) . "</strong><br><br>";
-        
-        $message .= "📎 <strong>Documents :</strong><br>";
+
+        $message .= "• Nombre de documents enregistrés : <strong>" . count($documentList) . "</strong><br><br>";
+
+        $message .= "<strong>Documents :</strong><br>";
         foreach ($documentList as $doc) {
             $message .= "• {$doc['type']} - {$doc['has_file']}";
             if ($doc['file_name'] !== 'Aucun fichier') {
@@ -545,22 +395,22 @@ class PetKeeperRegistration extends Component
             }
             $message .= "<br>";
         }
+
         
-        // Stocker dans la session
         session()->flash('registration_success', $message);
+
         
-        // Mettre à jour le statut
         $this->registrationComplete = true;
+
         
-        // Log final
-        Log::info('=== REGISTRATION COMPLETED ===', [
-            'user_id' => $utilisateur->idUser,
-            'email' => $utilisateur->email,
-            'petkeeper_id' => $petKeeper->idPetKeeper,
-            'service_id' => $service ? $service->idService : 'null',
-            'documents_count' => count($documentList)
+        Log::info('REGISTRATION COMPLETED', [
+            'user_id'        => $utilisateur->idUser,
+            'email'          => $utilisateur->email,
+            'petkeeper_id'   => $petKeeper->idPetKeeper,
+            'documents_count'=> count($documentList)
         ]);
     }
+
     
     public function removeFile($fileType, $index = null)
     {
