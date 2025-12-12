@@ -25,7 +25,9 @@ use App\Livewire\PetKeeping\PetKeeperRegistration;
 use App\Http\Controllers\Api\Auth\RegisterController;
 
 
+use App\Livewire\PetKeeperDashboard;
 
+Route::get('/dashboard-petkeeper', PetKeeperDashboard::class)->name('dashboard.petkeeper');
 Route::get('/', LandingPage::class);
 Route::get('/services', ServicesPage::class);
 Route::get('/contact', ContactPage::class);
