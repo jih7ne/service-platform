@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PetKeeping\PetKeeperEmailVerification;
-
+use App\Models\PetKeeping\PetKeeping;
+use App\Models\Shared\Service;
 
 class PetKeeperRegistration extends Component
 {
@@ -61,17 +62,37 @@ class PetKeeperRegistration extends Component
         'Formation éducation canine',
         'ACACED (Attestation de connaissances)'
     ];
+
+
+    // Etape 4: Creation du service
+    public $service_name = '';
+    public $service_description= '';
+    public $service_status = 'ACTIVE';
+    public $service_category = '';
+    public $service_payment_criteria = 'PER_HOUR';
+    public $service_pet_type = '';
+    public $service_base_price = 10;
+    public $service_accepts_aggressive_pets = false;
+    public $service_accepts_untrained_pets = false;
+    public $service_vaccination_required = false;
+
+    public $number_of_services = 0;
+    public $max_services = 2;
+    public $services = [];
    
     
-    // Étape 4: Compétences
+    // Étape 5: Compétences
     public $certifications = [];
     public $special_skills = [];
     public $availabilities = [];
     
-    // Étape 5: Documents
+    // Étape 6: Documents
     public $criminal_record;
     public $proof_of_address;
     public $animal_certificates = [];
+
+
+    
 
     
     
@@ -218,14 +239,27 @@ class PetKeeperRegistration extends Component
                 'pays' => 'required|string|max:50',
             ],
             4 => [
+                'services' => 'required|array|min:1', 
+                'services.*.service_name' => 'required|string|max:255',
+                'services.*.service_description' => 'nullable|string|max:1000',
+                'services.*.service_status' => 'nullable|string|in:active,inactive,pending',
+                'services.*.service_category' => 'required|string|max:255',
+                'services.*.service_payment_criteria' => 'required|string|max:255',
+                'services.*.service_pet_type' => 'required|string|max:255',
+                'services.*.service_base_price' => 'required|numeric|min:0',
+                'services.*.service_accepts_aggressive_pets' => 'sometimes|boolean',
+                'services.*.service_accepts_untrained_pets' => 'sometimes|boolean',
+                'services.*.service_vaccination_required' => 'sometimes|boolean',
+            ],
+            5 => [
                 'specialite' => 'required|string|max:255',
                 'years_experience' => 'required|integer|min:0|max:50',
                 'certifications' => 'array',
             ],
-            5 => [
+            6 => [
                 'availabilities' => 'array'
             ],
-            6 => [
+            7 => [
                 'criminal_record' => 'required|file|mimes:pdf,jpg,jpeg,png|max:15360',
                 'proof_of_address' => 'required|file|mimes:pdf,jpg,jpeg,png|max:15360',
                 'animal_certificates.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:15360',
@@ -267,6 +301,9 @@ class PetKeeperRegistration extends Component
 
         try {
             DB::beginTransaction();
+
+            $servicesToInsert = [];
+            $petKeepingToInsert = [];
 
             $utilisateur = Utilisateur::create([
                 'nom'         => $this->nom,
@@ -321,6 +358,68 @@ class PetKeeperRegistration extends Component
                     ]);
                 }
             }
+
+
+            //Create Services
+            foreach ($this->services as $service) {
+                if (!$service) continue;
+
+                $service->service_accepts_aggressive_pets = $service->service_accepts_aggressive_pets ?? false;
+                $service->service_accepts_untrained_pets = $service->service_accepts_untrained_pets ?? false;
+                $service->service_vaccination_required = $service->service_vaccination_required ?? false;
+
+                // Prepare service record
+                $servicesToInsert[] = [
+                    'nomService' => $service->service_name,
+                    'description' => $service->service_description,
+                    'statut' => $service->service_status,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                // $g_service = Service::create([
+                //     'nomService' => $service->service_name,
+                //     'description' => $service->service_description,
+                //     'statut' => $service->service_status,
+                // ]);
+
+                // PetKeeping::create([
+                //     'idPetKeeping' => $g_service->idService,
+                //     'idPetKeeper' => $petKeeper->idPetKeeper,
+                //     'categorie_petkeeping' => $service->service_category,
+                //     'accepts_aggressive_pets' => $service->service_accepts_aggressive_pets,
+                //     'accepts_untrained_pets' => $service->service_accepts_untrained_pets,
+                //     'vaccination_required' => $service->service_vaccination_required,
+                //     'pet_type' => $service->service_pet_type,
+                //     'payment_criteria' => $service->service_payment_criteria,
+                //     'base_price' => $service->service_base_price,
+                //     'statut' => $g_service->statut,
+                // ]);
+            }
+
+            Service::insert($servicesToInsert);
+            $insertedServices = Service::latest()->take(count($servicesToInsert))->get();
+
+            foreach ($insertedServices as $index => $g_service) {
+                $service = $this->services[$index];
+
+                $petKeepingToInsert[] = [
+                    'idPetKeeping' => $g_service->idService,
+                    'idPetKeeper' => $petKeeper->idPetKeeper,
+                    'categorie_petkeeping' => $service->service_category,
+                    'accepts_aggressive_pets' => $service->service_accepts_aggressive_pets ?? false,
+                    'accepts_untrained_pets' => $service->service_accepts_untrained_pets ?? false,
+                    'vaccination_required' => $service->service_vaccination_required ?? false,
+                    'pet_type' => $service->service_pet_type,
+                    'payment_criteria' => $service->service_payment_criteria,
+                    'base_price' => $service->service_base_price,
+                    'statut' => $g_service->statut,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            PetKeeping::insert($petKeepingToInsert);
 
 
             DB::commit();

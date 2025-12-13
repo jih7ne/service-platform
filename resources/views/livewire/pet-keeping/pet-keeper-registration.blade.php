@@ -131,7 +131,7 @@
         <!-- Progress Steps -->
         <div class="mb-10">
             <div class="flex items-center justify-between mb-2">
-                @foreach(['Profil', 'Verification de Email' ,'Contact', 'Professionnel', 'Disponibilités', 'Documents'] as $index => $step)
+                @foreach(['Profil', 'Verification de Email' ,'Contact', 'Service', 'Professionnel', 'Disponibilités', 'Documents'] as $index => $step)
                     @php $stepNumber = $index + 1; @endphp
                     <div class="flex flex-col items-center flex-1 relative">
                         <button 
@@ -544,9 +544,379 @@
             @endif
 
 
-            
-            <!-- Étape 4: Professionnel -->
+
+            <!-- Étape 4: Création du service -->
             @if($currentStep == 4)
+                <div>
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-semibold text-gray-900 mb-2">Création de vos services</h2>
+                        <p class="text-gray-600">Configurez les services que vous proposez (maximum {{ $max_services }})</p>
+                    </div>
+                    
+                    <!-- Services Container -->
+                    <div class="space-y-8" id="services-container">
+                        @foreach($services as $index => $service)
+                        <div class="border border-gray-200 rounded-xl p-6 hover:border-yellow-300 transition" wire:key="service-{{ $index }}">
+                            <!-- Service Header -->
+                            <div class="flex justify-between items-start mb-6">
+                                <div>
+                                    <h3 class="font-medium text-gray-900 text-xl mb-2 flex items-center">
+                                        <span class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-800 rounded-full mr-3">
+                                            {{ $index + 1 }}
+                                        </span>
+                                        Service {{ $index + 1 }}
+                                        @if($service['service_name'])
+                                            : <span class="text-gray-700 ml-2">{{ $service['service_name'] }}</span>
+                                        @endif
+                                    </h3>
+                                    @if($index == 0)
+                                        <p class="text-sm text-gray-600">Votre service principal</p>
+                                    @else
+                                        <p class="text-sm text-gray-600">Service supplémentaire</p>
+                                    @endif
+                                </div>
+                                
+                                @if($index > 0)
+                                    <button type="button" 
+                                            wire:click="removeService({{ $index }})"
+                                            class="p-2 text-gray-400 hover:text-red-500 transition"
+                                            title="Supprimer ce service">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                @endif
+                            </div>
+                            
+                            <!-- Service Form Fields -->
+                            <div class="space-y-6">
+                                <!-- Nom du service -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Nom du service *
+                                    </label>
+                                    <input type="text" wire:model="services.{{ $index }}.service_name" 
+                                        class="w-full md:w-2/3 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition"
+                                        placeholder="Ex: Gardiennage de chiens à domicile">
+                                    @error('services.'.$index.'.service_name') 
+                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                
+                                <!-- Description du service -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Description du service *
+                                    </label>
+                                    <textarea wire:model="services.{{ $index }}.service_description" 
+                                            rows="3"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition"
+                                            placeholder="Décrivez votre service, vos compétences, votre approche..."></textarea>
+                                    @error('services.'.$index.'.service_description') 
+                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                
+                                <!-- Catégorie et Type d'animal -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Catégorie du service -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Catégorie du service *
+                                        </label>
+                                        <select wire:model="services.{{ $index }}.service_category" 
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition bg-white">
+                                            <option value="">Sélectionnez une catégorie</option>
+                                            @foreach(App\Constants\PetKeeping\Constants::forSelect() as $value => $label)
+                                                <option value="{{ $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('services.'.$index.'.service_category') 
+                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    
+                                    <!-- Type d'animal -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Type d'animal accepté *
+                                        </label>
+                                        <select wire:model="services.{{ $index }}.service_pet_type" 
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition bg-white">
+                                            <option value="">Sélectionnez un type</option>
+                                            @foreach(App\Constants\PetKeeping\Constants::getSelectOptions() as $value => $label)
+                                                <option value="{{ $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('services.'.$index.'.service_pet_type') 
+                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+                                
+                                <!-- Critère de paiement et Prix de base -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Critère de paiement -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Critère de paiement *
+                                        </label>
+                                        <select wire:model="services.{{ $index }}.service_payment_criteria" 
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition bg-white">
+                                            @foreach(App\Constants\PetKeeping\Constants::forSelectCriteria() as $value => $label)
+                                                <option value="{{ $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('services.'.$index.'.service_payment_criteria') 
+                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    
+                                    <!-- Prix de base -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Prix de base (€) *
+                                        </label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500">€</span>
+                                            </div>
+                                            <input type="number" wire:model="services.{{ $index }}.service_base_price" min="0" step="0.01"
+                                                class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition"
+                                                placeholder="10.00">
+                                        </div>
+                                        @error('services.'.$index.'.service_base_price') 
+                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                </div>
+                                
+                                <!-- Statut du service -->
+                                <div class="max-w-md">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Statut du service *
+                                    </label>
+                                    <select wire:model="services.{{ $index }}.service_status" 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition bg-white">
+                                        <option value="ACTIVE">Actif (visible pour les clients)</option>
+                                        <option value="INACTIVE">Inactif (non visible)</option>
+                                    </select>
+                                    @error('services.'.$index.'.service_status') 
+                                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                
+                                <!-- Conditions spécifiques (Checkboxes) -->
+                                <div class="border border-gray-200 rounded-xl p-6 bg-gray-50 mt-4">
+                                    <h4 class="font-medium text-gray-900 mb-4">Conditions spécifiques</h4>
+                                    
+                                    <div class="space-y-4">
+                                        <!-- Vaccination requise -->
+                                        <label class="flex items-start p-3 border border-gray-200 rounded-lg hover:bg-white hover:border-yellow-300 transition cursor-pointer bg-white">
+                                            <input type="checkbox" wire:model="services.{{ $index }}.service_vaccination_required" 
+                                                class="mt-1 mr-3 h-5 w-5 text-yellow-600 rounded border-gray-300 focus:ring-yellow-500">
+                                            <div>
+                                                <span class="font-medium text-gray-900">Vaccination requise</span>
+                                                <p class="text-sm text-gray-600 mt-1">Je n'accepte que les animaux à jour de leurs vaccins</p>
+                                            </div>
+                                        </label>
+                                        
+                                        <!-- Animaux non éduqués -->
+                                        <label class="flex items-start p-3 border border-gray-200 rounded-lg hover:bg-white hover:border-yellow-300 transition cursor-pointer bg-white">
+                                            <input type="checkbox" wire:model="services.{{ $index }}.service_accepts_untrained_pets" 
+                                                class="mt-1 mr-3 h-5 w-5 text-yellow-600 rounded border-gray-300 focus:ring-yellow-500">
+                                            <div>
+                                                <span class="font-medium text-gray-900">J'accepte les animaux non éduqués</span>
+                                                <p class="text-sm text-gray-600 mt-1">Je suis formé(e) pour gérer les animaux avec des problèmes comportementaux</p>
+                                            </div>
+                                        </label>
+                                        
+                                        <!-- Animaux agressifs -->
+                                        <label class="flex items-start p-3 border border-gray-200 rounded-lg hover:bg-white hover:border-yellow-300 transition cursor-pointer bg-white">
+                                            <input type="checkbox" wire:model="services.{{ $index }}.service_accepts_aggressive_pets" 
+                                                class="mt-1 mr-3 h-5 w-5 text-yellow-600 rounded border-gray-300 focus:ring-yellow-500">
+                                            <div>
+                                                <span class="font-medium text-gray-900">J'accepte les animaux agressifs</span>
+                                                <p class="text-sm text-gray-600 mt-1">Je suis qualifié(e) pour prendre en charge des animaux avec des antécédents d'agressivité</p>
+                                                <p class="text-xs text-yellow-600 mt-2">
+                                                    ⚠️ Nécessite certification et assurance adaptée
+                                                </p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Service Summary -->
+                                @if($service['service_name'] || $service['service_category'])
+                                    <div class="border-t border-gray-200 pt-6 mt-6">
+                                        <h4 class="font-medium text-gray-900 mb-3">Récapitulatif</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div class="space-y-2">
+                                                @if($service['service_category'])
+                                                    <div class="flex justify-between">
+                                                        <span class="text-gray-600">Catégorie :</span>
+                                                        <span class="font-medium text-gray-900">
+                                                            @php
+                                                                $serviceCategories = App\Constants\PetKeeping\Constants::forSelect();
+                                                            @endphp
+                                                            {{ $serviceCategories[$service['service_category']] ?? '' }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if($service['service_pet_type'])
+                                                    <div class="flex justify-between">
+                                                        <span class="text-gray-600">Type d'animal :</span>
+                                                        <span class="font-medium text-gray-900">
+                                                            @php
+                                                                $petTypes = App\Constants\PetKeeping\Constants::getSelectOptions();
+                                                            @endphp
+                                                            {{ $petTypes[$service['service_pet_type']] ?? '' }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            <div class="space-y-2">
+                                                @if($service['service_base_price'])
+                                                    <div class="flex justify-between">
+                                                        <span class="text-gray-600">Prix :</span>
+                                                        <span class="font-medium text-gray-900">{{ number_format($service['service_base_price'], 2) }} €</span>
+                                                    </div>
+                                                @endif
+                                                @if($service['service_payment_criteria'])
+                                                    <div class="flex justify-between">
+                                                        <span class="text-gray-600">Facturation :</span>
+                                                        <span class="font-medium text-gray-900">
+                                                            @php
+                                                                $criteriaLabels = App\Constants\PetKeeping\Constants::forSelectCriteria();
+                                                            @endphp
+                                                            {{ $criteriaLabels[$service['service_payment_criteria']] ?? '' }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    
+                    <!-- Add Service Button -->
+                    @if(count($services) < $max_services)
+                        <div class="mt-8 text-center">
+                            <button type="button"
+                                    wire:click="addService"
+                                    class="inline-flex items-center px-6 py-3 border-2 border-dashed border-gray-300 text-gray-700 rounded-xl hover:border-yellow-500 hover:bg-yellow-50 transition font-medium">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Ajouter un autre service ({{ count($services) }}/{{ $max_services }})
+                            </button>
+                            <p class="text-sm text-gray-500 mt-2">Vous pouvez ajouter jusqu'à {{ $max_services }} services</p>
+                        </div>
+                    @else
+                        <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-yellow-800">
+                                        Vous avez atteint le nombre maximum de services ({{ $max_services }}). 
+                                        Vous pourrez ajouter d'autres services plus tard depuis votre tableau de bord.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                    
+                    <!-- Services Overview -->
+                    @if(count($services) > 0)
+                        <div class="mt-8 border-t border-gray-200 pt-8">
+                            <h3 class="font-medium text-gray-900 text-xl mb-4">Vue d'ensemble de vos services</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                @foreach($services as $index => $service)
+                                    <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <h4 class="font-medium text-gray-900">
+                                                <span class="inline-flex items-center justify-center w-6 h-6 bg-yellow-100 text-yellow-800 rounded-full text-sm mr-2">
+                                                    {{ $index + 1 }}
+                                                </span>
+                                                {{ $service['service_name'] ?: 'Service ' . ($index + 1) }}
+                                            </h4>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $service['service_status'] == 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                                {{ $service['service_status'] == 'ACTIVE' ? 'Actif' : 'Inactif' }}
+                                            </span>
+                                        </div>
+                                        
+                                        @if($service['service_category'])
+                                            <div class="flex items-center text-sm text-gray-600 mb-2">
+                                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                                </svg>
+                                                @php
+                                                    $serviceCategories = App\Constants\PetKeeping\Constants::forSelect();
+                                                @endphp
+                                                {{ $serviceCategories[$service['service_category']] ?? '' }}
+                                            </div>
+                                        @endif
+                                        
+                                        @if($service['service_base_price'])
+                                            <div class="flex items-center text-sm text-gray-600 mb-3">
+                                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                {{ number_format($service['service_base_price'], 2) }} €
+                                                @if($service['service_payment_criteria'])
+                                                    @php
+                                                        $criteriaLabels = App\Constants\PetKeeping\Constants::forSelectCriteria();
+                                                    @endphp
+                                                    / {{ strtolower($criteriaLabels[$service['service_payment_criteria']] ?? '') }}
+                                                @endif
+                                            </div>
+                                        @endif
+                                        
+                                        @if($service['service_description'])
+                                            <p class="text-sm text-gray-600 line-clamp-2">
+                                                {{ Str::limit($service['service_description'], 100) }}
+                                            </p>
+                                        @endif
+                                        
+                                        <!-- Conditions badges -->
+                                        <div class="flex flex-wrap gap-2 mt-4">
+                                            @if($service['service_vaccination_required'])
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Vaccination requise
+                                                </span>
+                                            @endif
+                                            @if($service['service_accepts_untrained_pets'])
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    Accepte non-éduqués
+                                                </span>
+                                            @endif
+                                            @if($service['service_accepts_aggressive_pets'])
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                    Accepte agressifs
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+
+
+
+
+            
+            <!-- Étape 5: Professionnel -->
+            @if($currentStep == 5)
                 <div>
                     <div class="mb-8">
                         <h2 class="text-2xl font-semibold text-gray-900 mb-2">Informations professionnelles</h2>
@@ -605,8 +975,8 @@
                 </div>
             @endif
             
-            <!-- Étape 5: Disponibilités -->
-            @if($currentStep == 5)
+            <!-- Étape 6: Disponibilités -->
+            @if($currentStep == 6)
                 <div>
                     <div class="mb-8">
                         <h2 class="text-2xl font-semibold text-gray-900 mb-2">Disponibilités</h2>
@@ -672,8 +1042,8 @@
             @endif
             
             
-            <!-- Étape 6: Documents -->
-            @if($currentStep == 6)
+            <!-- Étape 7: Documents -->
+            @if($currentStep == 7)
                 <div>
                     <div class="mb-8">
                         <h2 class="text-2xl font-semibold text-gray-900 mb-2">Documents requis</h2>
