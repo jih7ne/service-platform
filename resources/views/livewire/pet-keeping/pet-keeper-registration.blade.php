@@ -125,13 +125,13 @@
                 </svg>
             </div>
             <h1 class="text-3xl font-bold text-gray-900 mb-3">Inscription PetKeeper</h1>
-            <p class="text-gray-600 text-lg">Devenez gardien d'animaux professionnel en 5 étapes</p>
+            <p class="text-gray-600 text-lg">Devenez gardien d'animaux professionnel en {{ $totalSteps }} étapes</p> <!-- Updated -->
         </div>
         
         <!-- Progress Steps -->
         <div class="mb-10">
             <div class="flex items-center justify-between mb-2">
-                @foreach(['Profil', 'Verification de Email' ,'Contact', 'Service', 'Professionnel', 'Disponibilités', 'Documents'] as $index => $step)
+                @foreach(['Profil', 'Vérification Email', 'Contact', 'Service', 'Professionnel', 'Disponibilités', 'Documents'] as $index => $step)
                     @php $stepNumber = $index + 1; @endphp
                     <div class="flex flex-col items-center flex-1 relative">
                         <button 
@@ -140,7 +140,7 @@
                         >
                             <div class="w-12 h-12 rounded-full border-2 flex items-center justify-center mb-3 transition-all duration-200
                                 {{ $currentStep == $stepNumber ? 'border-yellow-600 bg-yellow-600 text-white shadow-md' : 
-                                   ($currentStep > $stepNumber ? 'border-yellow-600 bg-yellow-600 text-white' : 'border-gray-300 bg-white text-gray-400') }}">
+                                ($currentStep > $stepNumber ? 'border-yellow-600 bg-yellow-600 text-white' : 'border-gray-300 bg-white text-gray-400') }}">
                                 <span class="font-semibold">{{ $stepNumber }}</span>
                             </div>
                             <span class="text-sm font-medium {{ $currentStep >= $stepNumber ? 'text-gray-900' : 'text-gray-500' }}">
@@ -148,7 +148,7 @@
                             </span>
                         </button>
                         
-                        @if($stepNumber < 5)
+                        @if($stepNumber < 7)  <!-- Fixed: changed from < 5 to < 7 -->
                             <div class="absolute top-6 left-1/2 w-full h-0.5 -translate-x-1/2 -z-10
                                 {{ $currentStep > $stepNumber ? 'bg-yellow-600' : 'bg-gray-300' }}">
                             </div>
@@ -1214,6 +1214,16 @@
 
         Livewire.on('step-changed', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        Livewire.on('service-added', () => {
+            setTimeout(() => {
+                const servicesContainer = document.getElementById('services-container');
+                const lastService = servicesContainer.lastElementChild;
+                if (lastService) {
+                    lastService.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
         });
 
         const getInput = (index) =>
