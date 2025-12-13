@@ -37,6 +37,8 @@ class PetKeeping extends Model
         'accepts_untrained_pets',
         'vaccination_required',
         'pet_type',
+        'payment_criteria',
+        'base_price',
         'statut',
     ];
 

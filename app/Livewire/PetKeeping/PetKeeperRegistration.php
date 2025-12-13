@@ -14,13 +14,18 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PetKeeping\PetKeeperEmailVerification;
+use App\Models\PetKeeping\PetKeeping;
+use App\Models\Shared\Disponibilite;
+use App\Models\Shared\Service;
 
 class PetKeeperRegistration extends Component
 {
     use WithFileUploads;
     
     public $currentStep = 1;
-    public $totalSteps = 5;
+    public $totalSteps = 7;
     public $registrationComplete = false;
     public $uploadErrors = [];
     
@@ -32,6 +37,13 @@ class PetKeeperRegistration extends Component
     public $password_confirmation;
     public $dateNaissance;
     public $telephone;
+
+    public $verification_code;
+    public $verification_code_incomplete = true;
+    public $verification_code_full;
+
+    public ?string $generated_verification_code = null;
+    public ?\Carbon\Carbon $verification_code_expires_at = null;
     
     // Étape 2: Contact
     public $adresse;
@@ -51,17 +63,27 @@ class PetKeeperRegistration extends Component
         'Formation éducation canine',
         'ACACED (Attestation de connaissances)'
     ];
+
+
+    // Etape 4: Creation du service
+
+    public $number_of_services = 0;
+    public $max_services = 2;
+    public $services = [];
    
     
-    // Étape 4: Compétences
+    // Étape 5: Compétences
     public $certifications = [];
     public $special_skills = [];
     public $availabilities = [];
     
-    // Étape 5: Documents
+    // Étape 6: Documents
     public $criminal_record;
     public $proof_of_address;
     public $animal_certificates = [];
+
+
+    
 
     
     
@@ -72,10 +94,98 @@ class PetKeeperRegistration extends Component
         'Vendredi', 'Samedi', 'Dimanche'
     ];
     
+
+    public function mount()
+    {
+        if (empty($this->services)) {
+            $this->addService();
+        }
+    }
+
+    private function generateAndSendVerificationCode(): void
+    {
+        $code = (string) random_int(1000000000, 9999999999);
+
+        $this->generated_verification_code = Hash::make($code);
+        $this->verification_code_expires_at = now()->addMinutes(10);
+
+        Mail::to($this->email)->send(
+            new PetKeeperEmailVerification(
+                $this->email,
+                $this->prenom,
+                $this->nom,
+                $code
+            )
+        );
+    }
+
+
+    public function resendVerificationCode()
+    {
+        $this->resetErrorBag('verification_code');
+        $this->verification_code_full = null;
+
+        $this->generateAndSendVerificationCode();
+
+        session()->flash(
+            'verification_code_resent',
+            'Un nouveau code de vérification a été envoyé.'
+        );
+
+        $this->dispatch('clear-verification-code');
+    }
+
+
+    public function changeEmail()
+    {
+        $this->currentStep = 1;
+
+        $this->generated_verification_code = null;
+        $this->verification_code_expires_at = null;
+
+        $this->dispatch('step-changed', step: 1);
+    }
+
+    private function verifyEmailCode(): bool
+    {
+        if (!$this->verification_code_full || strlen($this->verification_code_full) !== 10) {
+            $this->verification_code_incomplete = true;
+            $this->addError('verification_code', 'Veuillez entrer le code complet.');
+            return false;
+        }
+
+        if (!$this->generated_verification_code ||
+            !$this->verification_code_expires_at ||
+            now()->greaterThan($this->verification_code_expires_at)) {
+
+            $this->addError('verification_code', 'Le code a expiré. Veuillez en demander un nouveau.');
+            return false;
+        }
+
+        if (!Hash::check($this->verification_code_full, $this->generated_verification_code)) {
+            $this->addError('verification_code', 'Code de vérification incorrect.');
+            return false;
+        }
+
+        $this->verification_code_incomplete = false;
+        return true;
+    }
+
     
     public function nextStep()
     {
         $this->validateCurrentStep();
+
+        
+
+        if ($this->currentStep === 2 && !$this->verifyEmailCode()) {
+            return;
+        }
+
+        if ($this->currentStep === 1) {
+            $this->generateAndSendVerificationCode();
+        }
+
         if ($this->currentStep < $this->totalSteps) {
             $this->currentStep++;
             $this->dispatch('step-changed', step: $this->currentStep);
@@ -117,21 +227,37 @@ class PetKeeperRegistration extends Component
                 'dateNaissance' => 'required|date|before:-18 years',
                 'telephone' => 'required|string|max:20',
             ],
-            2 => [
+            // 2 => [
+            //     'verification_code' => 'required|numeric|max:10',
+            // ],
+            3 => [
                 'adresse' => 'required|string|max:255',
                 'ville' => 'required|string|max:100',
                 'code_postal' => 'required|string|max:10',
                 'pays' => 'required|string|max:50',
             ],
-            3 => [
+            4 => [
+                'services' => 'required|array|min:1', 
+                'services.*.service_name' => 'required|string|max:255',
+                'services.*.service_description' => 'nullable|string|max:1000',
+                'services.*.service_status' => 'nullable|string|in:ACTIVE,INACTIVE,ARCHIVED',
+                'services.*.service_category' => 'required|string|max:255',
+                'services.*.service_payment_criteria' => 'required|string|max:255',
+                'services.*.service_pet_type' => 'required|string|max:255',
+                'services.*.service_base_price' => 'required|numeric|min:0',
+                'services.*.service_accepts_aggressive_pets' => 'sometimes|boolean',
+                'services.*.service_accepts_untrained_pets' => 'sometimes|boolean',
+                'services.*.service_vaccination_required' => 'sometimes|boolean',
+            ],
+            5 => [
                 'specialite' => 'required|string|max:255',
                 'years_experience' => 'required|integer|min:0|max:50',
                 'certifications' => 'array',
             ],
-            4 => [
+            6 => [
                 'availabilities' => 'array'
             ],
-            5 => [
+            7 => [
                 'criminal_record' => 'required|file|mimes:pdf,jpg,jpeg,png|max:15360',
                 'proof_of_address' => 'required|file|mimes:pdf,jpg,jpeg,png|max:15360',
                 'animal_certificates.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:15360',
@@ -167,9 +293,9 @@ class PetKeeperRegistration extends Component
         $this->validateAll();
 
       
-        if (!$this->validateFileUploads()) {
-            return;
-        }
+        // if (!$this->validateFileUploads()) {
+        //     return;
+        // }
 
         try {
             DB::beginTransaction();
@@ -228,6 +354,55 @@ class PetKeeperRegistration extends Component
                 }
             }
 
+
+
+            //Create Services
+            foreach ($this->services as $service) {
+                if (!$service) continue;
+
+                $g_service = Service::create([
+                    'nomService' => $service['service_name'],
+                    'description' => $service['service_description'],
+                    'statut' => $service['service_status'],
+                ]);
+
+                PetKeeping::create([
+                    'idPetKeeping' => $g_service->idService,
+                    'idPetKeeper' => $petKeeper->idPetKeeper,
+                    'categorie_petkeeping' => $service['service_category'],
+                    'accepts_aggressive_pets' => $service['service_accepts_aggressive_pets'] ?? false,
+                    'accepts_untrained_pets' => $service['service_accepts_untrained_pets'] ?? false,
+                    'vaccination_required' => $service['service_vaccination_required'] ?? false,
+                    'pet_type' => $service['service_pet_type'],
+                    'payment_criteria' => $service['service_payment_criteria'],
+                    'base_price' => $service['service_base_price'],
+                    'statut' => $g_service['statut'],
+                ]);
+            }
+
+
+
+            //Storing availabilities
+
+            foreach ($this->availabilities as $day => $slots) {
+                foreach ($slots as $slot) {
+                    if (
+                        empty($slot['start']) ||
+                        empty($slot['end'])
+                    ) {
+                        continue;
+                    }
+                    
+                    Disponibilite::create([
+                        'heureDebut'     => $slot['start'],
+                        'heureFin'       => $slot['end'],
+                        'jourSemaine'    => $day,              
+                        'est_reccurent'  => true,
+                        'date_specifique' => null,
+                        'idIntervenant'  => $petKeeper->idPetKeeper,
+                    ]);
+                }
+            }
 
             DB::commit();
             $this->showSuccessMessage($utilisateur, $petKeeper);
@@ -455,6 +630,38 @@ class PetKeeperRegistration extends Component
         if (isset($this->availabilities[$day][$index])) {
             unset($this->availabilities[$day][$index]);
             $this->availabilities[$day] = array_values($this->availabilities[$day]);
+        }
+    }
+
+
+    public function addService()
+    {
+        
+        if (count($this->services) < $this->max_services) {
+            $this->dispatch('service-added');
+            $this->services[] = [
+                'service_name' => '',
+                'service_description' => '',
+                'service_status' => 'ACTIVE',
+                'service_category' => '',
+                'service_payment_criteria' => 'PER_HOUR',
+                'service_pet_type' => '',
+                'service_base_price' => 10,
+                'service_accepts_aggressive_pets' => false,
+                'service_accepts_untrained_pets' => false,
+                'service_vaccination_required' => false,
+            ];
+            
+            $this->number_of_services = count($this->services);
+        }
+    }
+
+    public function removeService($index)
+    {
+        if ($index > 0 && isset($this->services[$index])) {
+            unset($this->services[$index]);
+            $this->services = array_values($this->services); // Reindex array
+            $this->number_of_services = count($this->services);
         }
     }
     
