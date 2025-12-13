@@ -24,6 +24,8 @@ use App\Livewire\Babysitter\BabysitterProfilePage;
 use App\Livewire\Babysitter\BabysitterBooking;
 use App\Livewire\Babysitter\BabysitterRegistration;
 use App\Livewire\Babysitter\BabysitterRegistrationSuccess;
+use App\Livewire\Babysitter\BabysitterDashboard;
+use App\Livewire\Babysitter\BabysitterProfile;
 
 
 Route::get('/', LandingPage::class);
@@ -36,6 +38,11 @@ Route::get('/inscriptionClient', RegisterClientPage::class);
 Route::get('/liste-babysitter', ListeBabysitter::class)->name('liste.babysitter');
 Route::get('/babysitter-profile/{id}', BabysitterProfilePage::class);
 Route::get('/babysitter-booking/{id}', BabysitterBooking::class);
+
+// Routes temporaires pour test sans authentification
+// Route::get('/test-babysitter-dashboard/{id}', BabysitterDashboard::class)->name('test.babysitter.dashboard');
+// Route::get('/test-babysitter-profile/{id}', BabysitterProfile::class)->name('test.babysitter.profile');
+
 // Client registration POST route
 Route::post('/register-client', [RegisterController::class, 'store'])->name('register.store');
 Route::post('/connexion', [LoginController::class, 'store'])->name('login.store');
@@ -59,5 +66,9 @@ Route::get('/reservation/{service}', BookingProcess::class)->name('reservation.c
 Route::middleware(['auth'])->group(function () {
    // Route::get('/tutoring/dashboard', Dashboard::class)->name('tutoring.dashboard');
     Route::get('/intervenant/hub', IntervenantHub::class)->name('intervenant.hub');
+    
+    // Babysitter routes
+    Route::get('/babysitter/dashboard', BabysitterDashboard::class)->name('babysitter.dashboard');
+    Route::get('/babysitter/profile', BabysitterProfile::class)->name('babysitter.profile');
 });
 
