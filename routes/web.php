@@ -13,20 +13,20 @@ use App\Livewire\Tutoring\TutorDetails;
 use App\Livewire\Tutoring\BookingProcess;
 use App\Livewire\Tutoring\DemandeDetails;
 use App\Livewire\Tutoring\ProfessorsList;
-use App\Http\Controllers\Api\Auth\LoginController;
 
 
 use App\Livewire\Shared\RegisterClientPage;
-use App\Livewire\Shared\RegisterIntervenantPage;
-use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 use App\Livewire\PetKeeping\PetkeeperBooking;
 use App\Livewire\PetKeeping\PetKeeperProfile;
 use App\Livewire\PetKeeping\PetKeeperDashboard;
+use App\Livewire\Shared\RegisterIntervenantPage;
+use App\Http\Controllers\Api\Auth\LoginController;
 use App\Livewire\PetKeeping\PetKeeperRegistration;
 
 
 //use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 
 
 Route::get('/', LandingPage::class);
@@ -36,12 +36,14 @@ Route::get('/connexion', LoginPage::class);
 Route::get('/inscription', Register::class);
 Route::get('/inscriptionIntervenant', RegisterIntervenantPage::class);
 Route::get('/inscriptionClient', RegisterClientPage::class);
+Route::get('/profil', \App\Livewire\Shared\ProfilClient::class);
 
 // Client registration POST route
 Route::post('/register-client', [RegisterController::class, 'store'])->name('register.store');
 Route::post('/connexion', [LoginController::class, 'store'])->name('login.store');
 Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 Route::get('/inscriptionProfesseur', \App\Livewire\Tutoring\RegisterProfesseur::class);
+
 
 Route::prefix('pet-keeping')->group(function (){
     Route::get('search-service', PetKeepingService::class);
