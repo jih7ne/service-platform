@@ -143,6 +143,28 @@ class BabysitterProfilePage extends Component
         }
     }
 
+    public function getMapData()
+    {
+        $location = $this->babysitter->intervenant->utilisateur->localisations()->first();
+        
+        if ($location && $location->latitude && $location->longitude) {
+            return [
+                'latitude' => $location->latitude,
+                'longitude' => $location->longitude,
+                'address' => $location->adresse . ', ' . $location->ville,
+                'hasLocation' => true
+            ];
+        }
+        
+        // Coordonnées par défaut pour Casablanca si pas de localisation
+        return [
+            'latitude' => 33.5731,
+            'longitude' => -7.5898,
+            'address' => $this->babysitter->intervenant->utilisateur->localisations->first()?->adresse . ', ' . $this->babysitter->intervenant->utilisateur->localisations->first()?->ville ?: 'Casablanca, Maroc',
+            'hasLocation' => false
+        ];
+    }
+
     public function render()
     {
         return view('livewire.babysitter.babysitter-profile-page');
