@@ -29,25 +29,45 @@ class RegisterIntervenantPage extends Component
         }
     }
 
-public function register()
-{
-    // Si le compte est client, rediriger
-    if ($this->accountType === 'client') {
-        return redirect('/inscriptionClient');
+    // NOUVELLE MÉTHODE : Quand le type de service change
+    public function updatedServiceType($value)
+    {
+        // Si babysitter est sélectionné, rediriger immédiatement
+        if ($value === 'babysitter') {
+            return redirect('/inscriptionBabysitter');
+        }
     }
+
+    // Méthode d'inscription
+    public function register()
+    {
+        // Si le compte est client, rediriger
+        if ($this->accountType === 'client') {
+            return redirect('/inscriptionClient');
+        }
 
     // Valider le type de service
     $this->validate();
 
-    // Rediriger vers la page appropriée selon le service
-    if ($this->serviceType === 'professeur') {
-        return redirect('/inscriptionProfesseur');
-    } elseif ($this->serviceType === 'babysitter') {
-        return redirect('/inscriptionBabysitter');
-    } elseif ($this->serviceType === 'petkeeper') {
-        return redirect('/inscriptionPetkeeper');
+        // Redirection selon le type de service
+        switch ($this->serviceType) {
+            case 'babysitter':
+                return redirect('/inscriptionBabysitter');
+            
+            case 'professeur':
+                // Rediriger vers le formulaire professeur
+                session(['serviceType' => 'professeur']);
+                return redirect('/inscriptionIntervenant/formulaire');
+            
+            case 'petkeeper':
+                // Rediriger vers le formulaire petkeeper
+                session(['serviceType' => 'petkeeper']);
+                return redirect('/inscriptionIntervenant/formulaire');
+            
+            default:
+                return redirect('/inscriptionIntervenant/formulaire');
+        }
     }
-}
 
     // Méthode de rendu
     public function render()

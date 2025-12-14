@@ -114,11 +114,19 @@
                                                         <span class="text-lg font-bold text-[#2B5AA8]">{{ number_format($service->prix_par_heure, 0) }} DH</span>
                                                     </td>
                                                     <td class="py-4 px-4">
-                                                        <button 
-                                                            wire:click="reserverCours({{ $service->id_service }})"
-                                                            class="bg-[#2B5AA8] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#224A91] transition-colors">
-                                                            Réserver
-                                                        </button>
+                                                        @auth
+    <button 
+        wire:click="reserverCours({{ $service->id_service }})"
+        class="bg-[#2B5AA8] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#224A91] transition-colors">
+        Réserver
+    </button>
+@else
+    <a 
+        href="{{ route('login.store') }}"
+        class="inline-block bg-[#2B5AA8] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#224A91] transition-colors text-center">
+        Réserver
+    </a>
+@endauth
                                                     </td>
                                                 </tr>
                                             @endforeach
