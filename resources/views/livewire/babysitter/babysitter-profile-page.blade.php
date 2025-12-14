@@ -3,7 +3,7 @@
     $age = \Carbon\Carbon::parse($user->dateNaissance)->age;
     $address = $user->localisations->first();
     $ville = $address ? $address->ville : 'Non spécifié';
-    $quartier = $address ? $address->adresse : '';
+    $quartier = ''; // Masquer l'adresse exacte pour la confidentialité
     $rating = $user->note ?? 0;
     $reviewCount = $user->nbrAvis ?? 0;
     $photoUrl = $user->photo 
@@ -62,8 +62,7 @@
                                         <path
                                             d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                                     </svg>
-                                    <span class="text-lg text-[#3a3a3a] font-semibold">{{ $quartier }},
-                                        {{ $ville }}</span>
+                                    <span class="text-lg text-[#3a3a3a] font-semibold">{{ $ville }}, Maroc</span>
                                 </div>
                                 <span
                                     class="px-4 py-1.5 bg-[#F9E0ED] rounded-full text-sm text-[#B82E6E] font-bold">{{ $age }}
@@ -355,7 +354,7 @@
                                 d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                         </svg>
                         <div>
-                            <p class="text-black font-bold">{{ $quartier }}, {{ $ville }}</p>
+                            <p class="text-black font-bold">{{ $ville }}, Maroc</p>
                             <p class="text-sm mt-1 text-gray-500 font-semibold">Zone d'intervention dans un rayon de 5
                                 km</p>
                         </div>
@@ -419,7 +418,7 @@
                         <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         </svg>
-                        <strong>{{ $localisation['ville'] }}, Maroc</strong>
+                        <strong>{{ $address->ville ?? 'Ville non spécifiée' }}, Maroc</strong>
                     </p>
                 </div>
             </div>
@@ -439,17 +438,20 @@
         
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                const lat = {{ $localisation['latitude'] }};
-                const lng = {{ $localisation['longitude'] }};
+                // Ajouter un décalage plus important pour ne montrer que la rue/quartier
+                const exactLat = {{ $address->latitude }};
+                const exactLng = {{ $address->longitude }};
+                const lat = exactLat + (Math.random() - 0.5) * 0.02; // ~1km de décalage pour montrer seulement la rue
+                const lng = exactLng + (Math.random() - 0.5) * 0.02; // ~1km de décalage pour montrer seulement la rue
                 
-                const map = L.map('location-map').setView([lat, lng], 13);
+                const map = L.map('location-map').setView([lat, lng], 12); // Zoom moins élevé pour montrer la zone/rue
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors'
                 }).addTo(map);
                 
                 L.marker([lat, lng]).addTo(map)
-                    .bindPopup('<strong>{{ $babysitter->prenom }} {{ $babysitter->nom }}</strong>');
+                    .bindPopup('<strong>{{ $babysitter->prenom }} {{ $babysitter->nom }}</strong><br><small>{{ $ville }}</small>');
                 
                 setTimeout(() => map.invalidateSize(), 200);
             });

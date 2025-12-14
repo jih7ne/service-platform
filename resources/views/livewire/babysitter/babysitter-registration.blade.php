@@ -299,11 +299,36 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Niveau d'études <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" wire:model="niveau_etudes"
-                            placeholder="Ex: Bac+3, Diplôme en petite enfance..."
+                        <select wire:model="niveau_etudes"
                             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                            <option value="">Sélectionnez votre niveau d'études</option>
+                            <option value="Aucun diplôme">Aucun diplôme</option>
+                            <option value="Brevet des collèges">Brevet des collèges</option>
+                            <option value="Baccalauréat">Baccalauréat</option>
+                            <option value="Bac+1 (DUT, BTS)">Bac+1 (DUT, BTS)</option>
+                            <option value="Bac+2 (DUT, BTS)">Bac+2 (DUT, BTS)</option>
+                            <option value="Bac+3 (Licence)">Bac+3 (Licence)</option>
+                            <option value="Bac+4 (Master 1)">Bac+4 (Master 1)</option>
+                            <option value="Bac+5 (Master 2)">Bac+5 (Master 2)</option>
+                            <option value="Doctorat">Doctorat</option>
+                            <option value="Diplôme en petite enfance">Diplôme en petite enfance</option>
+                            <option value="CAP Petite Enfance">CAP Petite Enfance</option>
+                            <option value="Autre formation">Autre formation</option>
+                        </select>
                         @error('niveau_etudes') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
+
+                    @if($niveau_etudes === 'Autre formation')
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Précisez votre formation <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" wire:model="autre_formation"
+                            placeholder="Décrivez votre formation..."
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                        @error('autre_formation') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+                    @endif
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -317,13 +342,64 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Maladies <span class="text-red-500">*</span>
+                            Avez-vous des maladies ou conditions médicales ? <span class="text-red-500">*</span>
                         </label>
-                        <textarea wire:model="experience_detaillee" rows="3"
-                            placeholder="Décrivez les maladies que vous connaissez et savez gérer..."
-                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"></textarea>
-                        @error('experience_detaillee') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        <div class="flex gap-4 mb-3">
+                            <label class="flex items-center">
+                                <input type="radio" wire:model.live="a_maladies" value="oui" class="mr-2">
+                                <span>Oui</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" wire:model.live="a_maladies" value="non" class="mr-2">
+                                <span>Non</span>
+                            </label>
+                        </div>
+                        @error('a_maladies') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
+
+                    @if($a_maladies == 'oui')
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Sélectionnez vos maladies ou conditions médicales <span class="text-red-500">*</span>
+                        </label>
+                        <div class="space-y-2 mb-3">
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" wire:model="maladies_selectionnees" value="Diabète" class="rounded">
+                                <span class="text-sm">Diabète</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" wire:model="maladies_selectionnees" value="Asthme" class="rounded">
+                                <span class="text-sm">Asthme</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" wire:model="maladies_selectionnees" value="Allergies" class="rounded">
+                                <span class="text-sm">Allergies</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" wire:model="maladies_selectionnees" value="Hypertension" class="rounded">
+                                <span class="text-sm">Hypertension</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" wire:model="maladies_selectionnees" value="Problèmes cardiaques" class="rounded">
+                                <span class="text-sm">Problèmes cardiaques</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="checkbox" wire:model="maladies_selectionnees" value="Épilepsie" class="rounded">
+                                <span class="text-sm">Épilepsie</span>
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Autres conditions (précisez)
+                            </label>
+                            <textarea wire:model="autres_maladies" rows="2"
+                                placeholder="Décrivez vos autres conditions médicales..."
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"></textarea>
+                            @error('autres_maladies') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    @endif
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">

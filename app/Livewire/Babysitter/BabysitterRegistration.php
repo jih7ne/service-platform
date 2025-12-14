@@ -39,8 +39,11 @@ class BabysitterRegistration extends Component
     public $auto_localisation = false;
 
     // Étape 3
-    public $prix_horaire, $annees_experience, $niveau_etudes;
+    public $prix_horaire, $annees_experience, $niveau_etudes, $autre_formation;
     public $description, $experience_detaillee;
+    public $a_maladies = '';
+    public $maladies_selectionnees = [];
+    public $autres_maladies = '';
     public $langues = [];
     public $categories_enfants = [];
     public $preferences_domicile = '';
@@ -129,7 +132,25 @@ class BabysitterRegistration extends Component
             $rules = [
                 'prenom' => 'required|string|max:255',
                 'nom' => 'required|string|max:255',
-                'email' => 'required|email|unique:utilisateurs,email',
+                'email' => [
+                    'required',
+                    'email',
+                    'unique:utilisateurs,email',
+                    function ($attribute, $value, $fail) {
+                        // Vérifier si l'email est valide avec un service externe
+                        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                            $fail('L\'adresse email n\'est pas valide.');
+                            return;
+                        }
+                        
+                        // Vérifier si le domaine a des enregistrements MX
+                        $domain = substr(strrchr($value, "@"), 1);
+                        if (!checkdnsrr($domain, "MX") && !checkdnsrr($domain, "A")) {
+                            $fail('Le domaine de cet email n\'existe pas ou n\'accepte pas les emails.');
+                            return;
+                        }
+                    }
+                ],
                 'date_naissance' => 'required|date|before:today',
                 'mot_de_passe' => 'required|min:8|confirmed',
             ];
@@ -156,7 +177,18 @@ class BabysitterRegistration extends Component
                 'experience_detaillee' => 'required|string|max:2000',
                 'langues' => 'required|array|min:1',
                 'preferences_domicile' => 'required|string|in:domicile_babysitter,domicile_client,les_deux',
+                'a_maladies' => 'required|string|in:oui,non',
             ];
+            
+            // Si "Autre formation" est sélectionné, le champ autre_formation est requis
+            if ($this->niveau_etudes === 'Autre formation') {
+                $rules['autre_formation'] = 'required|string|max:500';
+            }
+            
+            // Si "Oui" pour maladies, au moins une maladie doit être sélectionnée
+            if ($this->a_maladies === 'oui') {
+                $rules['maladies_selectionnees'] = 'required|array|min:1';
+            }
         }
 
         if ($this->currentStep == 5) {

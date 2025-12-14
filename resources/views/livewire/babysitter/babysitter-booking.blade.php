@@ -412,11 +412,20 @@
                                                 <p class="text-black font-bold">
                                                     {{ $child['nom'] }}, {{ $child['age'] }} ans
                                                 </p>
-                                                @if($child['besoins'])
-                                                    <p class="text-sm text-gray-500 font-semibold">
-                                                        {{ $child['besoins'] }}
-                                                    </p>
-                                                @endif
+                                                @if(!empty($child['besoinsSpeciaux']))
+                                                        <div class="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                                                            @php
+                                                                $besoinsNoms = [];
+                                                                foreach($child['besoinsSpeciaux'] as $besoinId) {
+                                                                    $besoin = $besoinsSpeciauxList->firstWhere('idExperience', $besoinId);
+                                                                    if($besoin) {
+                                                                        $besoinsNoms[] = $besoin->experience;
+                                                                    }
+                                                                }
+                                                                echo implode(', ', $besoinsNoms);
+                                                            @endphp
+                                                        </div>
+                                                    @endif
                                             </div>
                                         </div>
                                         <button wire:click="removeChild({{ $child['id'] }})" type="button"
@@ -456,9 +465,18 @@
                                     <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
                                         Besoins spécifiques (optionnel)
                                     </label>
-                                    <textarea wire:model.live="currentChild.besoins"
-                                        placeholder="Allergies, routines, particularités..." rows="3"
-                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E] resize-none"></textarea>
+                                    <div class="space-y-2">
+                                        <label class="block text-sm text-gray-600">Sélectionnez les besoins spéciaux (optionnel)</label>
+                                        @foreach($besoinsSpeciauxList as $besoin)
+                                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                                <input type="checkbox" 
+                                                    wire:model.live="currentChild.besoinsSpeciaux.{{ $loop->index }}"
+                                                    value="{{ $besoin->idExperience }}"
+                                                    class="w-4 h-4 text-[#B82E6E] border-gray-300 rounded focus:ring-[#B82E6E]">
+                                                <span class="text-sm text-gray-700">{{ $besoin->experience }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
                                 </div>
                                 <button wire:click="addChild" type="button"
                                     wire:loading.attr="disabled"
@@ -493,7 +511,21 @@
         </h2>
 
         <div class="bg-[#F9E0ED] rounded-2xl p-6 mb-6">
-            {{-- ... reste du code inchangé ... --}}
+            <!-- Prix Total -->
+            <div class="bg-white rounded-xl p-4 mb-4 border-2 border-[#B82E6E]">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6 text-[#B82E6E]" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1.81.45 1.61 1.67 1.61 1.16 0 1.6-.64 1.6-1.46 0-.84-.68-1.22-2.05-1.66-1.43-.46-3.08-1.1-3.08-3.19 0-1.83 1.41-2.84 3.15-3.18V5h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.63-1.63-1.63-1.01 0-1.46.54-1.46 1.34 0 .83.63 1.18 1.99 1.62 1.46.47 3.14 1.1 3.14 3.21 0 1.87-1.41 2.96-3.15 3.21z"/>
+                        </svg>
+                        <span class="text-lg font-bold text-[#B82E6E]">Prix Total</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-[#B82E6E]">{{ number_format($totalPrice, 2) }} MAD</div>
+                        <div class="text-xs text-gray-600">TTC</div>
+                    </div>
+                </div>
+            </div>
             
             <div class="space-y-4">
                 {{-- Service --}}
@@ -573,11 +605,20 @@
                                                         <p class="text-black font-bold">
                                                             {{ $child['nom'] }}, {{ $child['age'] }} ans
                                                         </p>
-                                                        @if($child['besoins'])
-                                                            <p class="text-xs mt-1 text-gray-500 font-semibold">
-                                                                {{ $child['besoins'] }}
-                                                            </p>
-                                                        @endif
+                                                        @if(!empty($child['besoinsSpeciaux']))
+                                                                <div class="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                                                                    @php
+                                                                        $besoinsNoms = [];
+                                                                        foreach($child['besoinsSpeciaux'] as $besoinId) {
+                                                                            $besoin = $besoinsSpeciauxList->firstWhere('idExperience', $besoinId);
+                                                                            if($besoin) {
+                                                                                $besoinsNoms[] = $besoin->experience;
+                                                                            }
+                                                                        }
+                                                                        echo implode(', ', $besoinsNoms);
+                                                                    @endphp
+                                                                </div>
+                                                            @endif
                                                     </div>
                                                 @endforeach
                                             </div>
@@ -630,6 +671,8 @@
                 <button 
                     @if($currentStep === 5)
                         wire:click="confirmBooking"
+                        wire:loading.attr="disabled"
+                        wire:target="confirmBooking"
                     @else
                         wire:click="nextStep"
                     @endif
@@ -637,18 +680,40 @@
                     @if(!$this->canProceed()) disabled @endif
                     class="flex-1 px-6 py-4 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                     style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
-                    {{ $currentStep === 5 ? 'Confirmer la demande' : 'Suivant' }}
-                    @if($currentStep < 5)
-                        <svg class="inline w-5 h-5 ml-2 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    <span wire:loading wire:target="confirmBooking">
+                        <svg class="inline w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path>
                         </svg>
-                    @else
-                        <svg class="inline w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                    @endif
+                        Traitement en cours...
+                    </span>
+                    <span wire:loading.remove wire:target="confirmBooking">
+                        {{ $currentStep === 5 ? 'Confirmer la demande' : 'Suivant' }}
+                        @if($currentStep < 5)
+                            <svg class="inline w-5 h-5 ml-2 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                        @else
+                            <svg class="inline w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        @endif
+                    </span>
                 </button>
             </div>
         </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Écouter l'événement de succès de réservation
+        window.addEventListener('booking-success', function() {
+            // Rediriger après 3 secondes pour permettre l'affichage du message
+            setTimeout(function() {
+                window.location.href = '/liste-babysitter';
+            }, 3000);
+        });
+    });
+</script>
+@endpush
