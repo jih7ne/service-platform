@@ -3,6 +3,7 @@
 namespace App\Livewire\Shared;
 
 use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
 
 class Header extends Component
 {
@@ -11,6 +12,15 @@ class Header extends Component
     public function toggleMenu()
     {
         $this->menuOpen = !$this->menuOpen;
+    }
+
+    public function logout()
+    {
+        Auth::logout();
+        session()->invalidate();
+        session()->regenerateToken();
+        
+        return redirect('/');
     }
 
     public function render()

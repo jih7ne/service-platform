@@ -13,6 +13,7 @@ class PetKeeper extends Model
         'idPetKeeper',
         'nombres_services_demandes',
         'specialite',
+        'years_of_experience',
         'statut',
     ];
 

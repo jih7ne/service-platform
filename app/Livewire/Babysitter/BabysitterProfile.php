@@ -47,6 +47,7 @@ class BabysitterProfile extends Component
 
     // Location
     public $adresse, $ville;
+    public $latitude, $longitude;
 
     // Edit modes
     public $editPersonalInfo = false;
@@ -132,6 +133,8 @@ class BabysitterProfile extends Component
         if ($location) {
             $this->adresse = $location->adresse;
             $this->ville = $location->ville;
+            $this->latitude = $location->latitude;
+            $this->longitude = $location->longitude;
         }
     }
 
@@ -271,6 +274,28 @@ class BabysitterProfile extends Component
     public function getIsExpertAttribute()
     {
         return ($this->utilisateur->note ?? 0) >= 4.5 && $this->level >= 8;
+    }
+
+    public function getMapData()
+    {
+        $location = $this->utilisateur->localisations()->first();
+        
+        if ($location && $location->latitude && $location->longitude) {
+            return [
+                'latitude' => $location->latitude,
+                'longitude' => $location->longitude,
+                'address' => $location->adresse . ', ' . $location->ville,
+                'hasLocation' => true
+            ];
+        }
+        
+        // Coordonnées par défaut pour Casablanca si pas de localisation
+        return [
+            'latitude' => 33.5731,
+            'longitude' => -7.5898,
+            'address' => $this->adresse . ', ' . $this->ville ?: 'Casablanca, Maroc',
+            'hasLocation' => false
+        ];
     }
 
     public function render()

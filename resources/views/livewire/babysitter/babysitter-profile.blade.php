@@ -344,6 +344,30 @@
                 </div>
             </div>
 
+            <!-- Map Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Localisation</h3>
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        {{ $adresse ?? 'Non spécifiée' }}, {{ $ville ?? 'Non spécifiée' }}
+                    </div>
+                </div>
+                
+                <div id="babysitter-map" class="h-64 rounded-lg border-2 border-purple-300 bg-purple-50"></div>
+                
+                @if(!$adresse || !$ville)
+                    <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p class="text-sm text-yellow-800">
+                            <strong>Attention:</strong> Veuillez renseigner votre adresse complète pour afficher votre localisation exacte sur la carte.
+                        </p>
+                    </div>
+                @endif
+            </div>
+
             <!-- Skills & Activities Section -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
                 <div class="p-6 border-b border-gray-100">
@@ -558,5 +582,24 @@
             // You can implement a toast notification here
             console.log(message);
         });
+    });
+
+    // Initialize Leaflet Map
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('babysitter-map')) {
+            // Initialize the map
+            const map = L.map('babysitter-map').setView([33.5731, -7.5898], 13);
+
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Add marker if location data is available
+            @if($adresse && $ville)
+                const marker = L.marker([{{ $latitude ?? 33.5731 }}, {{ $longitude ?? -7.5898 }}]).addTo(map);
+                marker.bindPopup('<b>{{ $prenom }} {{ $nom }}</b><br>{{ $adresse }}, {{ $ville }}').openPopup();
+            @endif
+        }
     });
 </script>

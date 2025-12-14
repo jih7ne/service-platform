@@ -341,12 +341,7 @@
                 <div class="bg-white rounded-2xl p-6 border border-gray-100"
                     style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06)">
                     <h2 class="text-xl mb-4 text-black font-extrabold">Emplacement</h2>
-                    <div class="relative w-full h-64 rounded-xl overflow-hidden border-2 border-gray-100 mb-4">
-                        <iframe width="100%" height="100%" frameBorder="0" scrolling="no" marginHeight="0"
-                            marginWidth="0"
-                            src="https://www.openstreetmap.org/export/embed.html?bbox=-7.620,33.565,-7.570,33.590&layer=mapnik&marker=33.5731,-7.5898"
-                            style="border: 0"></iframe>
-                    </div>
+                    <div id="babysitter-profile-map" class="relative w-full h-64 rounded-xl overflow-hidden border-2 border-gray-100 mb-4"></div>
                     <div class="flex items-start gap-3 p-3 bg-[#F7F7F7] rounded-xl">
                         <svg class="w-5 h-5 text-[#B82E6E] flex-shrink-0 mt-0.5" fill="currentColor"
                             viewBox="0 0 24 24">
@@ -405,25 +400,7 @@
         </div>
     </div>
 
-    <!-- Map Section -->
-    @if($address && $address->latitude && $address->longitude)
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div class="p-4 bg-[#B82E6E] text-white">
-                    <h3 class="font-bold">Localisation</h3>
-                </div>
-                <div id="location-map" style="height: 300px; width: 100%;"></div>
-                <div class="p-4">
-                    <p class="text-sm text-gray-700">
-                        <svg class="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        </svg>
-                        <strong>{{ $address->ville ?? 'Ville non spécifiée' }}, Maroc</strong>
-                    </p>
-                </div>
-            </div>
-        </div>
-    @endif
+    
 
     @push('styles')
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
@@ -438,21 +415,22 @@
         
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Ajouter un décalage plus important pour ne montrer que la rue/quartier
-                const exactLat = {{ $address->latitude }};
-                const exactLng = {{ $address->longitude }};
-                const lat = exactLat + (Math.random() - 0.5) * 0.02; // ~1km de décalage pour montrer seulement la rue
-                const lng = exactLng + (Math.random() - 0.5) * 0.02; // ~1km de décalage pour montrer seulement la rue
+                // Obtenir les données de localisation depuis le backend
+                const mapData = @json($this->getMapData());
                 
-                const map = L.map('location-map').setView([lat, lng], 12); // Zoom moins élevé pour montrer la zone/rue
+                // Centrer la carte sur les coordonnées de la babysitter
+                const map = L.map('babysitter-profile-map').setView([mapData.latitude, mapData.longitude], 13);
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors'
                 }).addTo(map);
                 
-                L.marker([lat, lng]).addTo(map)
-                    .bindPopup('<strong>{{ $babysitter->prenom }} {{ $babysitter->nom }}</strong><br><small>{{ $ville }}</small>');
+                // Ajouter un marqueur pour la position de la babysitter
+                L.marker([mapData.latitude, mapData.longitude]).addTo(map)
+                    .bindPopup('<strong>{{ $babysitter->prenom }} {{ $babysitter->nom }}</strong><br><small>' + mapData.address + '</small>')
+                    .openPopup();
                 
+                // Ajuster la taille de la carte après le chargement
                 setTimeout(() => map.invalidateSize(), 200);
             });
         </script>
