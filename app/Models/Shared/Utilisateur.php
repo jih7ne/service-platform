@@ -55,7 +55,7 @@ class Utilisateur extends Authenticatable
 
     public function intervenant()
     {
-        return $this->hasOne(Intervenant::class, 'idIntervenant', 'idUser');
+        return $this->hasOne(Intervenant::class, 'IdIntervenant', 'idUser');
     }
 
     public function localisations()

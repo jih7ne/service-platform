@@ -64,12 +64,14 @@
                 </p>
 
                 <!-- Button -->
-                <button class="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 group-hover:gap-3 transition-all text-sm bg-[#B82E6E] text-white font-bold shadow-md hover:shadow-lg">
-                    Découvrir
-                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
+                 <a href="{{ route('liste.babysitter') }}"
+                    class="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 group-hover:gap-3 transition-all text-sm bg-[#B82E6E] text-white font-bold shadow-md hover:shadow-lg">
+                        Découvrir
+                        <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+
             </div>
 
             <!-- Service 3: Garde d'Animaux -->
