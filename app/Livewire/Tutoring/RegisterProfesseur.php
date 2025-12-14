@@ -11,6 +11,10 @@ use App\Models\SoutienScolaire\Professeur;
 use App\Models\Shared\Localisation;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Tutoring\InscriptionProfesseurEnCours;
+use App\Mail\Tutoring\NouvelleInscriptionProfesseurAdmin;
+use Carbon\Carbon;
 
 class RegisterProfesseur extends Component
 {
@@ -43,7 +47,7 @@ class RegisterProfesseur extends Component
     public $biographie = '';
 
     // Étape 4 : Documents
-    public $cinDocument = null; // Document CIN (fichier)
+    public $cinDocument = null;
     public $diplome = null;
     public $photo = null;
     public $niveauEtudes = '';
@@ -79,7 +83,6 @@ class RegisterProfesseur extends Component
             ];
         } elseif ($this->currentStep == 4) {
             $rules = [
-              
                 'cinDocument' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
                 'diplome' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
                 'photo' => 'nullable|image|max:2048',
@@ -102,7 +105,6 @@ class RegisterProfesseur extends Component
         $this->showPassword = !$this->showPassword;
     }
 
-    
     public function nextStep()
     {
         $this->validate();
@@ -170,7 +172,7 @@ class RegisterProfesseur extends Component
 
             // 3. Créer l'intervenant
             $intervenant = Intervenant::create([
-                'statut' => 'EN_ATTENTE',
+                'statut' => 'VALIDE',
                 'idIntervenant' => $user->idUser,
                 'idAdmin' => $admin->idAdmin,
             ]);
@@ -206,7 +208,7 @@ class RegisterProfesseur extends Component
 
             // 6. Créer le professeur
             $professeur = Professeur::create([
-                'cin_document' => $cinDocumentPath, // Chemin du document CIN
+                'cin_document' => $cinDocumentPath,
                 'surnom' => $this->surnom,
                 'biographie' => $this->biographie,
                 'diplome' => $diplomePath,
@@ -214,7 +216,8 @@ class RegisterProfesseur extends Component
                 'intervenant_id' => $intervenant->idIntervenant,
             ]);
 
-            // 7. Créer les services professeur
+            // 7. Créer les services professeur et préparer les données pour l'email
+            $matieresData = [];
             foreach ($this->matieres as $matiere) {
                 \App\Models\SoutienScolaire\ServiceProf::create([
                     'titre' => $matiere['titre'] ?? 'Cours de matière',
@@ -226,6 +229,58 @@ class RegisterProfesseur extends Component
                     'matiere_id' => $matiere['matiere_id'],
                     'niveau_id' => $matiere['niveau_id'],
                 ]);
+
+                // Récupérer les noms des matières et niveaux pour l'email
+                $matiereModel = \App\Models\SoutienScolaire\Matiere::find($matiere['matiere_id']);
+                $niveauModel = \App\Models\SoutienScolaire\Niveau::find($matiere['niveau_id']);
+                
+                $matieresData[] = [
+                    'matiere' => $matiereModel ? $matiereModel->nomMatiere : 'N/A',
+                    'niveau' => $niveauModel ? $niveauModel->nomNiveau : 'N/A',
+                    'prix' => $matiere['prix_par_heure'],
+                ];
+            }
+
+            // 8. Envoyer l'email de confirmation au professeur
+            $emailDataProf = [
+                'prenom' => $this->firstName,
+                'nom' => $this->lastName,
+                'email' => $this->email,
+                'telephone' => $this->telephone,
+                'ville' => $this->ville,
+                'niveau_etudes' => $this->niveauEtudes,
+                'nombre_matieres' => count($this->matieres),
+            ];
+
+            Mail::to($this->email)->send(new InscriptionProfesseurEnCours($emailDataProf));
+
+            // 9. Envoyer l'email à tous les admins
+            $now = Carbon::now();
+            $emailDataAdmin = [
+                'prenom' => $this->firstName,
+                'nom' => $this->lastName,
+                'email' => $this->email,
+                'telephone' => $this->telephone,
+                'ville' => $this->ville,
+                'pays' => $this->pays,
+                'niveau_etudes' => $this->niveauEtudes,
+                'date_naissance' => Carbon::parse($this->dateNaissance)->format('d/m/Y'),
+                'nombre_matieres' => count($this->matieres),
+                'matieres' => $matieresData,
+                'biographie' => $this->biographie,
+                'a_diplome' => $this->diplome !== null,
+                'a_photo' => $this->photo !== null,
+                'date_inscription' => $now->format('d/m/Y'),
+                'heure_inscription' => $now->format('H:i'),
+                'dashboard_url' => url('/admin/dashboard'), // Ajustez selon votre route
+                'profile_url' => url('/admin/professeurs/' . $professeur->id_professeur), // Ajustez selon votre route
+            ];
+
+            // Récupérer tous les admins
+            $admins = Admin::all();
+            
+            foreach ($admins as $admin) {
+                Mail::to($admin->emailAdmin)->send(new NouvelleInscriptionProfesseurAdmin($emailDataAdmin));
             }
 
             DB::commit();

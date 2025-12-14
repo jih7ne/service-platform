@@ -142,7 +142,7 @@
                         @error('typeService') <span class="text-red-500 text-xs mt-1 block font-medium">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Address Form (appears when domicile is selected) -->
+                    <!-- Address Form (si le type de service est domicile) -->
                     @if($typeService === 'domicile')
                         <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-5 md:p-6 space-y-4 animate-fadeIn">
                             <div class="flex items-start gap-3 mb-4">
@@ -200,86 +200,128 @@
             @if($currentStep === 2)
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                     <!-- Calendar -->
-                    <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg text-black font-bold">{{ $currentMonth }}</h3>
-                            <div class="flex gap-2">
-                                <button class="p-2 hover:bg-gray-100 rounded-xl transition-all">
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                                    </svg>
-                                </button>
-                                <button class="p-2 hover:bg-gray-100 rounded-xl transition-all">
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+<div>
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg text-black font-bold">{{ $currentMonthDisplay }}</h3>
+        <div class="flex gap-2">
+            <button 
+                wire:click="previousMonth"
+                class="p-2 hover:bg-gray-100 rounded-xl transition-all">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <button 
+                wire:click="nextMonth"
+                class="p-2 hover:bg-gray-100 rounded-xl transition-all">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+        </div>
+    </div>
 
-                        <!-- Days of week -->
-                        <div class="grid grid-cols-7 gap-2 mb-2">
-                            @foreach(['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] as $day)
-                                <div class="text-center text-xs text-[#2a2a2a] py-2 font-semibold">{{ $day }}</div>
-                            @endforeach
-                        </div>
+    <!-- Days of week -->
+    <div class="grid grid-cols-7 gap-2 mb-2">
+        @foreach(['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] as $day)
+            <div class="text-center text-xs text-[#2a2a2a] py-2 font-semibold">{{ $day }}</div>
+        @endforeach
+    </div>
 
-                        <!-- Calendar days -->
-                        <div class="grid grid-cols-7 gap-2">
-                            @foreach($calendarDays as $day)
-                                <button 
-                                    wire:click="selectDate('{{ $day['date'] }}')"
-                                    @if($day['isPast']) disabled @endif
-                                    class="aspect-square flex items-center justify-center rounded-xl text-sm transition-all font-semibold
-                                           {{ $day['isPast'] ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100' }}
-                                           {{ $selectedDate === $day['date'] ? 'bg-[#2B5AA8] text-white hover:bg-[#224A91] shadow-md' : '' }}
-                                           {{ $day['isToday'] && $selectedDate !== $day['date'] ? 'border-2 border-[#2B5AA8]' : '' }}">
-                                    {{ $day['day'] }}
-                                </button>
-                            @endforeach
-                        </div>
-                    </div>
+    <!-- Calendar days -->
+    <div class="grid grid-cols-7 gap-2">
+        @foreach($calendarDays as $day)
+            @if($day['isEmpty'])
+                <!-- Jour vide pour l'alignement -->
+                <div class="aspect-square"></div>
+            @else
+                <button 
+                    wire:click="selectDate('{{ $day['date'] }}')"
+                    @if($day['isPast']) disabled @endif
+                    class="aspect-square flex items-center justify-center rounded-xl text-sm transition-all font-semibold relative
+                           {{ $day['isPast'] ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100' }}
+                           {{ $selectedDate === $day['date'] ? 'bg-[#2B5AA8] text-white hover:bg-[#224A91] shadow-md' : '' }}
+                           {{ $day['isToday'] && $selectedDate !== $day['date'] ? 'border-2 border-[#2B5AA8]' : '' }}">
+                    {{ $day['day'] }}
+                    
+                    @if($day['hasAvailability'] && !$day['isPast'])
+                        <!-- Indicateur vert pour disponibilité -->
+                        <span class="absolute bottom-1 w-1.5 h-1.5 bg-green-500 rounded-full
+                                     {{ $selectedDate === $day['date'] ? 'bg-white' : '' }}"></span>
+                    @endif
+                </button>
+            @endif
+        @endforeach
+    </div>
+
+    <!-- Légende -->
+    <div class="mt-4 pt-4 border-t border-gray-200">
+        <div class="flex items-center gap-2 text-xs">
+            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+            <span class="text-gray-600 font-medium">Créneaux disponibles</span>
+        </div>
+    </div>
+</div>
 
                     <!-- Time Slots -->
-                    <div>
-                        <h3 class="text-lg text-black mb-4 font-bold">
-                            Créneaux disponibles
-                            @if($selectedDate)
-                                - {{ \Carbon\Carbon::parse($selectedDate)->locale('fr')->isoFormat('dddd D MMMM') }}
-                            @endif
-                        </h3>
+<div>
+    <h3 class="text-lg text-black mb-4 font-bold">
+        Créneaux disponibles
+        @if($selectedDate)
+            - {{ \Carbon\Carbon::parse($selectedDate)->locale('fr')->isoFormat('dddd D MMMM') }}
+        @endif
+    </h3>
 
-                        @if($selectedDate)
-                            @if(count($availableSlots) > 0)
-                                <div class="space-y-2 mb-6 max-h-80 overflow-y-auto">
-                                    @foreach($availableSlots as $slot)
-                                        <button 
-                                            wire:click="toggleTimeSlot({{ json_encode($slot) }})"
-                                            class="w-full p-3.5 border-2 rounded-xl flex items-center justify-center gap-2 transition-all font-semibold text-sm
-                                                   {{ in_array($slot['start'] . '-' . $slot['end'], $selectedTimeSlots) ? 'border-[#2B5AA8] bg-[#2B5AA8] text-white shadow-md' : 'border-gray-300 hover:border-[#2B5AA8]' }}">
-                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            <span>{{ $slot['display'] }}</span>
-                                        </button>
-                                    @endforeach
-                                </div>
-                            @else
-                                <div class="text-center py-8 text-gray-500">
-                                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                    <p class="text-sm font-medium">Aucun créneau disponible pour cette date</p>
-                                </div>
-                            @endif
-                        @else
-                            <div class="text-center py-8 text-gray-500">
-                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+    @if($selectedDate)
+        @if(count($availableSlots) > 0)
+            <div class="space-y-2 mb-6 max-h-80 overflow-y-auto">
+                @foreach($availableSlots as $slot)
+                    @if($slot['isReserved'])
+                        <!-- Créneau réservé - grisé et non cliquable -->
+                        <div class="w-full p-3.5 border-2 border-gray-200 rounded-xl flex items-center justify-between bg-gray-100 cursor-not-allowed opacity-60">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <p class="text-sm font-medium">Sélectionnez une date pour voir les créneaux disponibles</p>
+                                <span class="text-sm font-semibold text-gray-500">{{ $slot['display'] }}</span>
                             </div>
-                        @endif
+                            <div class="flex items-center gap-2">
+                                <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                <span class="text-xs font-bold text-red-500">Réservé</span>
+                            </div>
+                        </div>
+                    @else
+                        <!-- Créneau disponible - cliquable -->
+                        <button 
+                            wire:click="toggleTimeSlot({{ json_encode($slot) }})"
+                            class="w-full p-3.5 border-2 rounded-xl flex items-center justify-center gap-2 transition-all font-semibold text-sm
+                                   {{ in_array($slot['start'] . '-' . $slot['end'], $selectedTimeSlots) ? 'border-[#2B5AA8] bg-[#2B5AA8] text-white shadow-md' : 'border-gray-300 hover:border-[#2B5AA8]' }}">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>{{ $slot['display'] }}</span>
+                        </button>
+                    @endif
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-8 text-gray-500">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm font-medium">Aucun créneau disponible pour cette date</p>
+            </div>
+        @endif
+    @else
+        <div class="text-center py-8 text-gray-500">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <p class="text-sm font-medium">Sélectionnez une date pour voir les créneaux disponibles</p>
+        </div>
+    @endif
 
                         <!-- Selected slots summary -->
                         @if(count($selectedTimeSlots) > 0)

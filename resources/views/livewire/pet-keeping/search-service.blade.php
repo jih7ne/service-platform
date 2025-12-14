@@ -305,6 +305,8 @@
 
                                                 <!-- Action Buttons -->
                                                 <div class="flex flex-wrap gap-2">
+                                                    
+
                                                     <button wire:click="bookService({{ $service['id'] ?? 0 }})" 
                                                             class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">
                                                         <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

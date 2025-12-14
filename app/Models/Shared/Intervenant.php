@@ -1,11 +1,12 @@
 <?php
 
 namespace App\Models\Shared;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Intervenant extends Model
 {
+       use HasFactory; 
     protected $table = 'intervenants';
     protected $primaryKey = 'id';
 
@@ -14,7 +15,10 @@ class Intervenant extends Model
         'idIntervenant',
         'idAdmin',
     ];
-
+protected static function newFactory()
+    {
+        return \Database\Factories\IntervenantFactory::new();
+    }
     public function user()
     {
         return $this->belongsTo(Utilisateur::class, 'idIntervenant', 'idUser');
