@@ -5,10 +5,10 @@ namespace App\Models\Shared;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Utilisateur extends Authenticatable
 {
-    use SoftDeletes, Notifiable;
+   use HasFactory, SoftDeletes, Notifiable;
 
     protected $table = 'utilisateurs';
     protected $primaryKey = 'idUser';
@@ -86,5 +86,9 @@ class Utilisateur extends Authenticatable
     public function reclamationsEnvoyees()
     {
         return $this->hasMany(Reclamation::class, 'idAuteur', 'idUser');
+    }
+    protected static function newFactory()
+    {
+        return \Database\Factories\UtilisateurFactory::new();
     }
 }

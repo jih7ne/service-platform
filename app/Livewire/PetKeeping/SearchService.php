@@ -37,6 +37,11 @@ class SearchService extends Component
         $this->loadKeepers(); 
     }
 
+    public function evaluer($id)
+    {
+        return redirect()->route('petkeeping.evaluate', ['id' => $id]);
+    }
+
     public function loadKeepers()
     {
         $query = DB::table('petkeeping as pk')

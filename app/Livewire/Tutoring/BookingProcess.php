@@ -11,6 +11,8 @@ use App\Models\Shared\Disponibilite;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Mail\Tutoring\SubmitBooking;
+use Illuminate\Support\Facades\Mail;
 
 class BookingProcess extends Component
 {
@@ -31,6 +33,7 @@ class BookingProcess extends Component
     public $selectedTimeSlots = [];
     public $disponibilites = [];
     public $availableSlots = [];
+    public $currentMonth; // Mois actuel pour la navigation
 
     // Étape 3 : Confirmation
     public $montantTotal = 0;
@@ -50,6 +53,7 @@ class BookingProcess extends Component
     public function mount($service)
     {
         $this->serviceId = $service;
+        $this->currentMonth = now(); // Initialiser au mois actuel
         $this->loadServiceDetails();
     }
 
@@ -110,6 +114,28 @@ class BookingProcess extends Component
         }
     }
 
+    public function previousMonth()
+    {
+        $this->currentMonth = Carbon::parse($this->currentMonth)->subMonth();
+        // Réinitialiser la sélection si la date n'est plus dans le mois affiché
+        if ($this->selectedDate && !Carbon::parse($this->selectedDate)->isSameMonth($this->currentMonth)) {
+            $this->selectedDate = null;
+            $this->selectedTimeSlots = [];
+            $this->availableSlots = [];
+        }
+    }
+
+    public function nextMonth()
+    {
+        $this->currentMonth = Carbon::parse($this->currentMonth)->addMonth();
+        // Réinitialiser la sélection si la date n'est plus dans le mois affiché
+        if ($this->selectedDate && !Carbon::parse($this->selectedDate)->isSameMonth($this->currentMonth)) {
+            $this->selectedDate = null;
+            $this->selectedTimeSlots = [];
+            $this->availableSlots = [];
+        }
+    }
+
     public function selectDate($date)
     {
         $this->selectedDate = $date;
@@ -133,6 +159,9 @@ class BookingProcess extends Component
             return false;
         });
 
+        // Récupérer les créneaux déjà réservés et validés pour ce professeur à cette date
+        $reservedSlots = $this->getReservedSlots($date);
+
         // Générer des créneaux d'une heure
         $this->availableSlots = [];
         foreach ($dispos as $dispo) {
@@ -142,15 +171,61 @@ class BookingProcess extends Component
             while ($start->lt($end)) {
                 $slotEnd = $start->copy()->addHour();
                 if ($slotEnd->lte($end)) {
+                    $slotStart = $start->format('H:i');
+                    $slotEndFormatted = $slotEnd->format('H:i');
+                    
+                    // Vérifier si ce créneau est réservé
+                    $isReserved = $this->isSlotReserved($slotStart, $slotEndFormatted, $reservedSlots);
+                    
+                    // Ajouter tous les créneaux (disponibles ET réservés)
                     $this->availableSlots[] = [
-                        'start' => $start->format('H:i'),
-                        'end' => $slotEnd->format('H:i'),
-                        'display' => $start->format('H:i') . ' - ' . $slotEnd->format('H:i')
+                        'start' => $slotStart,
+                        'end' => $slotEndFormatted,
+                        'display' => $slotStart . ' - ' . $slotEndFormatted,
+                        'isReserved' => $isReserved  // Indicateur de réservation
                     ];
                 }
                 $start->addHour();
             }
         }
+    }
+
+    /**
+     * Récupère tous les créneaux réservés pour le professeur à une date donnée
+     * Statuts considérés : 'validee' et 'en_attente'
+     */
+    private function getReservedSlots($date)
+    {
+        return DemandesIntervention::where('idIntervenant', $this->professeur->intervenant_id)
+            ->where('dateSouhaitee', $date)
+            ->whereIn('statut', ['validee', 'en_attente']) // On bloque aussi les demandes en attente
+            ->select('heureDebut', 'heureFin')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Vérifie si un créneau chevauche avec des créneaux réservés
+     */
+    private function isSlotReserved($slotStart, $slotEnd, $reservedSlots)
+    {
+        $slotStartTime = Carbon::parse($slotStart);
+        $slotEndTime = Carbon::parse($slotEnd);
+
+        foreach ($reservedSlots as $reserved) {
+            $reservedStart = Carbon::parse($reserved['heureDebut']);
+            $reservedEnd = Carbon::parse($reserved['heureFin']);
+
+            // Vérifier si les créneaux se chevauchent
+            // Un créneau chevauche si :
+            // - Il commence avant la fin du créneau réservé ET
+            // - Il se termine après le début du créneau réservé
+            if ($slotStartTime->lt($reservedEnd) && $slotEndTime->gt($reservedStart)) {
+                return true; // Le créneau est réservé
+            }
+        }
+
+        return false; // Le créneau est disponible
     }
 
     private function getJourSemaine($dayOfWeek)
@@ -169,6 +244,11 @@ class BookingProcess extends Component
 
     public function toggleTimeSlot($slot)
     {
+        // Empêcher la sélection si le créneau est réservé
+        if (isset($slot['isReserved']) && $slot['isReserved']) {
+            return; // Ne rien faire si le créneau est réservé
+        }
+
         $slotString = $slot['start'] . '-' . $slot['end'];
         
         if (in_array($slotString, $this->selectedTimeSlots)) {
@@ -220,10 +300,31 @@ class BookingProcess extends Component
     try {
         DB::beginTransaction();
 
+        // Vérifier une dernière fois que les créneaux sont toujours disponibles
+        $reservedSlots = $this->getReservedSlots($this->selectedDate);
+        
+        foreach ($this->selectedTimeSlots as $slot) {
+            $times = explode('-', $slot);
+            $heureDebut = trim($times[0]);
+            $heureFin = trim($times[1]);
+            
+            if ($this->isSlotReserved($heureDebut, $heureFin, $reservedSlots)) {
+                DB::rollBack();
+                session()->flash('error', 'Désolé, un ou plusieurs créneaux ont été réservés entre temps. Veuillez sélectionner d\'autres créneaux.');
+                $this->loadAvailableSlotsForDate($this->selectedDate);
+                $this->selectedTimeSlots = [];
+                $this->currentStep = 2;
+                return;
+            }
+        }
+
         // Créer le lieu
         $lieu = $this->typeService === 'domicile' 
             ? ($this->ville && $this->adresse ? $this->ville . ',' . $this->adresse : 'Domicile de l\'étudiant')
             : 'En ligne';
+
+        // Tableau pour stocker toutes les demandes créées
+        $demandesCreees = [];
 
         // Créer une demande pour CHAQUE créneau horaire
         foreach ($this->selectedTimeSlots as $slot) {
@@ -247,10 +348,38 @@ class BookingProcess extends Component
 
             // Créer la demande professeur pour chaque créneau
             DemandeProf::create([
-                'montant_total' => $this->service->prix_par_heure, // Prix pour 1 heure
+                'montant_total' => $this->service->prix_par_heure,
                 'service_prof_id' => $this->serviceId,
                 'demande_id' => $demande->idDemande
             ]);
+
+            $demandesCreees[] = $demande;
+        }
+
+        // Récupérer le client connecté
+        $client = Auth::user();
+
+        // Récupérer l'email du professeur
+        $professeurUser = DB::table('utilisateurs')
+            ->join('intervenants', 'utilisateurs.idUser', '=', 'intervenants.IdIntervenant')
+            ->where('intervenants.IdIntervenant', $this->professeur->intervenant_id)
+            ->first();
+
+        // Envoyer l'email au professeur
+        if ($professeurUser && $professeurUser->email) {
+            Mail::to($professeurUser->email)->send(new SubmitBooking(
+                $this->professeur,
+                $client,
+                $this->service,
+                $demandesCreees,
+                $this->selectedDate,
+                $this->typeService,
+                $this->ville,
+                $this->adresse,
+                $this->noteSpeciales,
+                $this->montantTotal,
+                $this->nombreHeures
+            ));
         }
 
         DB::commit();
@@ -272,27 +401,99 @@ class BookingProcess extends Component
     public function render()
     {
         return view('livewire.tutoring.booking-process', [
-            'currentMonth' => now()->locale('fr')->translatedFormat('F Y'),
+            'currentMonthDisplay' => Carbon::parse($this->currentMonth)->locale('fr')->translatedFormat('F Y'),
             'calendarDays' => $this->generateCalendar()
         ]);
     }
 
     private function generateCalendar()
     {
-        $start = now()->startOfMonth();
-        $end = now()->endOfMonth();
+        $start = Carbon::parse($this->currentMonth)->startOfMonth();
+        $end = Carbon::parse($this->currentMonth)->endOfMonth();
         $days = [];
+
+        // Ajouter les jours vides au début pour aligner avec le jour de la semaine
+        $startDayOfWeek = $start->dayOfWeek;
+        // Ajuster pour que Lundi = 0, Dimanche = 6
+        $startDayOfWeek = $startDayOfWeek == 0 ? 6 : $startDayOfWeek - 1;
+        
+        for ($i = 0; $i < $startDayOfWeek; $i++) {
+            $days[] = [
+                'date' => null,
+                'day' => null,
+                'isEmpty' => true,
+                'isToday' => false,
+                'isPast' => false,
+                'dayOfWeek' => null,
+                'hasAvailability' => false
+            ];
+        }
 
         for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
             $days[] = [
                 'date' => $date->format('Y-m-d'),
                 'day' => $date->day,
+                'isEmpty' => false,
                 'isToday' => $date->isToday(),
                 'isPast' => $date->isPast() && !$date->isToday(),
-                'dayOfWeek' => $date->dayOfWeek
+                'dayOfWeek' => $date->dayOfWeek,
+                'hasAvailability' => $this->checkIfDayHasAvailability($date)
             ];
         }
 
         return $days;
+    }
+
+    /**
+     * Vérifie si un jour a des créneaux disponibles (non réservés)
+     */
+    private function checkIfDayHasAvailability($date)
+    {
+        $carbonDate = Carbon::parse($date);
+        $jourSemaine = $this->getJourSemaine($carbonDate->dayOfWeek);
+
+        // Récupérer les disponibilités pour ce jour
+        $dispos = $this->disponibilites->filter(function($dispo) use ($jourSemaine, $date) {
+            $dateString = $date instanceof Carbon ? $date->format('Y-m-d') : $date;
+            
+            if ($dispo->est_reccurent && $dispo->jourSemaine === $jourSemaine) {
+                return true;
+            }
+            if ($dispo->date_specifique === $dateString) {
+                return true;
+            }
+            return false;
+        });
+
+        // S'il n'y a pas de disponibilités, retourner false
+        if ($dispos->isEmpty()) {
+            return false;
+        }
+
+        // Récupérer les créneaux réservés pour ce jour
+        $dateString = $date instanceof Carbon ? $date->format('Y-m-d') : $date;
+        $reservedSlots = $this->getReservedSlots($dateString);
+
+        // Vérifier s'il existe au moins un créneau disponible (non réservé)
+        foreach ($dispos as $dispo) {
+            $start = Carbon::parse($dispo->heureDebut);
+            $end = Carbon::parse($dispo->heureFin);
+            
+            while ($start->lt($end)) {
+                $slotEnd = $start->copy()->addHour();
+                if ($slotEnd->lte($end)) {
+                    $slotStart = $start->format('H:i');
+                    $slotEndFormatted = $slotEnd->format('H:i');
+                    
+                    // Si ce créneau n'est pas réservé, le jour a de la disponibilité
+                    if (!$this->isSlotReserved($slotStart, $slotEndFormatted, $reservedSlots)) {
+                        return true;
+                    }
+                }
+                $start->addHour();
+            }
+        }
+
+        return false;
     }
 }

@@ -24,3 +24,5 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /public/vendor/livewire/
+config/database.php
+config/database.php

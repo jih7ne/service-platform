@@ -3,6 +3,7 @@
 namespace App\Models\Shared;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\PetKeeping\Animal;
 
 class DemandesIntervention extends Model
 {
@@ -48,5 +49,17 @@ class DemandesIntervention extends Model
     public function facture()
     {
         return $this->hasOne(Facture::class, 'idDemande', 'idDemande');
+    }
+
+    public function animals()
+    {
+        return $this->belongsToMany(
+            Animal::class,      // Related model
+            'animal_demande',   // Pivot table
+            'idDemande',        // FK on pivot referencing demandes_intervention
+            'idAnimal',         // FK on pivot referencing animals
+            'idDemande',        // Local key on demandes_intervention
+            'idAnimale'         // Local key on animals table
+        );
     }
 }
