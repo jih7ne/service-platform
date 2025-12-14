@@ -70,7 +70,7 @@
                     </div>
                     <div>
                         <p class="text-sm opacity-90">Note moyenne</p>
-                        <p class="text-2xl font-bold">{{ isset($stats['avg_rating']) ? $stats['avg_rating'] . '/5' : '0/5' }}</p>
+                        <p class="text-2xl font-bold">{{ isset($stats['avg_rating']) ? round($stats['avg_rating'], 1) . '/5' : '0/5' }}</p>
                     </div>
                 </div>
             </div>
@@ -110,7 +110,7 @@
                         <div class="flex justify-between items-start mb-6">
                             <div class="flex items-center space-x-4">
                                 <div class="relative">
-                                    @if($user->photo ?? false)
+                                    @if(isset($user->photo) && $user->photo)
                                         <img src="{{ Storage::url($user->photo) }}" 
                                              class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg">
                                     @else
@@ -143,14 +143,14 @@
                                     <div class="flex items-center mt-3">
                                         <div class="flex text-amber-500">
                                             @for($i = 1; $i <= 5; $i++)
-                                                @if($i <= ($stats['avg_rating'] ?? 0))
+                                                @if($i <= round($stats['avg_rating'] ?? 0))
                                                     ★
                                                 @else
                                                     ☆
                                                 @endif
                                             @endfor
                                         </div>
-                                        <span class="ml-2 font-semibold text-gray-700">{{ $stats['avg_rating'] ?? 0 }}</span>
+                                        <span class="ml-2 font-semibold text-gray-700">{{ round($stats['avg_rating'] ?? 0, 1) }}</span>
                                         <span class="mx-2 text-gray-400">•</span>
                                         <span class="text-gray-600">{{ $stats['completed_missions'] ?? 0 }} missions</span>
                                     </div>
@@ -169,37 +169,43 @@
                             <div class="mb-6 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
                                 <h3 class="font-semibold text-gray-800 mb-4 text-lg">✏️ Modifier votre profil</h3>
                                 <div class="space-y-4">
+                                    <!-- Photo de profil -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Photo de profil</label>
+                                        <input type="file" wire:model="tempPhoto" accept="image/*"
+                                               class="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                                        @error('tempPhoto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        @if($tempPhoto)
+                                            <p class="mt-2 text-sm text-green-600">Nouvelle photo sélectionnée</p>
+                                        @endif
+                                    </div>
+                                    
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Spécialité *</label>
                                         <input type="text" wire:model="specialite"
                                                class="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                                         @error('specialite') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                     </div>
+                                    
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                                        <textarea wire:model="description" rows="4"
-                                                  class="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"></textarea>
-                                        @error('description') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Années d'expérience *</label>
+                                        <input type="number" wire:model="years_of_experience" min="0" max="50"
+                                               class="w-40 px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+                                        @error('years_of_experience') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                     </div>
+                                    
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Tarif horaire (DH) *</label>
                                         <input type="number" wire:model="hourly_rate" min="0" step="10"
                                                class="w-40 px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
                                         @error('hourly_rate') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                     </div>
+                                    
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Types d'animaux acceptés *</label>
-                                        <div class="grid grid-cols-2 gap-3">
-                                            @foreach($animalTypes ?? [] as $type)
-                                                <label class="inline-flex items-center p-2 border border-amber-200 rounded-lg hover:bg-amber-50">
-                                                    <input type="checkbox" wire:model="accepted_animal_types" 
-                                                           value="{{ $type }}"
-                                                           class="rounded border-amber-300 text-amber-600 focus:ring-amber-500">
-                                                    <span class="ml-3">{{ $type }}</span>
-                                                </label>
-                                            @endforeach
-                                        </div>
-                                        @error('accepted_animal_types') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Bio / Description *</label>
+                                        <textarea wire:model="bio" rows="4"
+                                                  class="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"></textarea>
+                                        @error('bio') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
                                 <div class="flex justify-end space-x-3 mt-6">
@@ -214,21 +220,24 @@
                                 </div>
                             </div>
                         @else
-                            <!-- À propos -->
-                            <div class="mb-8">
-                                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                                    <span class="mr-2">📋</span> À propos de moi
-                                </h3>
-                                <p class="text-gray-700 leading-relaxed">{{ $description ?? '' }}</p>
-                            </div>
+                            <!-- À propos / Bio -->
+                            @if(isset($bio) && $bio)
+                                <div class="mb-8">
+                                    <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                        <span class="mr-2">📋</span> À propos de moi
+                                    </h3>
+                                    <p class="text-gray-700 leading-relaxed">{{ $bio }}</p>
+                                </div>
+                            @endif
 
                             <!-- Informations de contact -->
-                            <div class="grid grid-cols-2 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl">
                                     <h4 class="text-sm font-medium text-amber-800 mb-2">📱 Contact</h4>
-                                    <p class="text-gray-900 font-semibold">{{ $user->telephone ?? '' }}</p>
+                                    <p class="text-gray-900 font-semibold">{{ $user->telephone ?? 'Non renseigné' }}</p>
                                     <p class="text-gray-600 text-sm mt-1">{{ $user->email ?? '' }}</p>
                                 </div>
+                                
                                 <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl">
                                     <h4 class="text-sm font-medium text-amber-800 mb-2">📍 Localisation</h4>
                                     <p class="text-gray-900 font-semibold">
@@ -246,14 +255,16 @@
                                         @endif
                                     </p>
                                 </div>
+                                
                                 <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl">
                                     <h4 class="text-sm font-medium text-amber-800 mb-2">💰 Tarif</h4>
                                     <p class="text-2xl font-bold text-amber-700">{{ $hourly_rate ?? 0 }} DH</p>
                                     <p class="text-gray-600 text-sm mt-1">par heure</p>
                                 </div>
+                                
                                 <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl">
                                     <h4 class="text-sm font-medium text-amber-800 mb-2">📅 Expérience</h4>
-                                    <p class="text-gray-900 font-semibold">Plus de 2 ans</p>
+                                    <p class="text-gray-900 font-semibold">{{ $years_of_experience ?? 0 }} ans</p>
                                     <p class="text-gray-600 text-sm mt-1">avec les animaux</p>
                                 </div>
                             </div>
@@ -305,9 +316,6 @@
                                                            wire:model="certificationList.{{ $index }}.type"
                                                            placeholder="Ex: Diplôme vétérinaire, Certificat d'éducation canine..."
                                                            class="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
-                                                    @error("certificationList.{$index}.type")
-                                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                                    @enderror
                                                 </div>
                                                 
                                                 <div>
@@ -320,7 +328,7 @@
                                                                accept=".pdf,.jpg,.jpeg,.png"
                                                                class="flex-1 px-4 py-3 border border-amber-300 rounded-lg">
                                                         
-                                                        @if($certificationList[$index]['file'] ?? false)
+                                                        @if(isset($certificationList[$index]['file']) && $certificationList[$index]['file'])
                                                             <div class="flex items-center text-green-600">
                                                                 <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -329,11 +337,8 @@
                                                             </div>
                                                         @endif
                                                     </div>
-                                                    @error("certificationList.{$index}.file")
-                                                        <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                                    @enderror
                                                     
-                                                    @if($certificationList[$index]['file'] ?? false)
+                                                    @if(isset($certificationList[$index]['file']) && $certificationList[$index]['file'])
                                                         <div class="mt-2 flex items-center text-xs text-gray-500">
                                                             <span>📄 {{ $certificationList[$index]['file']->getClientOriginalName() }}</span>
                                                             <span class="mx-2">•</span>
@@ -406,7 +411,7 @@
                                         </div>
                                         <div class="flex items-center space-x-3">
                                             @if($cert->document)
-                                                <button wire:click="downloadCertification({{ $cert->idCertification }})"
+                                                <button wire:click="downloadCertification({{ $cert->idCertification ?? $cert->id }})"
                                                         class="px-3 py-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 text-sm font-medium flex items-center transition">
                                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -414,7 +419,7 @@
                                                     Télécharger
                                                 </button>
                                             @endif
-                                            <button wire:click="deleteCertification({{ $cert->idCertification }})"
+                                            <button wire:click="deleteCertification({{ $cert->idCertification ?? $cert->id }})"
                                                     onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette certification ?')"
                                                     class="px-3 py-1 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm font-medium flex items-center transition">
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -600,7 +605,7 @@
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-3">
                                     <div class="bg-gradient-to-r from-amber-400 to-yellow-500 h-3 rounded-full" 
-                                         style="width: {{ $stats['response_rate'] ?? 100 }}%"></div>
+                                         style="width: {{ min($stats['response_rate'] ?? 100, 100) }}%"></div>
                                 </div>
                             </div>
                             
