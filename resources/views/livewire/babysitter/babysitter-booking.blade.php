@@ -1,34 +1,5 @@
 <div class="min-h-screen bg-[#F7F7F7]">
-    @if(isset($error))
-        {{-- Message d'erreur --}}
-        <div class="min-h-screen bg-[#F7F7F7] flex items-center justify-center p-4">
-            <div class="max-w-2xl w-full">
-                <div class="bg-white rounded-3xl p-10 border border-gray-100 text-center" style="box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08)">
-                    <div class="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </div>
-                    
-                    <h2 class="text-3xl mb-3 text-black font-extrabold">
-                        Babysitter non trouvé
-                    </h2>
-                    <p class="text-lg mb-8 text-[#3a3a3a] font-medium">
-                        {{ $error }}
-                    </p>
-
-                    <div class="flex gap-4">
-                        <a href="/liste-babysitter" wire:navigate class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold text-center">
-                            Retour à la recherche
-                        </a>
-                        <a href="/" wire:navigate class="flex-1 px-6 py-4 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center" style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
-                            Retour à l'accueil
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @elseif($showSuccess)
+    @if($showSuccess)
         {{-- Success Screen --}}
         <div class="min-h-screen bg-[#F7F7F7] flex items-center justify-center p-4">
             <div class="max-w-2xl w-full">
@@ -71,35 +42,6 @@
                 </div>
             </div>
         </div>
-    @elseif(!$babysitter)
-        {{-- Message d'erreur si babysitter null --}}
-        <div class="min-h-screen bg-[#F7F7F7] flex items-center justify-center p-4">
-            <div class="max-w-2xl w-full">
-                <div class="bg-white rounded-3xl p-10 border border-gray-100 text-center" style="box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08)">
-                    <div class="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </div>
-                    
-                    <h2 class="text-3xl mb-3 text-black font-extrabold">
-                        Babysitter non trouvé
-                    </h2>
-                    <p class="text-lg mb-8 text-[#3a3a3a] font-medium">
-                        Le babysitter demandé n'existe pas.
-                    </p>
-
-                    <div class="flex gap-4">
-                        <a href="/liste-babysitter" wire:navigate class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold text-center">
-                            Retour à la recherche
-                        </a>
-                        <a href="/" wire:navigate class="flex-1 px-6 py-4 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center" style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
-                            Retour à l'accueil
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
     @else
         {{-- Header --}}
         <div class="bg-white border-b border-gray-100">
@@ -112,14 +54,8 @@
                 </a>
 
                 <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 rounded-full overflow-hidden border-3 border-white shadow-lg flex items-center justify-center bg-[#B82E6E]">
-                        @if($babysitter['photo'])
-                            <img src="{{ $babysitter['photo'] }}" alt="{{ $babysitter['prenom'] }}" class="w-full h-full object-cover" />
-                        @else
-                            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
-                        @endif
+                    <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-[#B82E6E]">
+                        <img src="{{ $babysitter['photo'] }}" alt="{{ $babysitter['prenom'] }}" class="w-full h-full object-cover" />
                     </div>
                     <div>
                         <h1 class="text-2xl mb-1 text-black font-extrabold">
@@ -167,38 +103,29 @@
 
             {{-- Content --}}
             <div class="bg-white rounded-2xl p-8 border border-gray-100 mb-8" style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06)">
-               {{-- Step 1: Service --}}
-@if($currentStep === 1)
-    <div>
-        <h2 class="text-2xl mb-6 text-black font-extrabold">
-            Quel service souhaitez-vous ?
-        </h2>
-        <div class="grid grid-cols-2 gap-4">
-            @foreach($availableServices as $service)
-                <button wire:click="toggleService('{{ $service['name'] }}')" type="button"
-                    class="p-6 rounded-2xl border-2 transition-all text-center
-                    {{ in_array($service['name'], $selectedServices) ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-gray-300 bg-white' }}">
-                    <div class="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center"
-                         style="background-color: {{ in_array($service['name'], $selectedServices) ? '#B82E6E' : ($service['color'] ?? '#E5E7EB') }}; opacity: {{ in_array($service['name'], $selectedServices) ? 1 : 0.15 }}">
-                        <span class="text-4xl">{{ $service['icon'] }}</span>
+                {{-- Step 1: Service --}}
+                @if($currentStep === 1)
+                    <div>
+                        <h2 class="text-2xl mb-6 text-black font-extrabold">
+                            Quel service souhaitez-vous ?
+                        </h2>
+                        <div class="grid grid-cols-2 gap-4">
+                            @foreach($availableServices as $service)
+                                <button wire:click="toggleService('{{ $service['id'] }}')" type="button"
+                                    class="p-6 rounded-2xl border-2 transition-all text-center
+                                    {{ in_array($service['id'], $selectedServices) ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-gray-300 bg-white' }}">
+                                    <div class="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+                                         style="background-color: {{ in_array($service['id'], $selectedServices) ? '#B82E6E' : ($service['color'] ?? '#E5E7EB') }}; opacity: {{ in_array($service['id'], $selectedServices) ? 1 : 0.15 }}">
+                                        <span class="text-4xl">{{ $service['icon'] }}</span>
+                                    </div>
+                                    <h4 class="text-black font-bold">
+                                        {{ $service['name'] }}
+                                    </h4>
+                                </button>
+                            @endforeach
+                        </div>
                     </div>
-                    <h4 class="text-black font-bold">
-                        {{ $service['name'] }}
-                    </h4>
-                </button>
-            @endforeach
-        </div>
-        
-        {{-- Debug: Afficher les services sélectionnés --}}
-        @if(count($selectedServices) > 0)
-            <div class="mt-6 p-4 bg-blue-50 rounded-xl">
-                <p class="text-sm text-blue-600 font-semibold">
-                    Services sélectionnés: {{ implode(', ', $selectedServices) }}
-                </p>
-            </div>
-        @endif
-    </div>
-@endif
+                @endif
 
                 {{-- Step 2: Date & Horaires --}}
                 @if($currentStep === 2)
@@ -279,7 +206,7 @@
                                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                <input type="time" wire:model.live="startTime"
+                                                <input type="time" wire:model="startTime"
                                                     class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                             </div>
                                         </div>
@@ -291,7 +218,7 @@
                                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                <input type="time" wire:model.live="endTime"
+                                                <input type="time" wire:model="endTime"
                                                     class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                             </div>
                                         </div>
@@ -316,7 +243,7 @@
                                                     echo $duration > 0 ? number_format($duration, 1) . ' heure' . ($duration > 1 ? 's' : '') : 'Invalide';
                                                 @endphp
                                             </p>
-                                            @if(!$this->isTimeSlotValid())
+                                            @if($isTimeValid === false)
                                                 <div class="mt-3 p-3 bg-red-50 rounded-lg flex items-start gap-2">
                                                     <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
@@ -358,7 +285,7 @@
                                         23 Rue des Fleurs, Maârif - Casablanca
                                     </p>
                                 </div>
-                                <input type="checkbox" wire:model.live="useRegisteredAddress"
+                                <input type="checkbox" wire:model="useRegisteredAddress"
                                     class="w-5 h-5 text-[#B82E6E] rounded" style="accent-color: #B82E6E" />
                             </div>
                         </button>
@@ -382,7 +309,7 @@
                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                                 </svg>
-                                <input type="text" wire:model.live="address"
+                                <input type="text" wire:model="address"
                                     placeholder="Numéro et nom de rue, quartier, ville"
                                     class="w-full pl-10 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                             </div>
@@ -412,20 +339,11 @@
                                                 <p class="text-black font-bold">
                                                     {{ $child['nom'] }}, {{ $child['age'] }} ans
                                                 </p>
-                                                @if(!empty($child['besoinsSpeciaux']))
-                                                        <div class="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                                                            @php
-                                                                $besoinsNoms = [];
-                                                                foreach($child['besoinsSpeciaux'] as $besoinId) {
-                                                                    $besoin = $besoinsSpeciauxList->firstWhere('idExperience', $besoinId);
-                                                                    if($besoin) {
-                                                                        $besoinsNoms[] = $besoin->experience;
-                                                                    }
-                                                                }
-                                                                echo implode(', ', $besoinsNoms);
-                                                            @endphp
-                                                        </div>
-                                                    @endif
+                                                @if($child['besoins'])
+                                                    <p class="text-sm text-gray-500 font-semibold">
+                                                        {{ $child['besoins'] }}
+                                                    </p>
+                                                @endif
                                             </div>
                                         </div>
                                         <button wire:click="removeChild({{ $child['id'] }})" type="button"
@@ -449,7 +367,7 @@
                                     <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
                                         Nom de l'enfant
                                     </label>
-                                    <input type="text" wire:model.live="currentChild.nom"
+                                    <input type="text" wire:model="currentChild.nom"
                                         placeholder="Prénom de l'enfant"
                                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                 </div>
@@ -457,7 +375,7 @@
                                     <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
                                         Âge
                                     </label>
-                                    <input type="number" wire:model.live="currentChild.age"
+                                    <input type="number" wire:model="currentChild.age"
                                         placeholder="Âge en années" min="0" max="18"
                                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                 </div>
@@ -465,21 +383,12 @@
                                     <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
                                         Besoins spécifiques (optionnel)
                                     </label>
-                                    <div class="space-y-2">
-                                        <label class="block text-sm text-gray-600">Sélectionnez les besoins spéciaux (optionnel)</label>
-                                        @foreach($besoinsSpeciauxList as $besoin)
-                                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                                                <input type="checkbox" 
-                                                    wire:model.live="currentChild.besoinsSpeciaux.{{ $loop->index }}"
-                                                    value="{{ $besoin->idExperience }}"
-                                                    class="w-4 h-4 text-[#B82E6E] border-gray-300 rounded focus:ring-[#B82E6E]">
-                                                <span class="text-sm text-gray-700">{{ $besoin->experience }}</span>
-                                            </label>
-                                        @endforeach
-                                    </div>
+                                    <textarea wire:model="currentChild.besoins"
+                                        placeholder="Allergies, routines, particularités..." rows="3"
+                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E] resize-none"></textarea>
                                 </div>
                                 <button wire:click="addChild" type="button"
-                                    wire:loading.attr="disabled"
+                                    @if(empty($currentChild['nom']) || empty($currentChild['age'])) disabled @endif
                                     class="w-full px-6 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-bold">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -503,47 +412,50 @@
                 @endif
 
                 {{-- Step 5: Confirmation --}}
-        {{-- Step 5: Confirmation --}}
-@if($currentStep === 5)
-    <div>
-        <h2 class="text-2xl mb-6 text-center text-black font-extrabold">
-            Récapitulatif de votre demande
-        </h2>
-
-        <div class="bg-[#F9E0ED] rounded-2xl p-6 mb-6">
-            <!-- Prix Total -->
-            <div class="bg-white rounded-xl p-4 mb-4 border-2 border-[#B82E6E]">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-6 h-6 text-[#B82E6E]" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1.81.45 1.61 1.67 1.61 1.16 0 1.6-.64 1.6-1.46 0-.84-.68-1.22-2.05-1.66-1.43-.46-3.08-1.1-3.08-3.19 0-1.83 1.41-2.84 3.15-3.18V5h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.63-1.63-1.63-1.01 0-1.46.54-1.46 1.34 0 .83.63 1.18 1.99 1.62 1.46.47 3.14 1.1 3.14 3.21 0 1.87-1.41 2.96-3.15 3.21z"/>
-                        </svg>
-                        <span class="text-lg font-bold text-[#B82E6E]">Prix Total</span>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-2xl font-bold text-[#B82E6E]">{{ number_format($totalPrice, 2) }} MAD</div>
-                        <div class="text-xs text-gray-600">TTC</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="space-y-4">
-                {{-- Service --}}
-                <div class="flex items-start gap-3 p-4 bg-white rounded-xl">
-                    <span class="text-2xl">🎯</span>
+                @if($currentStep === 5)
                     <div>
-                        <p class="text-xs mb-1 text-gray-500 font-semibold">
-                            Service(s) demandé(s)
-                        </p>
-                        <p class="text-black font-bold">
-                            @if(count($selectedServices) > 0)
-                                {{ implode(', ', $selectedServices) }}
-                            @else
-                                Non sélectionné
-                            @endif
-                        </p>
-                    </div>
-                </div>
+                        <h2 class="text-2xl mb-6 text-center text-black font-extrabold">
+                            Récapitulatif de votre demande
+                        </h2>
+
+                        <div class="bg-[#F9E0ED] rounded-2xl p-6 mb-6">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-white">
+                                    <img src="{{ $babysitter['photo'] }}" alt="{{ $babysitter['prenom'] }}" class="w-full h-full object-cover" />
+                                </div>
+                                <div>
+                                    <h4 class="text-black font-extrabold">
+                                        {{ $babysitter['prenom'] }} {{ $babysitter['nom'] }}
+                                    </h4>
+                                    <p class="text-sm text-[#B82E6E] font-bold">
+                                        ⭐ {{ $babysitter['rating'] }} • Vérifiée ✓
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                {{-- Service --}}
+                                <div class="flex items-start gap-3 p-4 bg-white rounded-xl">
+                                    <span class="text-2xl">🎯</span>
+                                    <div>
+                                        <p class="text-xs mb-1 text-gray-500 font-semibold">
+                                            Service(s) demandé(s)
+                                        </p>
+                                        <p class="text-black font-bold">
+                                            @if(count($selectedServices) > 0)
+                                                @foreach($selectedServices as $index => $serviceId)
+                                                    @foreach($availableServices as $service)
+                                                        @if($service['id'] === $serviceId)
+                                                            {{ $service['name'] }}{{ $index < count($selectedServices) - 1 ? ', ' : '' }}
+                                                        @endif
+                                                    @endforeach
+                                                @endforeach
+                                            @else
+                                                Non sélectionné
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
 
                                 {{-- Date & Heure --}}
                                 <div class="flex items-start gap-3 p-4 bg-white rounded-xl">
@@ -605,20 +517,11 @@
                                                         <p class="text-black font-bold">
                                                             {{ $child['nom'] }}, {{ $child['age'] }} ans
                                                         </p>
-                                                        @if(!empty($child['besoinsSpeciaux']))
-                                                                <div class="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                                                                    @php
-                                                                        $besoinsNoms = [];
-                                                                        foreach($child['besoinsSpeciaux'] as $besoinId) {
-                                                                            $besoin = $besoinsSpeciauxList->firstWhere('idExperience', $besoinId);
-                                                                            if($besoin) {
-                                                                                $besoinsNoms[] = $besoin->experience;
-                                                                            }
-                                                                        }
-                                                                        echo implode(', ', $besoinsNoms);
-                                                                    @endphp
-                                                                </div>
-                                                            @endif
+                                                        @if($child['besoins'])
+                                                            <p class="text-xs mt-1 text-gray-500 font-semibold">
+                                                                {{ $child['besoins'] }}
+                                                            </p>
+                                                        @endif
                                                     </div>
                                                 @endforeach
                                             </div>
@@ -636,19 +539,18 @@
                                     Ajouter un message (optionnel)
                                 </label>
                                 <span class="text-xs text-gray-500 font-medium">
-                                    {{ strlen($message) }}/300
-                                </span>
+                                        {{ strlen($message) }}/300
+                                    </span>
                             </div>
-                            <textarea wire:model.live="message" maxlength="300" rows="4"
+                            <textarea wire:model="message" maxlength="300" rows="4"
                                 placeholder="Présentez-vous, expliquez vos attentes..."
                                 class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E] resize-none"></textarea>
                         </div>
 
                         <div class="flex items-start gap-3 mb-6">
-                            <input type="checkbox" id="terms" wire:model.live="agreedToTerms"
-                                class="w-5 h-5 text-[#B82E6E] rounded mt-1 focus:ring-[#B82E6E] focus:ring-2"
-                                style="accent-color: #B82E6E" />
-                            <label for="terms" class="text-sm text-gray-500 font-semibold cursor-pointer">
+                            <input type="checkbox" id="terms" wire:model="agreedToTerms"
+                                class="w-5 h-5 text-[#B82E6E] rounded mt-1" style="accent-color: #B82E6E" />
+                            <label for="terms" class="text-sm text-gray-500 font-semibold">
                                 J'accepte les conditions générales d'utilisation et je comprends que cette demande
                                 n'est pas encore confirmée
                             </label>
@@ -671,8 +573,6 @@
                 <button 
                     @if($currentStep === 5)
                         wire:click="confirmBooking"
-                        wire:loading.attr="disabled"
-                        wire:target="confirmBooking"
                     @else
                         wire:click="nextStep"
                     @endif
@@ -680,40 +580,18 @@
                     @if(!$this->canProceed()) disabled @endif
                     class="flex-1 px-6 py-4 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                     style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
-                    <span wire:loading wire:target="confirmBooking">
-                        <svg class="inline w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path>
+                    {{ $currentStep === 5 ? 'Confirmer la demande' : 'Suivant' }}
+                    @if($currentStep < 5)
+                        <svg class="inline w-5 h-5 ml-2 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
-                        Traitement en cours...
-                    </span>
-                    <span wire:loading.remove wire:target="confirmBooking">
-                        {{ $currentStep === 5 ? 'Confirmer la demande' : 'Suivant' }}
-                        @if($currentStep < 5)
-                            <svg class="inline w-5 h-5 ml-2 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                            </svg>
-                        @else
-                            <svg class="inline w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                        @endif
-                    </span>
+                    @else
+                        <svg class="inline w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    @endif
                 </button>
             </div>
         </div>
     @endif
 </div>
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Écouter l'événement de succès de réservation
-        window.addEventListener('booking-success', function() {
-            // Rediriger après 3 secondes pour permettre l'affichage du message
-            setTimeout(function() {
-                window.location.href = '/liste-babysitter';
-            }, 3000);
-        });
-    });
-</script>
-@endpush

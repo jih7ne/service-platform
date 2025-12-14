@@ -45,8 +45,7 @@
                             $shadow = 'shadow-blue-200';
                             $btnText = 'text-blue-600';
                         } elseif (str_contains(strtolower($service->nomService), 'baby')) {
-                            // $route = route('babysitter.dashboard');
-                            $route = '#';
+                            $route = route('babysitter.dashboard');
                             $icon = '👶';
                             $title = 'Babysitting';
                             $desc = 'Gestion des gardes d\'enfants';

@@ -65,15 +65,6 @@ class Babysitter extends Model
         return $this->hasMany(DemandeIntervention::class, 'idIntervenant', 'idBabysitter');
     }
 
-    public function preferencesDomicil()
-    {
-        return $this->belongsToMany(
-            PreferenceDomicil::class,
-            'choisir_domicils',
-            'idBabysitter',
-            'idDomicil'
-        );
-    }
 
     public function superpouvoirs()
     {
