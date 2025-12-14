@@ -1,3 +1,5 @@
+<div>
+
 <div class="min-h-screen bg-[#F8F9FA] font-sans text-gray-800 flex relative">
 
     <!-- SIDEBAR GAUCHE -->
@@ -397,8 +399,6 @@
 
 </div>
 
-<<<<<<< HEAD:resources/views/livewire/pet-keeping/pet-keeper-dashboard.blade.php
-=======
 <style>
     @keyframes slide-in {
         from { transform: translateX(100%); opacity: 0; }
@@ -408,4 +408,9 @@
     .animate-wave { animation: wave 2.5s infinite; transform-origin: 70% 70%; display: inline-block; }
     @keyframes wave { 0% { transform: rotate(0deg); } 10% { transform: rotate(14deg); } 20% { transform: rotate(-8deg); } 30% { transform: rotate(14deg); } 40% { transform: rotate(-4deg); } 50% { transform: rotate(10deg); } 60% { transform: rotate(0deg); } 100% { transform: rotate(0deg); } }
 </style>
->>>>>>> 3c89cfd (New dashboard):resources/views/livewire/pet-keeper-dashboard.blade.php
+
+</div>
+
+
+
+
