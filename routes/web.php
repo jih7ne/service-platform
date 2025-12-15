@@ -46,13 +46,29 @@ use App\Livewire\PetKeeping\PetkeepingServiceBooking;
 use App\Livewire\PetKeeping\PetKeeperProfile;
 use App\Livewire\PetKeeping\PetKeeperDashboard;
 use App\Livewire\PetKeeping\PetKeeperRegistration;
-use App\Livewire\PetKeeperMissionDetails;
+// ICI : J'ai décommenté et corrigé le chemin (PetKeeping\)
+//use App\Livewire\PetKeeping\PetKeeperMissionDetails;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+use App\Livewire\PetKeeping\PetKeeperMissions;
+use App\Livewire\PetKeeping\PetKeeperMissionDetails;
+
+Route::get('/petkeeper/mission/{id}', PetKeeperMissionDetails::class)
+    ->name('petkeeper.mission.show');
+
+
+
+Route::get('/petkeeper/missions', PetKeeperMissions::class);
+
+
+
+
+
+
 
 // Public Routes
 Route::get('/', LandingPage::class)->name('home');
@@ -115,5 +131,6 @@ Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
     Route::get('inscription', PetKeeperRegistration::class)->name('inscription');
     Route::get('profile', PetKeeperProfile::class)->name('profile');
     Route::get('dashboard', PetKeeperDashboard::class)->name('dashboard');
-    Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.details');
+    // Maintenant cette ligne va fonctionner car l'import est correct en haut
+    //Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.details');
 });
