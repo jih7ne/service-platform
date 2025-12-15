@@ -12,6 +12,8 @@ use App\Mail\RefusDemandeMail;
 
 class PetKeeperDashboard extends Component
 {
+    public $feedbacksSidebar = [];
+
     public $user;
     public $isAvailable = false;
 
@@ -22,6 +24,7 @@ class PetKeeperDashboard extends Component
     /* ===================== MOUNT ===================== */
     public function mount()
     {
+        
         $authUser = Auth::user();
 
         // Utilisation de l'accesseur idUser (si configuré dans le modèle) ou id standard
@@ -49,7 +52,21 @@ class PetKeeperDashboard extends Component
 
         // Vérification basée sur l'enum 'statut' de votre table utilisateurs
         $this->isAvailable = ($this->user->statut === 'actif');
+        $this->loadFeedbacks();
     }
+
+
+    private function loadFeedbacks()
+{
+    $this->feedbacksSidebar = DB::table('feedbacks')
+        ->join('utilisateurs', 'feedbacks.idAuteur', '=', 'utilisateurs.idUser')
+        ->where('feedbacks.idCible', $this->user->idUser)
+        ->where('feedbacks.estVisible', 1)
+        ->orderBy('feedbacks.dateCreation', 'desc')
+        ->select('feedbacks.commentaire', 'utilisateurs.prenom')
+        ->get();
+}
+
 
     public function toggleAvailability()
     {
@@ -250,7 +267,6 @@ public function confirmRefusal()
             ->count();
 
         $attenteCount = DB::table('demandes_intervention')
-    ->whereNull('idIntervenant')
     ->where('statut', 'en_attente')
     ->count();
 
@@ -285,10 +301,11 @@ public function confirmRefusal()
         }
 
         // Note moyenne réelle depuis la table feedbacks
-        $noteMoyenne = DB::table('feedbacks')
-            ->where('idCible', $intervenantId)
-            ->selectRaw('AVG((credibilite + sympathie + ponctualite + proprete + qualiteTravail) / 5) as moyenne')
-            ->value('moyenne');
+       $noteMoyenne = DB::table('feedbacks')
+    ->where('idCible', $this->user->idUser)
+    ->selectRaw('AVG((credibilite + sympathie + ponctualite + proprete + qualiteTravail) / 5)')
+    ->value(DB::raw('AVG((credibilite + sympathie + ponctualite + proprete + qualiteTravail) / 5)'));
+
 
         if (!$noteMoyenne) {
             $noteMoyenne = $this->user->note ?? 4.8;
@@ -297,30 +314,26 @@ public function confirmRefusal()
         // 2. Demandes urgentes (pour les intervenants disponibles)
         $demandesUrgentes = [];
         if ($this->isAvailable) {
-            $demandesUrgentes = DB::table('demandes_intervention')
-                ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
-                ->leftJoin('animal_demande', 'demandes_intervention.idDemande', '=', 'animal_demande.idDemande')
-                ->leftJoin('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
-                ->select(
-                    'demandes_intervention.*',
-                    'demandes_intervention.idDemande as id_demande_reelle',
-                    'utilisateurs.nom as nom_client',
-                    'utilisateurs.prenom as prenom_client',
-                    'utilisateurs.note as note_client',
-                    'utilisateurs.photo as photo_client',
-                    
-                    // Pour l'adresse, utiliser le lieu de la demande
-                    'demandes_intervention.lieu as ville_client',
-                    
-                    'animals.nomAnimal as nom_animal',
-                    'animals.race as race_animal'
-                )
-                ->whereNull('demandes_intervention.idIntervenant')
-                ->where('demandes_intervention.statut', 'en_attente')
-                ->whereDate('demandes_intervention.dateSouhaitee', '>=', Carbon::today())
-                ->orderBy('demandes_intervention.dateDemande', 'asc')
-                ->limit(5)
-                ->get();
+           $demandesUrgentes = DB::table('demandes_intervention')
+    ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
+    ->leftJoin('animal_demande', 'demandes_intervention.idDemande', '=', 'animal_demande.idDemande')
+    ->leftJoin('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
+    ->select(
+        'demandes_intervention.*',
+        'demandes_intervention.idDemande as id_demande_reelle',
+        'utilisateurs.nom as nom_client',
+        'utilisateurs.prenom as prenom_client',
+        'utilisateurs.note as note_client',
+        'utilisateurs.photo as photo_client',
+        'demandes_intervention.lieu as ville_client',
+        'animals.nomAnimal as nom_animal',
+        'animals.race as race_animal'
+    )
+    ->where('demandes_intervention.statut', 'en_attente')
+    ->whereDate('demandes_intervention.dateSouhaitee', '>=', Carbon::today())
+    ->orderBy('demandes_intervention.dateDemande', 'asc')
+    ->limit(5)
+    ->get();
 
             foreach ($demandesUrgentes as $d) {
                 $d->prix_estime = $this->calculerPrix($d->heureDebut, $d->heureFin);
@@ -365,18 +378,10 @@ public function confirmRefusal()
             ->orderBy('feedbacks.dateCreation', 'desc')
             ->limit(2)
             ->get();
-        $feedbacksSidebar = DB::table('feedbacks')
-    ->join('utilisateurs', 'feedbacks.idAuteur', '=', 'utilisateurs.idUser')
-    ->where('feedbacks.idCible', $this->user->idUser) // Ahmed
-    ->where('feedbacks.estVisible', 1)
-    ->select(
-        'feedbacks.commentaire',
-        'utilisateurs.prenom'
-    )
-    ->get();
+
+
 
         return view('livewire.pet-keeping.pet-keeper-dashboard', [
-            'feedbacksSidebar' => $feedbacksSidebar,
 
             'stats' => [
                 'missions' => $missionsCount,

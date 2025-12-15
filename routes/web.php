@@ -57,8 +57,8 @@ use App\Livewire\PetKeeping\PetKeeperRegistration;
 use App\Livewire\PetKeeping\PetKeeperMissions;
 use App\Livewire\PetKeeping\PetKeeperMissionDetails;
 
-Route::get('/petkeeper/mission/{id}', PetKeeperMissionDetails::class)
-    ->name('petkeeper.mission.show');
+// Route::get('/petkeeper/mission/{id}', PetKeeperMissionDetails::class)
+//     ->name('petkeeper.mission.show');
 
 
 
@@ -131,6 +131,8 @@ Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
     Route::get('inscription', PetKeeperRegistration::class)->name('inscription');
     Route::get('profile', PetKeeperProfile::class)->name('profile');
     Route::get('dashboard', PetKeeperDashboard::class)->name('dashboard');
+        Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.show');
+
     // Maintenant cette ligne va fonctionner car l'import est correct en haut
     //Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.details');
 });

@@ -238,7 +238,7 @@
                         <!-- BOUTONS ACTIONS (CORRECTEMENT PLACÉS ICI) -->
                         <div class="flex gap-3">
                             <!-- 1. BOUTON CONSULTER -->
-                            <a href="{{ route('petkeeper.mission.show', $demande->idDemande) }}"
+                            <a href="{{ route('petkeeper.mission.show', $demande->id_demande_reelle) }}"
    class="btn btn-primary">
    Consulter
 </a>
