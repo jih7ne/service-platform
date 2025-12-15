@@ -1,7 +1,11 @@
-<div class="min-h-screen bg-white">
-    <livewire:shared.header />
+<div>
+    <div class="bg-white border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <livewire:shared.header />
+        </div>
+    </div>
 
-    <div class="min-h-screen bg-[#F7F7F7] py-12 flex items-center justify-center">
+    <div class="min-h-screen bg-[#F7F7F7] py-12 flex items-start justify-center">
         <div class="max-w-2xl w-full mx-auto px-4 sm:px-6 lg:px-8">
             
             <!-- Messages Flash -->
@@ -24,7 +28,7 @@
             @endif
 
             <!-- Formulaire d'inscription Client -->
-            <div class="bg-white rounded-2xl p-8 shadow-md border border-gray-100">
+            <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 ring-1 ring-gray-50">
                 <!-- Header -->
                 <div class="text-center mb-8">
                     <h1 class="text-3xl mb-2 text-black font-extrabold">
@@ -36,8 +40,9 @@
                 </div>
 
                 <!-- Form -->
-                <form method="POST" action="{{ route('register.store') }}" class="space-y-5">
-                    @csrf
+                <form wire:submit.prevent="register" class="space-y-6">
+
+
                     <!-- Prénom et Nom (côte à côte) -->
                     <div class="grid md:grid-cols-2 gap-4">
                         <!-- Prénom -->
@@ -47,11 +52,9 @@
                             </label>
                             <input
                                 type="text"
-                                name="firstName"
-                                value="{{ old('firstName') }}"
+                                wire:model="firstName"
                                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a] @error('firstName') border-red-500 @enderror"
                                 placeholder="Jean"
-                                required
                             />
                             @error('firstName') 
                                 <span class="text-red-500 text-sm mt-1 block flex items-center gap-1">
@@ -70,11 +73,9 @@
                             </label>
                             <input
                                 type="text"
-                                name="lastName"
-                                value="{{ old('lastName') }}"
+                                wire:model="lastName"
                                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a] @error('lastName') border-red-500 @enderror"
                                 placeholder="Dupont"
-                                required
                             />
                             @error('lastName') 
                                 <span class="text-red-500 text-sm mt-1 block flex items-center gap-1">
@@ -94,22 +95,99 @@
                         </label>
                         <input
                             type="email"
-                            name="email"
-                            value="{{ old('email') }}"
+                            wire:model="email"
                             class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a] @error('email') border-red-500 @enderror"
                             placeholder="jean.dupont@email.com"
-                            required
                         />
                         @error('email') 
                             <span class="text-red-500 text-sm mt-1 block flex items-center gap-1">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                    </svg>
-                                    {{ $message }}
-                                </span>
+                                </svg>
+                                {{ $message }}
+                            </span>
                         @enderror
                     </div>
+                    <!-- Photo de profil (début) -->
+                    <div class="mb-4">
+                        <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">Photo de profil (optionnel)</label>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-shrink-0">
+                                <input
+                                    type="file"
+                                    wire:model="photo_profil"
+                                    accept="image/*"
+                                    class="block w-36 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#2B5AA8] file:text-white hover:file:bg-[#224A91]"
+                                />
+                            </div>
+                            <div class="text-sm text-[#6b7280]">Téléchargez une photo pour personnaliser votre profil.</div>
+                        </div>
+                        @error('photo_profil') 
+                            <span class="text-red-500 text-sm mt-2 block flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                </svg>
+                                {{ $message }}
+                            </span>
+                        @enderror
+                        @if($photo_profil)
+                            <div class="mt-3">
+                                <img src="{{ $photo_profil->temporaryUrl() }}" class="h-24 w-24 rounded-full object-cover border" alt="Aperçu">
+                            </div>
+                        @endif
+                    </div>
 
+                    <!-- Localisation (après photo) -->
+                    <div class="mb-6">
+                        <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">Localisation</label>
+                        <div class="space-y-3">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    id="auto_localisation_checkbox"
+                                    type="checkbox"
+                                    wire:model.live="auto_localisation"
+                                    class="w-4 h-4 text-[#2B5AA8] bg-gray-100 border-gray-300 rounded focus:ring-[#2B5AA8] focus:ring-2"
+                                />
+                                <span class="text-sm text-[#6b7280]">Utiliser ma position actuelle</span>
+                            </label>
+
+                            @if(!$auto_localisation)
+                                <input
+                                    type="text"
+                                    wire:model="adresse"
+                                    class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a] @error('adresse') border-red-500 @enderror"
+                                    placeholder="Entrez votre adresse"
+                                />
+                                @error('adresse') 
+                                    <span class="text-red-500 text-sm mt-1 block flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                        </svg>
+                                        {{ $message }}
+                                    </span>
+                                @enderror
+                            @else
+                                <div class="text-sm text-[#6b7280] bg-gray-50 px-3 py-2 rounded-lg">
+                                    @if($ville)
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <span>{{ $ville }}</span>
+                                        </div>
+                                    @else
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-yellow-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span>Détection de votre position...</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    </div>
                     <!-- Telephone et Date de Naissance -->
                     <div class="grid md:grid-cols-2 gap-4">
                         <!-- Telephone -->
@@ -119,11 +197,9 @@
                             </label>
                             <input
                                 type="tel"
-                                name="telephone"
-                                value="{{ old('telephone') }}"
+                                wire:model="telephone"
                                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a] @error('telephone') border-red-500 @enderror"
                                 placeholder="06XXXXXXXX"
-                                required
                             />
                             @error('telephone') 
                                 <span class="text-red-500 text-sm mt-1 block flex items-center gap-1">
@@ -142,10 +218,8 @@
                             </label>
                             <input
                                 type="date"
-                                name="dateNaissance"
-                                value="{{ old('dateNaissance') }}"
+                                wire:model="dateNaissance"
                                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a] @error('dateNaissance') border-red-500 @enderror"
-                                required
                             />
                             @error('dateNaissance') 
                                 <span class="text-red-500 text-sm mt-1 block flex items-center gap-1">
@@ -158,7 +232,6 @@
                         </div>
                     </div>
 
-                    <!-- Mot de passe -->
                     <div>
                         <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
                             Mot de passe <span class="text-red-500">*</span>
@@ -166,11 +239,10 @@
                         <div class="relative">
                             <input
                                 type="password"
-                                name="password"
+                                wire:model="password"
                                 id="password"
                                 class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a] pr-12 @error('password') border-red-500 @enderror"
                                 placeholder="••••••••"
-                                required
                             />
                             <button 
                                 type="button"
@@ -288,6 +360,52 @@
                 })
                 .catch(error => console.error('Erreur rafraîchissement CSRF:', error));
         }, 600000); // 10 minutes
+
+        // Geolocation functionality
+document.addEventListener('livewire:init', () => {
+    Livewire.on('getLocation', () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    
+                    // Reverse geocoding to get city name
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const city = data.address?.city || data.address?.town || data.address?.village || 'Ville inconnue';
+                            Livewire.dispatch('setLocation', { latitude, longitude, city });
+                        })
+                        .catch(error => {
+                            console.error('Erreur de géocodage:', error);
+                            Livewire.dispatch('setLocation', { latitude, longitude, city: 'Ville inconnue' });
+                        });
+                },
+                (error) => {
+                    console.error('Erreur de géolocalisation:', error);
+                    alert('Impossible d\'obtenir votre position. Veuillez entrer votre adresse manuellement.');
+                    Livewire.set('auto_localisation', false);
+                }
+            );
+        } else {
+            alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+            Livewire.set('auto_localisation', false);
+        }
+    });
+
+    // Émettre l'événement getLocation lorsque l'utilisateur coche la case
+    const autoCheckbox = document.getElementById('auto_localisation_checkbox');
+    if (autoCheckbox) {
+        autoCheckbox.addEventListener('change', () => {
+            if (autoCheckbox.checked) {
+                Livewire.emit('getLocation');
+            } else {
+                Livewire.dispatch('setLocation', { latitude: null, longitude: null, city: null });
+            }
+        });
+    }
+});
     </script>
     @endpush
+    </div>
 </div>
