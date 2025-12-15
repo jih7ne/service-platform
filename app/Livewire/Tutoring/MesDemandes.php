@@ -76,6 +76,8 @@ class MesDemandes extends Component
         }
 
         return $query->select(
+                'demandes_intervention.idClient',
+                
                 'demandes_intervention.idDemande',
                 'demandes_intervention.dateDemande',
                 'demandes_intervention.dateSouhaitee',

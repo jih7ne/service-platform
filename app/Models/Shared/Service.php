@@ -12,7 +12,6 @@ class Service extends Model
     protected $fillable = [
         'nomService',
         'description',
-        'statut'
     ];
 
     public function demandes()
