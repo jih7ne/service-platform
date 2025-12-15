@@ -1,16 +1,14 @@
 <div class="flex h-screen bg-[#F3F4F6] font-sans overflow-hidden">
 
-    {{-- SIDEBAR (Copie identique du Dashboard pour cohérence) --}}
+    {{-- SIDEBAR --}}
     <aside class="w-72 bg-white border-r border-gray-100 flex flex-col justify-between shadow-sm z-20">
         <div>
             <div class="px-8 py-6 flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">H</div>
                 <span class="text-2xl font-bold text-gray-800">Helpora</span>
             </div>
             
-            {{-- Carte Profil Mini --}}
             <div class="px-6 mb-6">
-                <div class="bg-[#EFF6FF] rounded-2xl p-4 flex items-center gap-4 border border-blue-100">
+                <a href="{{ route('tutoring.profile') }}" class="block bg-[#EFF6FF] rounded-2xl p-4 flex items-center gap-4 border border-blue-100 hover:bg-blue-50 transition-colors cursor-pointer">
                     @if($photo)
                         <img src="{{ asset('storage/'.$photo) }}" class="w-10 h-10 rounded-full object-cover">
                     @else
@@ -20,44 +18,35 @@
                         <h3 class="font-bold text-gray-800 text-sm">{{ $prenom }}</h3>
                         <p class="text-xs text-blue-600 font-medium">Professeur</p>
                     </div>
-                </div>
+                </a>
             </div>
 
             <nav class="px-4 space-y-1 mt-6">
                 <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Menu Principal</p>
                 
-                <!-- 1. Tableau de bord (Gris) -->
-                <a href="{{ route('tutoring.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl font-medium transition-all group">
-                    <svg class="w-5 h-5 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                    Tableau de bord
+                <a href="{{ route('tutoring.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-xl font-medium transition-all group">
+                <svg class="w-5 h-5 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>                    Tableau de bord
                 </a>
 
-                <!-- 2. Mes Demandes (ACTIF - Bleu) -->
                 <a href="{{ route('tutoring.requests') }}" class="flex items-center gap-3 px-4 py-3 bg-[#EFF6FF] text-blue-700 rounded-xl font-bold transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    <svg class="w-5 h-5 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                     Mes demandes
-                    
-                @if(count($this->demandes) > 0)
-                    <span class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        {{ count($this->demandes) }}
-                    </span>
-                @endif
+                    @if(count($this->demandes) > 0)
+                        <span class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{{ count($this->demandes) }}</span>
+                    @endif
                 </a>
 
-                <!-- 3. Disponibilité (Gris) -->
                 <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl font-medium transition-all group">
                     <svg class="w-5 h-5 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     Disponibilité
                 </a>
 
-                <!-- 4. Mes Clients (Gris) -->
-                <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl font-medium transition-all group">
+                <a href="{{ route('tutoring.clients') }}" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl font-medium transition-all group">
                     <svg class="w-5 h-5 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     Mes clients
                 </a>
 
-                <!-- 5. Mes Cours (Gris) -->
-                <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl font-medium transition-all group">
+                <a href="{{ route('tutoring.courses') }}" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl font-medium transition-all group">
                     <svg class="w-5 h-5 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                     Mes cours
                 </a>
@@ -78,7 +67,6 @@
     {{-- CONTENU PRINCIPAL --}}
     <main class="flex-1 overflow-y-auto p-8">
         
-      
         <!-- Titre + Filtre -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
@@ -86,63 +74,42 @@
                 <p class="text-gray-500 mt-1">Gérez les demandes de cours reçues de vos futurs élèves</p>
             </div>
 
-            <!-- Bouton et Menu Déroulant -->
+            <!-- Filtre -->
             <div class="relative">
-                <button 
-                    wire:click="toggleFilters" 
-                    class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                <button wire:click="toggleFilters" class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                     Filtrer
-                    
-                    @if($showFilters)
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-                    @else
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    @endif
+                    @if($showFilters) <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                    @else <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg> @endif
                 </button>
 
-                <!-- Le Menu Dropdown -->
                 @if($showFilters)
                     <div class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50">
                         <div class="space-y-4">
-                            
-                            <!-- 1. Trier par -->
                             <div>
                                 <p class="text-xs font-bold text-gray-400 uppercase mb-2">Trier par</p>
                                 <select wire:model.live="filterSort" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="recent">Plus récent d'abord</option>
-                                    <option value="ancien"> Plus ancien d'abord</option>
-                                    <option value="prix_decroissant"> Prix décroissant</option>
-                                    <option value="prix_croissant">Prix croissant</option>
+                                    <option value="recent">📅 Plus récent d'abord</option>
+                                    <option value="ancien">📅 Plus ancien d'abord</option>
+                                    <option value="prix_decroissant">💰 Prix décroissant</option>
+                                    <option value="prix_croissant">💰 Prix croissant</option>
                                 </select>
                             </div>
-
-                            <!-- 2. Type de cours -->
                             <div>
                                 <p class="text-xs font-bold text-gray-400 uppercase mb-2">Type de cours</p>
                                 <div class="space-y-2">
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" wire:model.live="filterType" value="all" class="text-blue-600 focus:ring-blue-500">
-                                        <span class="text-sm text-gray-700">Tout afficher</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" wire:model.live="filterType" value="enligne" class="text-blue-600 focus:ring-blue-500">
-                                        <span class="text-sm text-gray-700">En ligne</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="radio" wire:model.live="filterType" value="domicile" class="text-blue-600 focus:ring-blue-500">
-                                        <span class="text-sm text-gray-700">À Domicile</span>
-                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" wire:model.live="filterType" value="all" class="text-blue-600 focus:ring-blue-500"><span class="text-sm text-gray-700">Tout afficher</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" wire:model.live="filterType" value="enligne" class="text-blue-600 focus:ring-blue-500"><span class="text-sm text-gray-700">En ligne (Visio)</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" wire:model.live="filterType" value="domicile" class="text-blue-600 focus:ring-blue-500"><span class="text-sm text-gray-700">À Domicile</span></label>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 @endif
             </div>
         </div>
 
-        <!-- Messages Flash (Succès) -->
+        <!-- Messages Flash -->
         @if (session()->has('success'))
             <div class="mb-6 p-4 rounded-xl bg-green-50 text-green-700 border border-green-200 flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
@@ -157,17 +124,31 @@
                     
                     <!-- Colonne Gauche : Info Client & Service -->
                     <div class="flex gap-5 w-full lg:w-1/3">
-                        <!-- Avatar Client -->
+                        
+                        <!-- Avatar Cliquable -->
                         <div class="flex-shrink-0">
-                            @if($demande->client_photo)
-                                <img src="{{ asset('storage/'.$demande->client_photo) }}" class="w-14 h-14 rounded-full object-cover">
-                            @else
-                                <img src="https://ui-avatars.com/api/?name={{$demande->client_prenom}}+{{$demande->client_nom}}&background=random" class="w-14 h-14 rounded-full object-cover">
-                            @endif
+                            <a href="{{ route('tutoring.student.profile', $demande->idClient) }}"  class="block relative hover:opacity-80 transition-opacity" title="Voir le profil">
+                                @if($demande->client_photo)
+                                    <img src="{{ asset('storage/'.$demande->client_photo) }}" class="w-14 h-14 rounded-full object-cover border border-gray-200">
+                                @else
+                                    <div class="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg border border-blue-200">
+                                        {{ substr($demande->client_prenom, 0, 1) }}
+                                    </div>
+                                @endif
+                                <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                </div>
+                            </a>
                         </div>
                         
                         <div>
-                            <h3 class="font-bold text-gray-900 text-lg">{{ $demande->client_prenom }} {{ $demande->client_nom }}</h3>
+                            <!-- Nom Cliquable -->
+                            <h3 class="font-bold text-gray-900 text-lg">
+                                <a href="{{ route('tutoring.student.profile', ['id' => $demande->idClient, 'source' => 'list']) }}" class="hover:text-[#1E40AF] hover:underline transition-colors flex items-center gap-2">
+                                    {{ $demande->client_prenom }} {{ $demande->client_nom }}
+                                </a>
+                            </h3>
+
                             <div class="flex items-center text-xs text-gray-500 mb-3 mt-1">
                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 {{ \Carbon\Carbon::parse($demande->dateDemande)->format('d F Y, H:i') }}
@@ -190,8 +171,6 @@
 
                     <!-- Colonne Milieu : Détails Pratiques -->
                     <div class="w-full lg:w-1/3 space-y-3 border-l border-r border-gray-50 px-0 lg:px-6">
-                        <div class="flex items-start gap-3">                            
-                        </div>
                         <div class="flex items-start gap-3">
                             <div class="text-gray-400 mt-0.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
                             <div>
@@ -214,7 +193,6 @@
                     </div>
 
                     <!-- Colonne Droite : Prix & Actions -->
-                    <!-- Colonne Droite : Prix & Actions -->
                     <div class="w-full lg:w-1/4 flex flex-col justify-between h-full min-h-[140px]">
                         <div>
                             <p class="text-xs text-gray-400 font-bold uppercase">Budget proposé</p>
@@ -222,54 +200,19 @@
                         </div>
 
                         <div class="space-y-3 mt-4">
-                            <!-- Bouton Consulter (Lien standard) -->
-                            <a href="{{ route('tutoring.request.details', ['id' => $demande->idDemande]) }}" 
-                               class="w-full py-2 border border-gray-300 rounded-lg text-gray-700 font-bold text-sm hover:bg-gray-50 transition-colors flex justify-center items-center">
+                            <a href="{{ route('tutoring.request.details', ['id' => $demande->idDemande]) }}" class="w-full py-2 border border-gray-300 rounded-lg text-gray-700 font-bold text-sm hover:bg-gray-50 transition-colors flex justify-center items-center">
                                 Consulter détails
                             </a>
 
                             <div class="flex gap-3">
-                                
-                                {{-- BOUTON REFUSER AVEC CHARGEMENT --}}
-                                <button 
-                                    wire:click="refuser({{ $demande->idDemande }})" 
-                                    wire:confirm="Êtes-vous sûr de vouloir refuser cette demande ?"
-                                    wire:loading.attr="disabled"
-                                    class="flex-1 py-2 bg-gray-100 text-gray-700 font-bold text-sm rounded-lg hover:bg-gray-200 transition-colors flex justify-center items-center">
-                                    
-                                    {{-- Texte Normal --}}
-                                    <span wire:loading.remove wire:target="refuser({{ $demande->idDemande }})">
-                                        Refuser
-                                    </span>
-
-                                    {{-- Spinner Rouge pendant le chargement --}}
-                                    <span wire:loading wire:target="refuser({{ $demande->idDemande }})">
-                                        <svg class="animate-spin h-4 w-4 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                    </span>
+                                <button wire:click="refuser({{ $demande->idDemande }})" wire:confirm="Êtes-vous sûr de vouloir refuser cette demande ?" wire:loading.attr="disabled" class="flex-1 py-2 bg-gray-100 text-gray-700 font-bold text-sm rounded-lg hover:bg-gray-200 transition-colors flex justify-center items-center">
+                                    <span wire:loading.remove wire:target="refuser({{ $demande->idDemande }})">Refuser</span>
+                                    <span wire:loading wire:target="refuser({{ $demande->idDemande }})"><svg class="animate-spin h-4 w-4 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></span>
                                 </button>
 
-                                {{-- BOUTON ACCEPTER AVEC CHARGEMENT --}}
-                                <button 
-                                    wire:click="accepter({{ $demande->idDemande }})"
-                                    wire:confirm="Accepter cette demande ? Un email sera envoyé au client."
-                                    wire:loading.attr="disabled"
-                                    class="flex-1 py-2 bg-[#1E40AF] text-white font-bold text-sm rounded-lg hover:bg-blue-800 transition-colors shadow-md shadow-blue-100 flex justify-center items-center">
-                                    
-                                    {{-- Texte Normal --}}
-                                    <span wire:loading.remove wire:target="accepter({{ $demande->idDemande }})">
-                                        Accepter
-                                    </span>
-
-                                    {{-- Spinner Blanc pendant le chargement --}}
-                                    <span wire:loading wire:target="accepter({{ $demande->idDemande }})" class="flex items-center gap-1">
-                                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                    </span>
+                                <button wire:click="accepter({{ $demande->idDemande }})" wire:confirm="Accepter cette demande ? Un email sera envoyé au client." wire:loading.attr="disabled" class="flex-1 py-2 bg-[#1E40AF] text-white font-bold text-sm rounded-lg hover:bg-blue-800 transition-colors shadow-md shadow-blue-100 flex justify-center items-center">
+                                    <span wire:loading.remove wire:target="accepter({{ $demande->idDemande }})">Accepter</span>
+                                    <span wire:loading wire:target="accepter({{ $demande->idDemande }})" class="flex items-center gap-1"><svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></span>
                                 </button>
                             </div>
                         </div>

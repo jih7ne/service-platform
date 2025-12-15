@@ -25,6 +25,11 @@ use App\Livewire\Tutoring\BookingProcess;
 use App\Livewire\Tutoring\DemandeDetails;
 use App\Livewire\Tutoring\ProfessorsList;
 use App\Livewire\Tutoring\RegisterProfesseur;
+use App\Livewire\Tutoring\MesClients;
+use App\Livewire\Tutoring\ClientDetails;
+use App\Livewire\Tutoring\StudentProfile;
+use App\Livewire\Tutoring\MesCours;
+use App\Livewire\Tutoring\MonProfil;
 
 // Babysitter Livewire Components
 use App\Livewire\Babysitter\ListeBabysitter;
@@ -88,6 +93,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tutoring/dashboard', Dashboard::class)->name('tutoring.dashboard');
     Route::get('/tutoring/requests', MesDemandes::class)->name('tutoring.requests');
     Route::get('/tutoring/demande/{id}', DemandeDetails::class)->name('tutoring.request.details');
+    Route::get('/tutoring/client/{id}', ClientDetails::class)->name('tutoring.client.details');
+    Route::get('/tutoring/mes-clients', MesClients::class)->name('tutoring.clients');
+    Route::get('/tutoring/profil-candidat/{id}', StudentProfile::class)->name('tutoring.student.profile');
+    Route::get('/tutoring/mes-cours', MesCours::class)->name('tutoring.courses');
+    Route::get('/tutoring/mon-profil', MonProfil::class)->name('tutoring.profile');
     
     // Babysitter
     Route::get('/babysitter/dashboard', BabysitterDashboard::class)->name('babysitter.dashboard');
