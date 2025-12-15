@@ -1,3 +1,6 @@
+<div>
+<livewire:shared.header />
+
 <div class="min-h-screen bg-gradient-to-br from-yellow-50 to-amber-50">
     <!-- Messages flash -->
     @if(session()->has('success'))
@@ -26,24 +29,11 @@
     <div class="bg-gradient-to-r from-amber-500 to-yellow-600 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-6">
             <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="text-amber-100 hover:text-white flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        Retour à l'accueil
-                    </a>
-                    <h1 class="text-2xl font-bold text-white">🐕 Profil PetKeeper</h1>
+                <div class="flex items-center justify-center space-x-4">
+                    
+                    <h1 class="text-2xl font-bold text-white">Profil PetKeeper</h1>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <span class="px-3 py-1 rounded-full text-sm font-medium bg-white bg-opacity-20 text-white">
-                        {{ $user->statut === 'en_ligne' ? '🟢 En ligne' : '⚫ Hors ligne' }}
-                    </span>
-                    <button wire:click="updateOnlineStatus('{{ $user->statut === 'en_ligne' ? 'hors_ligne' : 'en_ligne' }}')"
-                            class="px-4 py-2 text-sm bg-white text-amber-700 rounded-lg hover:bg-amber-50 font-semibold shadow">
-                        {{ $user->statut === 'en_ligne' ? 'Se déconnecter' : 'Se connecter' }}
-                    </button>
-                </div>
+                
             </div>
         </div>
     </div>
@@ -167,7 +157,7 @@
                     <div class="p-6">
                         @if($isEditing && $editingSection === 'profile')
                             <div class="mb-6 p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl border border-amber-200">
-                                <h3 class="font-semibold text-gray-800 mb-4 text-lg">✏️ Modifier votre profil</h3>
+                                <h3 class="font-semibold text-gray-800 mb-4 text-lg">Modifier votre profil</h3>
                                 <div class="space-y-4">
                                     <!-- Photo de profil -->
                                     <div>
@@ -194,19 +184,7 @@
                                         @error('years_of_experience') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                     </div>
                                     
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tarif horaire (DH) *</label>
-                                        <input type="number" wire:model="hourly_rate" min="0" step="10"
-                                               class="w-40 px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
-                                        @error('hourly_rate') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
                                     
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Bio / Description *</label>
-                                        <textarea wire:model="bio" rows="4"
-                                                  class="w-full px-4 py-3 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"></textarea>
-                                        @error('bio') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                                    </div>
                                 </div>
                                 <div class="flex justify-end space-x-3 mt-6">
                                     <button wire:click="cancelEditing"
@@ -257,9 +235,8 @@
                                 </div>
                                 
                                 <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl">
-                                    <h4 class="text-sm font-medium text-amber-800 mb-2">💰 Tarif</h4>
-                                    <p class="text-2xl font-bold text-amber-700">{{ $hourly_rate ?? 0 }} DH</p>
-                                    <p class="text-gray-600 text-sm mt-1">par heure</p>
+                                    <h4 class="text-sm font-medium text-amber-800 mb-2">Nombres des services Pet keeping</h4>
+                                    <p class="text-2xl font-bold text-amber-700">{{ $stats['nombres_services_pet_keeping'] ?? 0 }}</p>
                                 </div>
                                 
                                 <div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl">
@@ -657,7 +634,7 @@
                     
                     <div class="p-6">
                         <div class="space-y-3">
-                            <a href="/petkeeper/dashboard"
+                            <a href="/pet-keeper/dashboard"
                                class="flex items-center p-4 border border-amber-200 rounded-xl hover:bg-gradient-to-r hover:from-amber-50 hover:to-yellow-50 transition group">
                                 <span class="mr-3 text-2xl">📊</span>
                                 <div>
@@ -667,7 +644,7 @@
                                 <span class="ml-auto text-amber-500 opacity-0 group-hover:opacity-100">→</span>
                             </a>
                             
-                            <a href="/petkeeper/missions"
+                            <a href="/pet-keeper/missions"
                                class="flex items-center p-4 border border-amber-200 rounded-xl hover:bg-gradient-to-r hover:from-amber-50 hover:to-yellow-50 transition group">
                                 <span class="mr-3 text-2xl">📅</span>
                                 <div>
@@ -677,7 +654,7 @@
                                 <span class="ml-auto text-amber-500 opacity-0 group-hover:opacity-100">→</span>
                             </a>
                             
-                            <a href="/petkeeper/calendar"
+                            <a href="/pet-keeper/calendar"
                                class="flex items-center p-4 border border-amber-200 rounded-xl hover:bg-gradient-to-r hover:from-amber-50 hover:to-yellow-50 transition group">
                                 <span class="mr-3 text-2xl">🗓️</span>
                                 <div>
@@ -705,6 +682,9 @@
         @csrf
     </form>
 </div>
+</div>
+
+
 
 @push('styles')
 <style>

@@ -16,7 +16,7 @@ class ServiceSeeder extends Seeder
             ['nomService' => 'Soutien Scolaire'], 
             [
                 'description' => 'Cours particuliers, aide aux devoirs et préparation aux examens.',
-                'statut' => 'ACTIVE'
+                
             ]
         );
 
@@ -25,7 +25,7 @@ class ServiceSeeder extends Seeder
             ['nomService' => 'Babysitting'], 
             [
                 'description' => 'Garde d\'enfants ponctuelle ou régulière.',
-                'statut' => 'ACTIVE'
+                
             ]
         );
 
@@ -34,7 +34,7 @@ class ServiceSeeder extends Seeder
             ['nomService' => 'Pet Keeping'], 
             [
                 'description' => 'Garde d\'animaux, promenades et visites à domicile.',
-                'statut' => 'ACTIVE'
+                
             ]
         );
         

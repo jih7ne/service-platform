@@ -6,14 +6,13 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\PetKeeping\PetKeeper;
 use App\Models\PetKeeping\PetKeeperCertification;
-use App\Models\PetKeeping\PaymentCriteria;
-use App\Models\PetKeeping\OptionSuppPetKeeping;
+use App\Models\PetKeeping\PetKeeping;
 use App\Models\Shared\Utilisateur;
 use App\Models\Shared\Intervenant;
 use App\Models\Shared\Localisation;
 use App\Models\Shared\Disponibilite;
 use App\Models\Shared\Feedback;
-use App\Models\Shared\Demandesintervention;
+use App\Models\Shared\DemandesIntervention;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -92,59 +91,32 @@ class PetKeeperProfile extends Component
         
         $this->user = Utilisateur::find($userId);
         
-        if (!$this->user) {
+        if (!$this->user || $this->user->role != 'intervenant') {
             return redirect('/connexion');
         }
         
-        // CORRECTION : Recherche avec 'IdIntervenant' (I majuscule)
+       
         $this->intervenant = Intervenant::where('IdIntervenant', $userId)->first();
-        
-        if (!$this->intervenant) {
-            // CORRECTION : Création avec 'IdIntervenant'
-            $this->intervenant = Intervenant::create([
-                'IdIntervenant' => $userId,
-                'statut' => 'actif',
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+
+        if(!$this->intervenant){
+            return redirect('/connexion');
         }
         
-        // Récupérer le PetKeeper
+
         $this->petKeeper = PetKeeper::where('idPetKeeper', $this->intervenant->IdIntervenant)->first();
         
         if (!$this->petKeeper) {
-            // Création simple sans colonne pet_type
-            $this->petKeeper = PetKeeper::create([
-                'idPetKeeper' => $this->intervenant->IdIntervenant,
-                'nombres_services_demandes' => 0,
-                'specialite' => 'Garde d\'animaux',
-                'years_of_experience' => 0,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+            return redirect('/connexion');
         }
         
-        // Charger la localisation
         $this->localisation = Localisation::where('idUser', $userId)->first();
         
-        // Charger les certifications
+        
         $this->certifications = PetKeeperCertification::where('idPetKeeper', $this->petKeeper->idPetKeeper)
             ->orderBy('created_at', 'desc')
             ->get();
         
-        // Charger les critères de paiement
-        $this->paymentCriteria = PaymentCriteria::where('idPetKeeper', $this->petKeeper->idPetKeeper)->first();
-        
-        if (!$this->paymentCriteria) {
-            $this->paymentCriteria = PaymentCriteria::create([
-                'idPetKeeper' => $this->petKeeper->idPetKeeper,
-                'base_price' => 15.00,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-        }
-        
-        $this->additionalOptions = OptionSuppPetKeeping::where('idPetKeeper', $this->petKeeper->idPetKeeper)->get();
+    
         
         $this->loadAvailabilities();
         $this->loadReviews();
@@ -184,7 +156,7 @@ class PetKeeperProfile extends Component
     {
         $this->reviews = Feedback::where('idCible', $this->intervenant->IdIntervenant)
             ->with(['auteur'])
-            ->orderBy('created_at', 'desc')
+           // ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
     }
@@ -194,39 +166,39 @@ class PetKeeperProfile extends Component
         $intervenantId = $this->intervenant->IdIntervenant;
         
         $completedMissions = Demandesintervention::where('idIntervenant', $intervenantId)
-            ->where('statut', 'TERMINE')
+            ->where('statut', 'validée')
             ->count();
         
-        $ongoingMissions = Demandesintervention::where('idIntervenant', $intervenantId)
-            ->whereIn('statut', ['CONFIRME', 'EN_COURS'])
-            ->count();
         
         $pendingRequests = Demandesintervention::where('idIntervenant', $intervenantId)
-            ->where('statut', 'EN_ATTENTE')
+            ->where('statut', 'en_attente')
             ->count();
         
-        $avgRating = Feedback::where('idCible', $intervenantId)
-            ->avg('note');
         
-        $totalEarnings = Demandesintervention::where('idIntervenant', $intervenantId)
-            ->where('statut', 'TERMINE')
+        $avgRating = $this->user->note ?? 0;
+        
+        $totalEarnings = DemandesIntervention::where('idIntervenant', $intervenantId)
+            ->where('statut', 'validée')
             ->with('facture')
             ->get()
             ->sum(function($mission) {
-                return $mission->facture->montant_total ?? 0;
+                return $mission->facture->montantTotal ?? 0;
             });
+
+        $services_pet_keeping = PetKeeping::where('idPetKeeper', $intervenantId)->count();
         
         $requestedServices = $this->petKeeper->nombres_services_demandes ?? 0;
         
         $this->stats = [
             'completed_missions' => $completedMissions,
-            'ongoing_missions' => $ongoingMissions,
+            'ongoing_missions' => $pendingRequests,
             'pending_requests' => $pendingRequests,
             'requested_services' => $requestedServices,
             'avg_rating' => round($avgRating, 1) ?? 0,
             'total_earnings' => $totalEarnings,
             'response_rate' => $this->calculateResponseRate(),
             'repeat_clients' => $this->calculateRepeatClients(),
+            'nombres_services_pet_keeping' => $services_pet_keeping
         ];
     }
     
@@ -234,9 +206,9 @@ class PetKeeperProfile extends Component
     {
         $intervenantId = $this->intervenant->IdIntervenant;
         
-        $totalRequests = Demandesintervention::where('idIntervenant', $intervenantId)->count();
-        $respondedRequests = Demandesintervention::where('idIntervenant', $intervenantId)
-            ->whereIn('statut', ['CONFIRME', 'REFUSE'])
+        $totalRequests = DemandesIntervention::where('idIntervenant', $intervenantId)->count();
+        $respondedRequests = DemandesIntervention::where('idIntervenant', $intervenantId)
+            ->whereIn('statut', ['validée', 'refusée', 'annulée'])
             ->count();
         
         return $totalRequests > 0 ? round(($respondedRequests / $totalRequests) * 100) : 100;
@@ -246,8 +218,8 @@ class PetKeeperProfile extends Component
     {
         $intervenantId = $this->intervenant->IdIntervenant;
         
-        $repeatClients = Demandesintervention::where('idIntervenant', $intervenantId)
-            ->where('statut', 'TERMINE')
+        $repeatClients = DemandesIntervention::where('idIntervenant', $intervenantId)
+            ->where('statut', 'validée')
             ->select('idClient')
             ->groupBy('idClient')
             ->havingRaw('COUNT(*) > 1')
@@ -274,10 +246,219 @@ class PetKeeperProfile extends Component
         $this->loadAvailabilities();
         $this->certificationList = [['type' => '', 'file' => null]];
     }
+
+
+    public function deleteCertification($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $cert = PetKeeperCertification::findOrFail($id);
+
+            if ($cert->document && Storage::disk('public')->exists($cert->document)) {
+                Storage::disk('public')->delete($cert->document);
+            }
+
+            $cert->delete();
+
+            DB::commit();
+
+            $this->loadProfileData();
+
+            session()->flash('success', 'Certification supprimée avec succès !');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
+
+
+    private function saveProfilePhoto()
+    {
+        $this->validate([
+            'tempPhoto' => 'image|max:2048',
+        ]);
+
+        if ($this->user->photo && Storage::disk('public')->exists($this->user->photo)) {
+            Storage::disk('public')->delete($this->user->photo);
+        }
+
+        $filename = 'profile_' . $this->user->id . '_' . Str::uuid() . '.' . $this->tempPhoto->getClientOriginalExtension();
+
+        $path = $this->tempPhoto->storeAs(
+            'profile-photos',
+            $filename,
+            'public'
+        );
+
+        $this->user->update([
+            'photo' => $path,
+            'updated_at' => now(),
+        ]);
+
+        
+        $this->tempPhoto = null;
+    }
+
+
+    public function saveAvailability()
+    {
+        try {
+            Disponibilite::where('idIntervenant', $this->petKeeper->idPetKeeper)->delete();
+            
+            foreach ($this->availabilities as $day => $slots) {
+                foreach ($slots as $slot) {
+                    if (!empty($slot['heureDebut']) && !empty($slot['heureFin'])) {
+                        Disponibilite::create([
+                            'jourSemaine' => $day,
+                            'heureDebut' => $slot['heureDebut'],
+                            'heureFin' => $slot['heureFin'],
+                            'est_reccurent' => true,
+                            'idIntervenant' => $this->petKeeper->idPetKeeper,
+                        ]);
+                    }
+                }
+            }
+            
+            $this->loadAvailabilities();
+            session()->flash('success', 'Disponibilités mises à jour!');
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
+
+
+    public function addAvailabilitySlot($day)
+    {
+        if (!isset($this->availabilities[$day])) {
+            $this->availabilities[$day] = [];
+        }
+        
+        $this->availabilities[$day][] = [
+            'heureDebut' => '09:00',
+            'heureFin' => '17:00'
+        ];
+    }
+
+    public function removeAvailabilitySlot($day, $index)
+    {
+        if (isset($this->availabilities[$day][$index])) {
+            unset($this->availabilities[$day][$index]);
+            $this->availabilities[$day] = array_values($this->availabilities[$day]);
+        }
+    }
+
+
+
+    public function uploadCertification()
+    {
+        $cert = $this->certificationList[0] ?? null;
+
+        if (!$cert || empty(trim($cert['type'])) || !$cert['file']) {
+            session()->flash('error', 'Veuillez remplir le nom et sélectionner un fichier');
+            return;
+        }
+
+        $this->validate([
+            'certificationList.0.type' => 'required|string|max:255',
+            'certificationList.0.file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:4096',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            
+            $path = $cert['file']->store('certifications', 'public');
+
+           
+            PetKeeperCertification::create([
+                'idPetKeeper'  => $this->petKeeper->idPetKeeper,
+                'certification'=> trim($cert['type']),
+                'document'     => $path,
+            ]);
+
+            DB::commit();
+
+            
+            $this->certificationList = [['type' => '', 'file' => null]];
+            $this->isEditing = false;
+            $this->editingSection = null;
+
+            $this->loadProfileData();
+
+            session()->flash('success', 'Certification ajoutée avec succès !');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            
+            if (isset($path)) {
+                Storage::disk('public')->delete($path);
+            }
+
+            session()->flash('error', 'Erreur: ' . $e->getMessage());
+        }
+    }
+
+
+    public function downloadCertification($id)
+    {
+        try {
+            $cert = PetKeeperCertification::find($id);
+            
+            if (!$cert) {
+                session()->flash('error', 'Certification non trouvée');
+                return null;
+            }
+            
+            if (!$cert->document) {
+                session()->flash('error', 'Aucun document associé à cette certification');
+                return null;
+            }
+            
+            $filePath = 'public/' . $cert->document;
+            
+            if (!Storage::exists($filePath)) {
+                session()->flash('error', 'Fichier non trouvé sur le serveur');
+                return null;
+            }
+            
+            $extension = pathinfo($cert->document, PATHINFO_EXTENSION);
+            $filename = Str::slug($cert->certification) . '.' . $extension;
+            
+            return Storage::download($filePath, $filename);
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Erreur lors du téléchargement: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function addCertificationField()
+    {
+        $this->certificationList[] = [
+            'type' => '',
+            'file' => null
+        ];
+    }
+    
+    public function removeCertificationField($index)
+    {
+        if (isset($this->certificationList[$index])) {
+            unset($this->certificationList[$index]);
+            $this->certificationList = array_values($this->certificationList);
+        }
+    }
+
+
+    
+
     
     public function saveProfile()
     {
-        // CORRECTION : Validation simplifiée sans pet_type
+        
         $this->validate([
             'specialite' => 'required|string|max:255',
             'hourly_rate' => 'required|numeric|min:0',
@@ -287,26 +468,16 @@ class PetKeeperProfile extends Component
         
         DB::beginTransaction();
         try {
-            // Mettre à jour le petkeeper sans pet_type
+           
             $this->petKeeper->update([
                 'specialite' => $this->specialite,
                 'years_of_experience' => $this->years_of_experience,
                 'updated_at' => now(),
             ]);
             
-            // Mettre à jour les critères de paiement
-            if ($this->paymentCriteria) {
-                $this->paymentCriteria->update([
-                    'base_price' => $this->hourly_rate,
-                ]);
-            }
             
-            // Mettre à jour la bio de l'utilisateur
-            $this->user->update([
-                'bio' => $this->bio,
-            ]);
             
-            // Mettre à jour la photo si nécessaire
+            
             if ($this->tempPhoto) {
                 $this->saveProfilePhoto();
             }
@@ -325,9 +496,7 @@ class PetKeeperProfile extends Component
         }
     }
     
-    // Le reste des méthodes reste IDENTIQUE...
-    // (saveAvailability, addAvailabilitySlot, removeAvailabilitySlot,
-    // uploadCertification, deleteCertification, etc.)
+    
     
     public function render()
     {

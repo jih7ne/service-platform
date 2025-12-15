@@ -57,7 +57,7 @@ class RegisterIntervenantPage extends Component
             case 'professeur':
                 // Rediriger vers le formulaire professeur
                 session(['serviceType' => 'professeur']);
-                return redirect('/inscriptionIntervenant/formulaire');
+                return redirect('/inscriptionProfesseur');
             
             case 'petkeeper':
                 // Rediriger vers le formulaire petkeeper

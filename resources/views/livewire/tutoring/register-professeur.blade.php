@@ -4,7 +4,6 @@
     <div class="min-h-screen bg-[#F7F7F7] py-12">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             
-            <!-- Messages Flash -->
             @if (session()->has('success'))
                 <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
                     {{ session('success') }}
@@ -17,10 +16,8 @@
                 </div>
             @endif
 
-            <!-- Card principale -->
             <div class="bg-white rounded-2xl p-8 shadow-md border border-gray-100">
                 
-                <!-- Header -->
                 <div class="text-center mb-8">
                     <h1 class="text-3xl mb-2 text-black font-extrabold">
                         Inscription Professeur
@@ -30,45 +27,47 @@
                     </p>
                 </div>
 
-                <!-- Stepper -->
+                <!-- Stepper mis à jour -->
+                @if(!$registrationComplete)
                 <div class="w-full mb-8">
                     <div class="flex items-center justify-between max-w-3xl mx-auto">
-                        @foreach([1 => 'Infos', 2 => 'Lieu', 3 => 'Matières', 4 => 'Finaliser'] as $stepNumber => $stepLabel)
+                        @php
+                            $steps = [1 => 'Infos', 2 => 'Lieu', 3 => 'Matières', 4 => 'Finaliser'];
+                            $currentStepDisplay = $currentStep == 1.5 ? 1 : $currentStep;
+                        @endphp
+                        @foreach($steps as $stepNumber => $stepLabel)
                             <div class="flex flex-col items-center flex-1 relative">
-                                <!-- Cercle du step -->
                                 <div class="flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300 z-10
-                                    {{ $currentStep > $stepNumber ? 'bg-[#2B5AA8] border-[#2B5AA8]' : 
-                                       ($currentStep == $stepNumber ? 'bg-[#2B5AA8] border-[#2B5AA8]' : 'bg-white border-gray-300') }}">
-                                    @if($currentStep > $stepNumber)
+                                    {{ $currentStepDisplay > $stepNumber ? 'bg-[#2B5AA8] border-[#2B5AA8]' : 
+                                       ($currentStepDisplay == $stepNumber ? 'bg-[#2B5AA8] border-[#2B5AA8]' : 'bg-white border-gray-300') }}">
+                                    @if($currentStepDisplay > $stepNumber)
                                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                         </svg>
                                     @else
                                         <span class="text-lg font-bold 
-                                            {{ $currentStep == $stepNumber ? 'text-white' : 'text-gray-400' }}">
+                                            {{ $currentStepDisplay == $stepNumber ? 'text-white' : 'text-gray-400' }}">
                                             {{ $stepNumber }}
                                         </span>
                                     @endif
                                 </div>
 
-                                <!-- Label du step -->
                                 <span class="mt-2 text-sm font-semibold
-                                    {{ $currentStep >= $stepNumber ? 'text-[#2B5AA8]' : 'text-gray-400' }}">
+                                    {{ $currentStepDisplay >= $stepNumber ? 'text-[#2B5AA8]' : 'text-gray-400' }}">
                                     {{ $stepLabel }}
                                 </span>
 
-                                <!-- Ligne de connexion -->
                                 @if($stepNumber < 4)
                                     <div class="absolute top-6 left-1/2 w-full h-0.5 -z-1 transition-all duration-300
-                                        {{ $currentStep > $stepNumber ? 'bg-[#2B5AA8]' : 'bg-gray-300' }}">
+                                        {{ $currentStepDisplay > $stepNumber ? 'bg-[#2B5AA8]' : 'bg-gray-300' }}">
                                     </div>
                                 @endif
                             </div>
                         @endforeach
                     </div>
                 </div>
+                @endif
 
-                <!-- Contenu des étapes -->
                 <div class="mt-8">
                     
                     {{-- ÉTAPE 1 : INFORMATIONS PERSONNELLES --}}
@@ -77,10 +76,9 @@
                             <h2 class="text-xl font-bold text-black mb-4">Informations Personnelles</h2>
 
                             <div class="grid md:grid-cols-2 gap-4">
-                                <!-- Prénom -->
                                 <div>
                                     <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
-                                        Prénom  <span class="text-red-500">*</span>
+                                        Prénom <span class="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
@@ -93,7 +91,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Nom -->
                                 <div>
                                     <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
                                         Nom <span class="text-red-500">*</span>
@@ -110,7 +107,6 @@
                                 </div>
                             </div>
 
-                            <!-- Email -->
                             <div>
                                 <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
                                     Email <span class="text-red-500">*</span>
@@ -127,7 +123,6 @@
                             </div>
 
                             <div class="grid md:grid-cols-2 gap-4">
-                                <!-- Téléphone -->
                                 <div>
                                     <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
                                         Téléphone <span class="text-red-500">*</span>
@@ -143,7 +138,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Date de naissance -->
                                 <div>
                                     <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
                                         Date de Naissance <span class="text-red-500">*</span>
@@ -159,7 +153,6 @@
                                 </div>
                             </div>
 
-                            <!-- Mot de passe -->
                             <div>
                                 <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
                                     Mot de passe <span class="text-red-500">*</span>
@@ -191,6 +184,70 @@
                                 @enderror
                                 <p class="text-xs text-gray-500 mt-1">
                                     Le mot de passe doit contenir au moins 8 caractères
+                                </p>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- ÉTAPE 1.5 : VÉRIFICATION EMAIL --}}
+                    @if($currentStep == 1.5)
+                        <div class="space-y-6">
+                            <div class="text-center">
+                                <div class="w-20 h-20 bg-[#E1EAF7] rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg class="w-10 h-10 text-[#2B5AA8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <h2 class="text-2xl font-bold text-black mb-2">Vérifiez votre email</h2>
+                                <p class="text-gray-600">
+                                    Nous avons envoyé un code de vérification à<br>
+                                    <span class="font-semibold text-[#2B5AA8]">{{ $email }}</span>
+                                </p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold text-center">
+                                    Code de vérification (10 chiffres)
+                                </label>
+                                <input
+                                    type="text"
+                                    wire:model="verificationCode"
+                                    maxlength="10"
+                                    class="w-full px-4 py-4 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-center text-2xl tracking-widest font-mono"
+                                    placeholder="0000000000"
+                                />
+                                @error('verificationCode') 
+                                    <span class="text-red-500 text-sm mt-1 block text-center">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <button
+                                type="button"
+                                wire:click="verifyCode"
+                                class="w-full py-3 bg-[#2B5AA8] text-white rounded-lg hover:bg-[#224A91] transition-all font-bold"
+                            >
+                                Vérifier le code
+                            </button>
+
+                            <div class="text-center">
+                                <p class="text-sm text-gray-600">
+                                    Vous n'avez pas reçu le code ?
+                                    <button
+                                        type="button"
+                                        wire:click="resendCode"
+                                        class="text-[#2B5AA8] font-semibold hover:underline"
+                                    >
+                                        Renvoyer
+                                    </button>
+                                </p>
+                            </div>
+
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <p class="text-sm text-yellow-800 flex items-start gap-2">
+                                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Le code expire dans 10 minutes. Vérifiez vos spams si vous ne le trouvez pas.
                                 </p>
                             </div>
                         </div>
