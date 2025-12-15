@@ -14,6 +14,7 @@ class StudentProfile extends Component
     public $photo_prof;
     public $moyenne = 0;
     public $backUrl; 
+    public $enAttente;
 
     public function mount($id)
     {
