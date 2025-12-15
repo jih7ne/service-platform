@@ -21,15 +21,15 @@ class Constants
 
 
     //Payment Criteria
-    public const PER_HOUR = 'par heure';
-    public const PER_DAY = 'par jour';
-    public const PER_VISIT = 'par visite';
-    public const PER_WALK = 'par promenade';
-    public const PER_PET = 'par animal';
-    public const PER_SPECIES = 'par espèce';
-    public const PER_WEIGHT = 'par poids';
-    public const PER_SERVICE = 'par service';
-    public const PER_DISTANCE = 'par distance';
+    public const PER_HOUR = 'PER_HOUR';
+    public const PER_DAY = 'PER_DAY';
+    public const PER_VISIT = 'PER_VISIT';
+    public const PER_WALK = 'PER_WALK';
+    public const PER_PET = 'PER_PET';
+    public const PER_SPECIES = 'PER_SPECIES';
+    public const PER_WEIGHT = 'PER_WEIGHT';
+    public const PER_SERVICE = 'PER_SERVICE';
+    public const PER_DISTANCE = 'PER_DISTANCE';
 
     public const LIST_PETS = [
         'all'       => ['label' => 'Tous',   'emoji' => '🐾', 'icon' => 'fa-paw'            ],

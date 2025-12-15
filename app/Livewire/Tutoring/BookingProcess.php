@@ -11,6 +11,8 @@ use App\Models\Shared\Disponibilite;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Mail\Tutoring\SubmitBooking;
+use Illuminate\Support\Facades\Mail;
 
 class BookingProcess extends Component
 {
@@ -275,91 +277,121 @@ class BookingProcess extends Component
     }
 
     public function submitBooking()
-    {
-        if (!Auth::check()) {
-            session()->flash('error', 'Vous devez être connecté pour réserver un cours.');
-            return redirect()->route('connexion');
-        }
-
-        // Validation
-        $validationRules = [
-            'typeService' => 'required|in:enligne,domicile',
-            'selectedDate' => 'required|date|after_or_equal:today',
-            'selectedTimeSlots' => 'required|array|min:1',
-        ];
-        
-        if ($this->typeService === 'domicile') {
-            $validationRules['ville'] = 'required|string|max:100';
-            $validationRules['adresse'] = 'required|string|max:255';
-        }
-        
-        $this->validate($validationRules);
-
-        try {
-            DB::beginTransaction();
-
-            // Vérifier une dernière fois que les créneaux sont toujours disponibles
-            $reservedSlots = $this->getReservedSlots($this->selectedDate);
-            
-            foreach ($this->selectedTimeSlots as $slot) {
-                $times = explode('-', $slot);
-                $heureDebut = trim($times[0]);
-                $heureFin = trim($times[1]);
-                
-                // Si le créneau est déjà réservé, annuler la transaction
-                if ($this->isSlotReserved($heureDebut, $heureFin, $reservedSlots)) {
-                    DB::rollBack();
-                    session()->flash('error', 'Désolé, un ou plusieurs créneaux ont été réservés entre temps. Veuillez sélectionner d\'autres créneaux.');
-                    $this->loadAvailableSlotsForDate($this->selectedDate);
-                    $this->selectedTimeSlots = [];
-                    $this->currentStep = 2;
-                    return;
-                }
-            }
-
-            // Créer le lieu
-            $lieu = $this->typeService === 'domicile' 
-                ? ($this->ville && $this->adresse ? $this->ville . ',' . $this->adresse : 'Domicile de l\'étudiant')
-                : 'En ligne';
-
-            // Créer une demande pour CHAQUE créneau horaire
-            foreach ($this->selectedTimeSlots as $slot) {
-                $times = explode('-', $slot);
-                $heureDebut = trim($times[0]);
-                $heureFin = trim($times[1]);
-
-                // Créer la demande d'intervention
-                $demande = DemandesIntervention::create([
-                    'dateDemande' => now(),
-                    'dateSouhaitee' => $this->selectedDate,
-                    'heureDebut' => $heureDebut,
-                    'heureFin' => $heureFin,
-                    'statut' => 'en_attente',
-                    'lieu' => $lieu,
-                    'note_speciales' => $this->noteSpeciales,
-                    'idIntervenant' => $this->professeur->intervenant_id,
-                    'idClient' => Auth::id(),
-                    'idService' => null
-                ]);
-
-                // Créer la demande professeur pour chaque créneau
-                DemandeProf::create([
-                    'montant_total' => $this->service->prix_par_heure,
-                    'service_prof_id' => $this->serviceId,
-                    'demande_id' => $demande->idDemande
-                ]);
-            }
-
-            DB::commit();
-
-            session()->flash('success', 'Votre demande de réservation a été envoyée avec succès !');
-            return redirect()->route('professeurs.details', ['id' => $this->service->professeur_id]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            session()->flash('error', 'Une erreur est survenue lors de la réservation : ' . $e->getMessage());
-        }
+{
+    if (!Auth::check()) {
+        session()->flash('error', 'Vous devez être connecté pour réserver un cours.');
+        return redirect()->route('connexion');
     }
+
+    // Validation
+    $validationRules = [
+        'typeService' => 'required|in:enligne,domicile',
+        'selectedDate' => 'required|date|after_or_equal:today',
+        'selectedTimeSlots' => 'required|array|min:1',
+    ];
+    
+    if ($this->typeService === 'domicile') {
+        $validationRules['ville'] = 'required|string|max:100';
+        $validationRules['adresse'] = 'required|string|max:255';
+    }
+    
+    $this->validate($validationRules);
+
+    try {
+        DB::beginTransaction();
+
+        // Vérifier une dernière fois que les créneaux sont toujours disponibles
+        $reservedSlots = $this->getReservedSlots($this->selectedDate);
+        
+        foreach ($this->selectedTimeSlots as $slot) {
+            $times = explode('-', $slot);
+            $heureDebut = trim($times[0]);
+            $heureFin = trim($times[1]);
+            
+            if ($this->isSlotReserved($heureDebut, $heureFin, $reservedSlots)) {
+                DB::rollBack();
+                session()->flash('error', 'Désolé, un ou plusieurs créneaux ont été réservés entre temps. Veuillez sélectionner d\'autres créneaux.');
+                $this->loadAvailableSlotsForDate($this->selectedDate);
+                $this->selectedTimeSlots = [];
+                $this->currentStep = 2;
+                return;
+            }
+        }
+
+        // Créer le lieu
+        $lieu = $this->typeService === 'domicile' 
+            ? ($this->ville && $this->adresse ? $this->ville . ',' . $this->adresse : 'Domicile de l\'étudiant')
+            : 'En ligne';
+
+        // Tableau pour stocker toutes les demandes créées
+        $demandesCreees = [];
+
+        // Créer une demande pour CHAQUE créneau horaire
+        foreach ($this->selectedTimeSlots as $slot) {
+            $times = explode('-', $slot);
+            $heureDebut = trim($times[0]);
+            $heureFin = trim($times[1]);
+
+            // Créer la demande d'intervention
+            $demande = DemandesIntervention::create([
+                'dateDemande' => now(),
+                'dateSouhaitee' => $this->selectedDate,
+                'heureDebut' => $heureDebut,
+                'heureFin' => $heureFin,
+                'statut' => 'en_attente',
+                'lieu' => $lieu,
+                'note_speciales' => $this->noteSpeciales,
+                'idIntervenant' => $this->professeur->intervenant_id,
+                'idClient' => Auth::id(),
+                'idService' => null
+            ]);
+
+            // Créer la demande professeur pour chaque créneau
+            DemandeProf::create([
+                'montant_total' => $this->service->prix_par_heure,
+                'service_prof_id' => $this->serviceId,
+                'demande_id' => $demande->idDemande
+            ]);
+
+            $demandesCreees[] = $demande;
+        }
+
+        // Récupérer le client connecté
+        $client = Auth::user();
+
+        // Récupérer l'email du professeur
+        $professeurUser = DB::table('utilisateurs')
+            ->join('intervenants', 'utilisateurs.idUser', '=', 'intervenants.IdIntervenant')
+            ->where('intervenants.IdIntervenant', $this->professeur->intervenant_id)
+            ->first();
+
+        // Envoyer l'email au professeur
+        if ($professeurUser && $professeurUser->email) {
+            Mail::to($professeurUser->email)->send(new SubmitBooking(
+                $this->professeur,
+                $client,
+                $this->service,
+                $demandesCreees,
+                $this->selectedDate,
+                $this->typeService,
+                $this->ville,
+                $this->adresse,
+                $this->noteSpeciales,
+                $this->montantTotal,
+                $this->nombreHeures
+            ));
+        }
+
+        DB::commit();
+
+        session()->flash('success', 'Votre demande de réservation a été envoyée avec succès !');
+        return redirect()->route('professeurs.details', ['id' => $this->service->professeur_id]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        session()->flash('error', 'Une erreur est survenue lors de la réservation : ' . $e->getMessage());
+    }
+}
 
     public function cancel()
     {
