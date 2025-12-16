@@ -32,11 +32,12 @@ use App\Livewire\Shared\Admin\AdminDashboard;
 use App\Livewire\Shared\Admin\AdminIntervenants;
 use App\Livewire\Shared\Admin\IntervenantDetails;
 use App\Livewire\Tutoring\RegisterProfesseur;
-use App\Livewire\Tutoring\DisponibilitesPage;
+use App\Livewire\Tutoring\DisponibilitesPage as TutoringDisponibilitesPage;
 
 // Babysitter Livewire Components
 use App\Livewire\Babysitter\BabysitterBooking;
 use App\Livewire\Babysitter\BabysitterProfile;
+use App\Livewire\Babysitter\DisponibilitesPage as BabysitterDisponibilitesPage;
 use App\Livewire\PetKeeping\PetKeeperMissions;
 use App\Livewire\PetKeeping\PetKeeperDashboard;
 use App\Livewire\Babysitter\BabysitterDashboard;
@@ -129,7 +130,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tutoring/profil-candidat/{id}', StudentProfile::class)->name('tutoring.student.profile');
     Route::get('/tutoring/mes-cours', MesCours::class)->name('tutoring.courses');
     Route::get('/tutoring/mon-profil', MonProfil::class)->name('tutoring.profile');
-    Route::get('/tutoring/disponibilites', DisponibilitesPage::class)->name('tutoring.disponibilites');
+    Route::get('/tutoring/disponibilites', TutoringDisponibilitesPage::class)->name('tutoring.disponibilites');
     
     // Babysitter
     Route::get('/babysitter/dashboard', BabysitterDashboard::class)->name('babysitter.dashboard');
