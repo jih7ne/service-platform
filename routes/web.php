@@ -32,6 +32,7 @@ use App\Livewire\PetKeeping\PetKeeperProfile;
 use App\Livewire\Shared\Admin\AdminDashboard;
 use App\Livewire\Shared\Admin\AdminIntervenants;
 use App\Livewire\Shared\Admin\IntervenantDetails;
+use App\Livewire\Shared\Admin\AdminUsers;
 use App\Livewire\Tutoring\RegisterProfesseur;
 use App\Livewire\Tutoring\DisponibilitesPage as TutoringDisponibilitesPage;
 
@@ -151,11 +152,11 @@ Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
     // Maintenant cette ligne va fonctionner car l'import est correct en haut
     //Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.details');
 
-
+});
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
-    // Route::get('/users', AdminUsers::class)->name('users');
+    Route::get('/users', AdminUsers::class)->name('users');
     // Route::get('/complaints', AdminComplaints::class)->name('complaints');
     Route::get('/intervenants', AdminIntervenants::class)->name('intervenants');
     Route::get('/intervenant/{id}', IntervenantDetails::class)->name('intervenant.details');

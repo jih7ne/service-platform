@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             
             // PetKeeping (contient users, intervenants, services)
             PetKeepingSeeder::class,
+                  TestUsersSeeder::class,
         ]);
         
         $this->command->info('✅ Tous les seeders ont été exécutés avec succès !');
