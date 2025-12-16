@@ -5,6 +5,7 @@ namespace App\Livewire\Shared;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Shared\Intervenant;
+use App\Models\Shared\OffreService;
 
 class IntervenantHub extends Component
 {
@@ -23,6 +24,42 @@ class IntervenantHub extends Component
         if ($intervenant) {
             // On charge les services associés
             $this->services = $intervenant->services;
+        }
+    }
+
+    public function archiveService($idService)
+    {
+        $user = Auth::user();
+        $intervenant = Intervenant::where('idIntervenant', $user->idUser)->first();
+        
+        if ($intervenant) {
+            \DB::table('offres_services')
+                ->where('idService', $idService)
+                ->where('idIntervenant', $intervenant->IdIntervenant)
+                ->update(['statut' => 'ARCHIVED']);
+            
+            // Recharger les services
+            $this->services = $intervenant->services;
+            
+            session()->flash('success', 'Service archivé avec succès !');
+        }
+    }
+
+    public function unarchiveService($idService)
+    {
+        $user = Auth::user();
+        $intervenant = Intervenant::where('idIntervenant', $user->idUser)->first();
+        
+        if ($intervenant) {
+            \DB::table('offres_services')
+                ->where('idService', $idService)
+                ->where('idIntervenant', $intervenant->IdIntervenant)
+                ->update(['statut' => 'ACTIVE']);
+            
+            // Recharger les services
+            $this->services = $intervenant->services;
+            
+            session()->flash('success', 'Service désarchivé avec succès !');
         }
     }
 

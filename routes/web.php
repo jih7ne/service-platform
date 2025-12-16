@@ -16,6 +16,7 @@ use App\Livewire\Shared\ServicesPage;
 use App\Livewire\Tutoring\MesClients;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Tutoring\MesDemandes;
+use App\Livewire\Shared\AvisPage;
 
 // Tutoring Livewire Components
 use App\Livewire\Shared\IntervenantHub;
@@ -50,6 +51,8 @@ use App\Livewire\PetKeeping\PetKeeperRegistration;
 use App\Livewire\Babysitter\BabysitterRegistration;
 use App\Livewire\PetKeeping\PetKeeperMissionDetails;
 use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Livewire\Shared\Feedback;
+
 // ICI : J'ai décommenté et corrigé le chemin (PetKeeping\)
 //use App\Livewire\PetKeeping\PetKeeperMissionDetails;
 
@@ -68,13 +71,6 @@ use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 
 
 Route::get('/petkeeper/missions', PetKeeperMissions::class);
-
-
-
-
-
-
-
 // Public Routes
 Route::get('/', LandingPage::class)->name('home');
 Route::get('/services', ServicesPage::class)->name('services');
@@ -134,19 +130,25 @@ Route::middleware(['auth'])->group(function () {
     
     // Babysitter
     Route::get('/babysitter/dashboard', BabysitterDashboard::class)->name('babysitter.dashboard');
+    Route::get('/babysitter/disponibilites', BabysitterDisponibilitesPage::class)->name('babysitter.disponibilites');
+    Route::get('/babysitter/avis', AvisPage::class)->name('babysitter.avis');
     Route::get('/babysitter/profile', BabysitterProfile::class)->name('babysitter.profile');
-
-
-    //petKeeping
-    Route::get('/pet-keeper/profile', PetKeeperProfile::class)->name('petkeeper.profile');
-    Route::get('/pet-keeper/dashboard', PetKeeperDashboard::class)->name('petkeeper.dashboard');
-    Route::get('/pet-keeper/mission/{id}', PetKeeperMissionDetails::class)->name('petkeeper.mission.show');
-    Route::get('/pet-keeping/book/{IdService}', PetKeepingServiceBooking::class)->name('pet-keeper.book');
 });
 
+// Pet Keeping Routes (Client)
+Route::prefix('pet-keeping')->group(function (){
+    Route::get('search-service', PetKeepingService::class);
+    Route::get('book/{IdService}', PetKeepingServiceBooking::class)->name('pet-keeper.book');
+});
 
+// Pet Keeper Routes (Provider)
+Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
+    Route::get('inscription', PetKeeperRegistration::class)->name('inscription');
+    Route::get('profile', PetKeeperProfile::class)->name('profile');
+    Route::get('dashboard', PetKeeperDashboard::class)->name('dashboard');
+        Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.show');
 
-
+});
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
@@ -155,3 +157,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/intervenants', AdminIntervenants::class)->name('intervenants');
     Route::get('/intervenant/{id}', IntervenantDetails::class)->name('intervenant.details');
 });
+
+Route::get('/feedback/test', Feedback::class)->name('feedback.test');
+
+// Route avec paramètres (pour utilisation réelle)
+Route::get('/feedback/{demandeId}/{auteurId}/{cibleId}/{typeAuteur?}', Feedback::class)
+    ->name('feedback.form');
