@@ -143,24 +143,49 @@ class BookingProcess extends Component
         $this->loadAvailableSlotsForDate($date);
     }
 
-    private function loadAvailableSlotsForDate($date)
+  private function loadAvailableSlotsForDate($date)
     {
         $carbonDate = Carbon::parse($date);
         $jourSemaine = $this->getJourSemaine($carbonDate->dayOfWeek);
+        $dateFormatted = $carbonDate->format('Y-m-d');
 
         // Récupérer les disponibilités pour ce jour
-        $dispos = $this->disponibilites->filter(function($dispo) use ($jourSemaine, $date) {
+        $dispos = $this->disponibilites->filter(function($dispo) use ($jourSemaine, $dateFormatted) {
+            // Disponibilités récurrentes
             if ($dispo->est_reccurent && $dispo->jourSemaine === $jourSemaine) {
                 return true;
             }
-            if ($dispo->date_specifique === $date) {
-                return true;
+            
+            // Disponibilités ponctuelles
+            // Vérifier que c'est bien une dispo ponctuelle (jourSemaine = N/A ou null ou vide)
+            if (!$dispo->est_reccurent) {
+                if ($dispo->jourSemaine === 'N/A' || empty($dispo->jourSemaine) || is_null($dispo->jourSemaine)) {
+                    // Comparer les dates au format Y-m-d
+                    $dispoDate = Carbon::parse($dispo->date_specifique)->format('Y-m-d');
+                    
+                    \Log::info('BookingProcess - Comparaison date ponctuelle', [
+                        'date_recherchee' => $dateFormatted,
+                        'date_dispo_brute' => $dispo->date_specifique,
+                        'date_dispo_formatee' => $dispoDate,
+                        'match' => $dispoDate === $dateFormatted
+                    ]);
+                    
+                    return $dispoDate === $dateFormatted;
+                }
             }
+            
             return false;
         });
 
+        // Log pour debug
+        \Log::info('Disponibilités trouvées pour la date', [
+            'date' => $dateFormatted,
+            'jour_semaine' => $jourSemaine,
+            'nombre_dispos' => $dispos->count()
+        ]);
+
         // Récupérer les créneaux déjà réservés et validés pour ce professeur à cette date
-        $reservedSlots = $this->getReservedSlots($date);
+        $reservedSlots = $this->getReservedSlots($dateFormatted);
 
         // Générer des créneaux d'une heure
         $this->availableSlots = [];
@@ -182,12 +207,17 @@ class BookingProcess extends Component
                         'start' => $slotStart,
                         'end' => $slotEndFormatted,
                         'display' => $slotStart . ' - ' . $slotEndFormatted,
-                        'isReserved' => $isReserved  // Indicateur de réservation
+                        'isReserved' => $isReserved
                     ];
                 }
                 $start->addHour();
             }
         }
+        
+        \Log::info('Créneaux générés', [
+            'date' => $dateFormatted,
+            'nombre_creneaux' => count($this->availableSlots)
+        ]);
     }
 
     /**
@@ -447,21 +477,27 @@ class BookingProcess extends Component
     /**
      * Vérifie si un jour a des créneaux disponibles (non réservés)
      */
-    private function checkIfDayHasAvailability($date)
+ private function checkIfDayHasAvailability($date)
     {
         $carbonDate = Carbon::parse($date);
         $jourSemaine = $this->getJourSemaine($carbonDate->dayOfWeek);
+        $dateString = $carbonDate->format('Y-m-d');
 
         // Récupérer les disponibilités pour ce jour
-        $dispos = $this->disponibilites->filter(function($dispo) use ($jourSemaine, $date) {
-            $dateString = $date instanceof Carbon ? $date->format('Y-m-d') : $date;
-            
+        $dispos = $this->disponibilites->filter(function($dispo) use ($jourSemaine, $dateString) {
+            // Disponibilités récurrentes
             if ($dispo->est_reccurent && $dispo->jourSemaine === $jourSemaine) {
                 return true;
             }
-            if ($dispo->date_specifique === $dateString) {
-                return true;
+            
+            // Disponibilités ponctuelles
+            if (!$dispo->est_reccurent) {
+                if ($dispo->jourSemaine === 'N/A' || empty($dispo->jourSemaine) || is_null($dispo->jourSemaine)) {
+                    $dispoDate = Carbon::parse($dispo->date_specifique)->format('Y-m-d');
+                    return $dispoDate === $dateString;
+                }
             }
+            
             return false;
         });
 
@@ -471,7 +507,6 @@ class BookingProcess extends Component
         }
 
         // Récupérer les créneaux réservés pour ce jour
-        $dateString = $date instanceof Carbon ? $date->format('Y-m-d') : $date;
         $reservedSlots = $this->getReservedSlots($dateString);
 
         // Vérifier s'il existe au moins un créneau disponible (non réservé)
