@@ -16,6 +16,7 @@ use App\Livewire\Shared\IntervenantHub;
 use App\Livewire\Shared\ProfilClient;
 use App\Livewire\Shared\RegisterClientPage;
 use App\Livewire\Shared\RegisterIntervenantPage;
+use App\Livewire\Shared\AvisPage;
 
 // Tutoring Livewire Components
 use App\Livewire\Tutoring\Dashboard;
@@ -63,13 +64,6 @@ use App\Livewire\PetKeeping\PetKeeperMissionDetails;
 
 
 Route::get('/petkeeper/missions', PetKeeperMissions::class);
-
-
-
-
-
-
-
 // Public Routes
 Route::get('/', LandingPage::class)->name('home');
 Route::get('/services', ServicesPage::class)->name('services');
@@ -117,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Babysitter
     Route::get('/babysitter/dashboard', BabysitterDashboard::class)->name('babysitter.dashboard');
+    Route::get('/babysitter/avis', AvisPage::class)->name('babysitter.avis');
     Route::get('/babysitter/profile', BabysitterProfile::class)->name('babysitter.profile');
 });
 
