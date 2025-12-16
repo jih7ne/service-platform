@@ -66,8 +66,8 @@ class PetKeepingServiceBooking extends Component
         'prenom' => 'required|string|max:255',
         'email' => 'required|email',
         'telephone' => 'required|string',
-        'province' => 'required|string',
-        'region' => 'required|string',
+        'ville' => 'required|string',
+        'adresse' => 'required|string',
         'dateDebut' => 'required|date',
         'dateFin' => 'required|date|after_or_equal:dateDebut',
         'animals.*.nomAnimal' => 'required|string',
@@ -126,6 +126,7 @@ class PetKeepingServiceBooking extends Component
                 'utilisateurs.photo',
                 'utilisateurs.note',
                 'utilisateurs.nbrAvis',
+                'utilisateurs.email',
                 'localisations.ville as intervenant_ville'
             )
             ->first();
@@ -146,6 +147,7 @@ class PetKeepingServiceBooking extends Component
         
         $this->intervenantDetails = [
             'nom_complet' => $result->prenom . ' ' . $result->nom,
+            'email' => $result->email,
             'photo' => $result->photo,
             'note' => $result->note ?? 4.9,
             'nbrAvis' => $result->nbrAvis ?? 156,
@@ -507,7 +509,8 @@ class PetKeepingServiceBooking extends Component
             
             // Prendre le premier créneau pour dateDebut/dateFin de la demande principale
             $firstSlot = $this->selectedSlots[0];
-            $lastSlot = end($this->selectedSlots);
+            $lastSlot = $this->selectedSlots[count($this->selectedSlots) - 1];
+
             
             $demandeId = DB::table('demandes_intervention')->insertGetId([
                 'dateDemande' => now(),
@@ -549,9 +552,11 @@ class PetKeepingServiceBooking extends Component
                 }
             }
 
+            $numFacture = intval(date('Ymd') . str_pad($demandeId, 6, '0', STR_PAD_LEFT));
+
             DB::table('factures')->insert([
                 'montantTotal' => $this->prixTotal,
-                'numFacture' => 'FACT-' . date('Ymd') . '-' . $demandeId,
+                'numFacture' => $numFacture,
                 'idDemande' => $demandeId,
             ]);
 
@@ -566,17 +571,25 @@ class PetKeepingServiceBooking extends Component
                 ]
             );
 
-            // Send email notification to service provider
-            $this->sendIntervenantNotification($demandeId);
-
             DB::commit();
 
             session()->flash('success', 'Votre demande a été envoyée avec succès !');
-            return redirect()->route('mes-demandes');
+           
+            $this->sendIntervenantNotification($demandeId);
+
+            
+            return redirect()->route('pet-keeping.search-service');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            session()->flash('error', 'Une erreur est survenue : ' . $e->getMessage());
+            // DB::rollBack();
+            // session()->flash('error', 'Une erreur est survenue : ' . $e->getMessage());
+
+             DB::rollBack();
+
+            dd(
+                $e->getMessage(),
+                $e->getTraceAsString()
+            );
         }
     }
 
