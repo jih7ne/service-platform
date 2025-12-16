@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Livewire\Babysitter;
+namespace App\Livewire\Shared;
 
 use Livewire\Component;
-use App\Models\Shared\Feedback;
+use App\Models\Shared\Feedback as FeedbackModel;
 use App\Models\Shared\Utilisateur;
 use App\Models\Shared\DemandesIntervention;
 use Illuminate\Support\Facades\DB;
 
-class FeedbackBabysitter extends Component
+class Feedback extends Component
 {
     // IDs
     public $demandeId;
@@ -60,50 +60,52 @@ class FeedbackBabysitter extends Component
 
     public function mount($demandeId = null, $auteurId = null, $cibleId = null, $typeAuteur = 'client')
     {
-        // Simuler des données pour le test
-        if (!$demandeId) {
-            $this->demandeId = 1; // ID valide qui existe dans la BD
-            $this->auteurId = 1;
-            $this->cibleId = 2;
-        } else {
-            $this->demandeId = $demandeId;
-            $this->auteurId = $auteurId;
-            $this->cibleId = $cibleId;
+        // Valider les paramètres requis
+        if (!$demandeId || !$auteurId || !$cibleId) {
+            session()->flash('error', 'Paramètres manquants: demandeId, auteurId et cibleId sont requis');
+            return;
         }
         
+        $this->demandeId = $demandeId;
+        $this->auteurId = $auteurId;
+        $this->cibleId = $cibleId;
         $this->typeAuteur = $typeAuteur;
 
-        // Charger les données
+        // Charger les données depuis la base
         $this->loadData();
     }
 
     private function loadData()
     {
-        // Charger la demande (simulée pour le test)
-        $this->demande = (object)[
-            'idDemande' => $this->demandeId,
-            'dateSouhaitee' => now()->subDays(1),
-            'heureDebut' => '14:00',
-            'heureFin' => '18:00',
-            'lieu' => 'Casablanca, Maarif',
-        ];
+        try {
+            // Charger la demande depuis la base de données
+            $this->demande = DemandesIntervention::find($this->demandeId);
+            
+            if (!$this->demande) {
+                session()->flash('error', 'Demande introuvable');
+                return;
+            }
 
-        // Charger l'auteur (simulé)
-        $this->auteur = (object)[
-            'idUser' => $this->auteurId,
-            'nom' => 'Alami',
-            'prenom' => 'Sara',
-            'photo' => null,
-        ];
+            // Charger l'auteur depuis la base de données
+            $this->auteur = Utilisateur::find($this->auteurId);
+            
+            if (!$this->auteur) {
+                session()->flash('error', 'Auteur introuvable');
+                return;
+            }
 
-        // Charger la cible (simulé)
-        $this->cible = (object)[
-            'idUser' => $this->cibleId,
-            'nom' => 'Benjelloun',
-            'prenom' => 'Fatima',
-            'photo' => null,
-            'note' => 4.5,
-        ];
+            // Charger la cible depuis la base de données
+            $this->cible = Utilisateur::find($this->cibleId);
+            
+            if (!$this->cible) {
+                session()->flash('error', 'Destinataire introuvable');
+                return;
+            }
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Erreur lors du chargement des données: ' . $e->getMessage());
+            \Log::error('Load data error: ' . $e->getMessage());
+        }
     }
 
     public function setRating($criteria, $value)
@@ -167,7 +169,7 @@ class FeedbackBabysitter extends Component
                            $this->proprete) / 5;
 
             // Créer le feedback
-            $feedback = Feedback::create([
+            $feedback = FeedbackModel::create([
                 'idAuteur' => $this->auteurId,
                 'idCible' => $this->cibleId,
                 'typeAuteur' => $this->typeAuteur,
@@ -203,7 +205,7 @@ class FeedbackBabysitter extends Component
     private function updateUserRating($userId, $newRating)
     {
         // Récupérer tous les feedbacks pour cet utilisateur
-        $feedbacks = Feedback::where('idCible', $userId)->get();
+        $feedbacks = FeedbackModel::where('idCible', $userId)->get();
         
         $totalRatings = $feedbacks->count() + 1; // +1 pour le nouveau feedback
         

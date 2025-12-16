@@ -45,7 +45,7 @@
                         <div class="grid grid-cols-2 gap-4 text-sm">
                             <div>
                                 <span class="text-gray-500">Date :</span>
-                                <span class="ml-2 font-medium">{{ $demande->dateSouhaitee->format('d/m/Y') }}</span>
+                                <span class="ml-2 font-medium">{{ \Carbon\Carbon::parse($demande->dateSouhaitee)->format('d/m/Y') }}</span>
                             </div>
                             <div>
                                 <span class="text-gray-500">Horaires :</span>
