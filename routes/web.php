@@ -130,6 +130,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Babysitter
     Route::get('/babysitter/dashboard', BabysitterDashboard::class)->name('babysitter.dashboard');
+    Route::get('/babysitter/disponibilites', BabysitterDisponibilitesPage::class)->name('babysitter.disponibilites');
     Route::get('/babysitter/avis', AvisPage::class)->name('babysitter.avis');
     Route::get('/babysitter/profile', BabysitterProfile::class)->name('babysitter.profile');
 });
