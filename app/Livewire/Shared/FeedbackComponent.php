@@ -315,9 +315,9 @@ class FeedbackComponent extends Component
             case 'tutoring':
                 return view('livewire.tutoring.feedback-tutoring');
             case 'petkeeping':
-                return view('livewire.petkeeping.feedback-petkeeping');
+                return view('livewire.pet-keeping.feedback-petkeeping');
             case 'babysitter':
-            default:
+            
                 return view('livewire.babysitter.feedback-babysitter');
         }
     }
