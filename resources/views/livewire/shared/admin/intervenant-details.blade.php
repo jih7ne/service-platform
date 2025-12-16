@@ -145,7 +145,7 @@
                                             </div>
                                         @endif
                                         
-                                        @if($professeurData->cin_document)
+                                        @if($professeurData->CIN)
                                             <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
                                                 <div class="flex items-center gap-3">
                                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +153,7 @@
                                                     </svg>
                                                     <span class="text-sm font-medium text-gray-700">Document CIN</span>
                                                 </div>
-                                                <a href="{{ asset('storage/' . $professeurData->cin_document) }}" 
+                                                <a href="{{ asset('storage/' . $professeurData->CIN) }}" 
                                                    target="_blank" 
                                                    class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
                                                     Voir

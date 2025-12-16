@@ -927,13 +927,15 @@
                         <!-- Années d'expérience -->
                         <div class="max-w-md">
                             <label class="block text-sm font-medium text-gray-700 mb-3">
-                                Années d'expérience avec les animaux *
+                                Niveau d'expérience avec les animaux *
                             </label>
-                            <div class="flex items-center space-x-4">
-                                <input type="number" wire:model="years_experience" min="0" max="50" 
-                                       class="w-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition">
-                                <span class="text-gray-600">années</span>
-                            </div>
+                            <select wire:model="years_experience"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition bg-white">
+                                <option value="">Sélectionnez votre niveau d'expérience</option>
+                                @foreach($experienceIntervals as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
                             @error('years_experience') 
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
