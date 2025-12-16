@@ -3,12 +3,14 @@
 namespace App\Livewire\Shared;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AvisPage extends Component
 {
+    use WithFileUploads;
     public $babysitter;
     public $feedbacks = [];
     public $filterRating = 'all';
