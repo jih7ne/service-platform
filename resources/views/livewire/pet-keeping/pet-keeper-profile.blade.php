@@ -25,6 +25,16 @@
         </div>
     @endif
 
+
+
+    
+
+
+
+
+
+
+
     <!-- Header -->
     <div class="bg-gradient-to-r from-amber-500 to-yellow-600 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 py-6">
