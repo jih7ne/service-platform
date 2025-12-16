@@ -17,6 +17,7 @@ use App\Livewire\Tutoring\MesClients;
 use Illuminate\Support\Facades\Route;
 use App\Livewire\Tutoring\MesDemandes;
 use App\Livewire\Shared\AvisPage;
+use App\Livewire\Shared\Client\MesAvis;
 
 // Tutoring Livewire Components
 use App\Livewire\Shared\IntervenantHub;
@@ -58,11 +59,23 @@ use App\Livewire\PetKeeping\PetkeepingServiceBooking;
 use App\Livewire\Babysitter\BabysitterRegistrationSuccess;
 use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 
+
+
+// 1. AJOUTE CETTE LIGNE TOUT EN HAUT DU FICHIER (avec les autres use)
+
+// ... le reste de ton code ...
+
+// 2. AJOUTE CETTE LIGNE TOUT EN BAS (en dehors des groupes pour tester facilement)
+Route::get('/mes-demandes', \App\Livewire\Client\MesDemandes::class)->name('client.mes-demandes');
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+use App\Livewire\PetKeeping\MyServices as MyPetKeepingServices;
+use App\Livewire\PetKeeping\SingleService as SinglePetKeepingService;
+
 
 // Public Routes
 Route::get('/', LandingPage::class)->name('home');
@@ -130,8 +143,33 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/babysitter/disponibilites', BabysitterDisponibilitesPage::class)->name('babysitter.disponibilites');
     Route::get('/babysitter/avis', AvisPage::class)->name('babysitter.avis');
     Route::get('/babysitter/profile', BabysitterProfile::class)->name('babysitter.profile');
+
+    Route::get('/mes-avis', MesAvis::class)->name('mes-avis');
 });
 
+
+
+    // Maintenant cette ligne va fonctionner car l'import est correct en haut
+    //Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.details');
+
+// Pet Keeping Routes (Client)
+Route::prefix('pet-keeping')->group(function (){
+    Route::get('search-service', PetKeepingService::class)->name('pet-keeping.search-service');
+    Route::get('book/{IdService}', PetKeepingServiceBooking::class)->name('pet-keeper.book');
+});
+
+// Pet Keeper Routes (Provider)
+Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
+    Route::get('inscription', PetKeeperRegistration::class)->name('inscription');
+    Route::get('profile', PetKeeperProfile::class)->name('profile');
+    Route::get('dashboard', PetKeeperDashboard::class)->name('dashboard');
+    Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.show');
+    Route::get('/dashboard/services', MyPetKeepingServices::class)->name('services');
+    Route::get('/dashboard/service/{serviceId}', SinglePetKeepingService::class)->name('services.show');
+    
+
+
+});
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
