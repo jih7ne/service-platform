@@ -1,5 +1,3 @@
-
-
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4">
         
@@ -13,6 +11,7 @@
             </a>
         </div>
 
+        {{-- Display service name instead of pet keeper name in header --}}
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div class="flex items-center gap-4">
                 @if($intervenantDetails['photo'])
@@ -23,7 +22,8 @@
                     </div>
                 @endif
                 <div class="flex-1">
-                    <h2 class="text-xl font-bold text-gray-900">Réserver avec {{ $intervenantDetails['nom_complet'] }}</h2>
+                    <h2 class="text-xl font-bold text-gray-900">Réserver {{ $serviceDetails['nom'] }}</h2>
+                    <p class="text-sm text-gray-600 mt-1">avec {{ $intervenantDetails['nom_complet'] }}</p>
                     <div class="flex items-center gap-1 mt-1">
                         <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
@@ -109,19 +109,20 @@
                         @error('telephone') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                     </div>
 
+                    {{-- Replace province/region with ville/adresse from localisations table --}}
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Province</label>
-                            <input type="text" wire:model="province" 
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                            <input type="text" wire:model="ville" placeholder="Casablanca"
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
-                            @error('province') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            @error('ville') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Région</label>
-                            <input type="text" wire:model="region" 
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
+                            <input type="text" wire:model="adresse" placeholder="123 Rue Mohammed V"
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
-                            @error('region') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            @error('adresse') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                         </div>
                     </div>
                 </div>
@@ -156,7 +157,7 @@
                                 </svg>
                                 Sélectionnez les créneaux souhaités
                             </p>
-                            <p class="text-xs text-gray-600">Cliquez sur les créneaux où {{ $intervenantDetails['nom_complet'] }} est disponible :</p>
+                            <p class="text-xs text-gray-600">Cliquez sur les créneaux où l'intervenant est disponible :</p>
                         </div>
                         
                         <div class="space-y-4">
@@ -380,13 +381,14 @@
                 </div>
                 
                 <div class="space-y-4">
+                    {{-- Updated summary to show ville/adresse instead of province/region --}}
                     <div class="border border-gray-200 rounded-lg p-4">
                         <h4 class="font-semibold text-gray-900 mb-2">Informations personnelles</h4>
                         <div class="text-sm text-gray-700 space-y-1">
                             <p>{{ $prenom }} {{ $nom }}</p>
                             <p>{{ $email }}</p>
                             <p>{{ $telephone }}</p>
-                            <p>{{ $province }}, {{ $region }}</p>
+                            <p>{{ $ville }}, {{ $adresse }}</p>
                         </div>
                     </div>
 
@@ -414,15 +416,57 @@
                         </div>
                     </div>
 
+                    {{-- Updated pricing display to show dynamic criteria from payment_criteria --}}
                     <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm text-gray-700">Tarif horaire</span>
-                            <span class="text-sm font-medium">{{ number_format($prixDetails['tarif_horaire'], 2) }} DH/h</span>
-                        </div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm text-gray-700">Nombre d'heures</span>
-                            <span class="text-sm font-medium">{{ $prixDetails['heures'] }}h</span>
-                        </div>
+                        @if(isset($prixDetails['critere']))
+                            <div class="mb-3">
+                                <span class="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded">{{ $prixDetails['critere'] }}</span>
+                            </div>
+                        @endif
+                        
+                        @if(isset($prixDetails['tarif_horaire']))
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-700">Tarif horaire</span>
+                                <span class="text-sm font-medium">{{ number_format($prixDetails['tarif_horaire'], 2) }} DH/h</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-700">Nombre d'heures</span>
+                                <span class="text-sm font-medium">{{ $prixDetails['heures'] }}h</span>
+                            </div>
+                        @elseif(isset($prixDetails['tarif_journalier']))
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-700">Tarif journalier</span>
+                                <span class="text-sm font-medium">{{ number_format($prixDetails['tarif_journalier'], 2) }} DH/jour</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-700">Nombre de jours</span>
+                                <span class="text-sm font-medium">{{ $prixDetails['jours'] }}</span>
+                            </div>
+                        @elseif(isset($prixDetails['tarif_par_animal']))
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-700">Tarif par animal</span>
+                                <span class="text-sm font-medium">{{ number_format($prixDetails['tarif_par_animal'], 2) }} DH</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-700">Nombre d'animaux × Jours</span>
+                                <span class="text-sm font-medium">{{ $prixDetails['animaux'] }} × {{ $prixDetails['jours'] }}</span>
+                            </div>
+                        @elseif(isset($prixDetails['tarif_par_visite']))
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-700">Tarif par visite</span>
+                                <span class="text-sm font-medium">{{ number_format($prixDetails['tarif_par_visite'], 2) }} DH</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-700">Nombre de visites</span>
+                                <span class="text-sm font-medium">{{ $prixDetails['visites'] }}</span>
+                            </div>
+                        @elseif(isset($prixDetails['tarif']))
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-700">Prix fixe</span>
+                                <span class="text-sm font-medium">{{ number_format($prixDetails['tarif'], 2) }} DH</span>
+                            </div>
+                        @endif
+                        
                         <div class="border-t border-amber-300 pt-2 mt-2">
                             <div class="flex justify-between items-center">
                                 <span class="font-bold text-gray-900">Prix total</span>
@@ -457,9 +501,10 @@
                     </svg>
                 </button>
             @else
+                {{-- Fixed button to call correct method submitBooking --}}
                 <button type="button" wire:click="submitBooking"
                     class="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition shadow-sm">
-                    Confirmer la réservation
+                    Réserver maintenant
                 </button>
             @endif
         </div>

@@ -6,6 +6,8 @@ use App\Constants\PetKeeping\Constants;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 use Livewire\Component;
@@ -29,8 +31,8 @@ class PetKeepingServiceBooking extends Component
     public $prenom = '';
     public $email = '';
     public $telephone = '';
-    public $province = '';
-    public $region = '';
+    public $ville = '';
+    public $adresse = '';
     
     // Étape 2: Dates et Créneaux  
     public $dateDebut;
@@ -64,8 +66,8 @@ class PetKeepingServiceBooking extends Component
         'prenom' => 'required|string|max:255',
         'email' => 'required|email',
         'telephone' => 'required|string',
-        'province' => 'required|string',
-        'region' => 'required|string',
+        'ville' => 'required|string',
+        'adresse' => 'required|string',
         'dateDebut' => 'required|date',
         'dateFin' => 'required|date|after_or_equal:dateDebut',
         'animals.*.nomAnimal' => 'required|string',
@@ -124,6 +126,7 @@ class PetKeepingServiceBooking extends Component
                 'utilisateurs.photo',
                 'utilisateurs.note',
                 'utilisateurs.nbrAvis',
+                'utilisateurs.email',
                 'localisations.ville as intervenant_ville'
             )
             ->first();
@@ -144,6 +147,7 @@ class PetKeepingServiceBooking extends Component
         
         $this->intervenantDetails = [
             'nom_complet' => $result->prenom . ' ' . $result->nom,
+            'email' => $result->email,
             'photo' => $result->photo,
             'note' => $result->note ?? 4.9,
             'nbrAvis' => $result->nbrAvis ?? 156,
@@ -160,8 +164,8 @@ class PetKeepingServiceBooking extends Component
             ->first();
             
         if ($location) {
-            $this->province = $location->province ?? '';
-            $this->region = $location->region ?? '';
+            $this->ville = $location->ville ?? '';
+            $this->adresse = $location->adresse ?? '';
         }
     }
 
@@ -210,7 +214,7 @@ class PetKeepingServiceBooking extends Component
         
         $reservedSlots = DB::table('demandes_intervention')
             ->where('idIntervenant', $this->intervenantId)
-            ->where('statut', '!=', 'annulee')
+            ->whereIn('statut', ['validée', 'en_attente'])
             ->whereBetween('dateSouhaitee', [$this->dateDebut, $this->dateFin])
             ->select('dateSouhaitee', 'heureDebut', 'heureFin')
             ->get()
@@ -228,6 +232,11 @@ class PetKeepingServiceBooking extends Component
                 ->where('jourSemaine', $jourSemaine)
                 ->get();
             
+            if ($disponibilites->isEmpty()) {
+                $start->addDay();
+                continue;
+            }
+            
             $slots = [];
             
             foreach ($disponibilites as $dispo) {
@@ -240,19 +249,20 @@ class PetKeepingServiceBooking extends Component
                     
                     $isReserved = false;
                     foreach ($reservedSlots as $reserved) {
-                        if ($reserved->dateSouhaitee == $dateString) {
-                            $reservedStart = substr($reserved->heureDebut, 0, 5);
-                            $reservedEnd = substr($reserved->heureFin, 0, 5);
+                        if ($reserved->dateSouhaitee == $dateString && $reserved->heureDebut && $reserved->heureFin) {
+                            $reservedStart = Carbon::parse($reserved->heureDebut)->format('H:i');
+                            $reservedEnd = Carbon::parse($reserved->heureFin)->format('H:i');
                             
                             if (($slotStart >= $reservedStart && $slotStart < $reservedEnd) ||
-                                ($slotEnd > $reservedStart && $slotEnd <= $reservedEnd)) {
+                                ($slotEnd > $reservedStart && $slotEnd <= $reservedEnd) ||
+                                ($slotStart <= $reservedStart && $slotEnd >= $reservedEnd)) {
                                 $isReserved = true;
                                 break;
                             }
                         }
                     }
                     
-                    if (!$isReserved) {
+                    if (!$isReserved && $slotEnd <= $heureFin->format('H:i')) {
                         $slots[] = [
                             'heureDebut' => $slotStart,
                             'heureFin' => $slotEnd,
@@ -315,15 +325,68 @@ class PetKeepingServiceBooking extends Component
 
     private function calculatePrice()
     {
-        if($this->payment_criteria === Constants::PER_HOUR){
-            $totalHeures = count($this->selectedSlots);
-            $this->prixTotal = $totalHeures * $this->tarifHoraire;
-            
-            $this->prixDetails = [
-                'tarif_horaire' => $this->tarifHoraire,
-                'heures' => $totalHeures,
-                'total' => $this->prixTotal,
-            ];
+        switch ($this->payment_criteria) {
+            case 'PER_HOUR':
+            case 'par heure':
+                $totalHeures = count($this->selectedSlots);
+                $this->prixTotal = $totalHeures * $this->tarifHoraire;
+                $this->prixDetails = [
+                    'critere' => 'Par heure',
+                    'tarif_horaire' => $this->tarifHoraire,
+                    'heures' => $totalHeures,
+                    'total' => $this->prixTotal,
+                ];
+                break;
+                
+            case 'PER_DAY':
+            case 'par jour':
+                $dates = array_unique(array_column($this->selectedSlots, 'date'));
+                $totalJours = count($dates);
+                $this->prixTotal = $totalJours * $this->tarifHoraire;
+                $this->prixDetails = [
+                    'critere' => 'Par jour',
+                    'tarif_journalier' => $this->tarifHoraire,
+                    'jours' => $totalJours,
+                    'total' => $this->prixTotal,
+                ];
+                break;
+                
+            case 'PER_PET':
+            case 'par animal':
+                $totalAnimaux = count($this->animals);
+                $dates = array_unique(array_column($this->selectedSlots, 'date'));
+                $totalJours = count($dates);
+                $this->prixTotal = $totalAnimaux * $this->tarifHoraire * $totalJours;
+                $this->prixDetails = [
+                    'critere' => 'Par animal',
+                    'tarif_par_animal' => $this->tarifHoraire,
+                    'animaux' => $totalAnimaux,
+                    'jours' => $totalJours,
+                    'total' => $this->prixTotal,
+                ];
+                break;
+                
+            case 'PER_VISIT':
+            case 'par visite':
+                $totalVisites = count($this->selectedSlots);
+                $this->prixTotal = $totalVisites * $this->tarifHoraire;
+                $this->prixDetails = [
+                    'critere' => 'Par visite',
+                    'tarif_par_visite' => $this->tarifHoraire,
+                    'visites' => $totalVisites,
+                    'total' => $this->prixTotal,
+                ];
+                break;
+                
+            default:
+                // Default to fixed price
+                $this->prixTotal = $this->tarifHoraire;
+                $this->prixDetails = [
+                    'critere' => 'Prix fixe',
+                    'tarif' => $this->tarifHoraire,
+                    'total' => $this->prixTotal,
+                ];
+                break;
         }
     }
 
@@ -404,8 +467,8 @@ class PetKeepingServiceBooking extends Component
                 'prenom' => 'required',
                 'email' => 'required|email',
                 'telephone' => 'required',
-                'province' => 'required',
-                'region' => 'required',
+                'ville' => 'required',
+                'adresse' => 'required',
             ]);
         }
         
@@ -437,6 +500,8 @@ class PetKeepingServiceBooking extends Component
 
     public function submitBooking()
     {
+        //$this->validateCurrentStep();
+        
         DB::beginTransaction();
         
         try {
@@ -444,7 +509,8 @@ class PetKeepingServiceBooking extends Component
             
             // Prendre le premier créneau pour dateDebut/dateFin de la demande principale
             $firstSlot = $this->selectedSlots[0];
-            $lastSlot = end($this->selectedSlots);
+            $lastSlot = $this->selectedSlots[count($this->selectedSlots) - 1];
+
             
             $demandeId = DB::table('demandes_intervention')->insertGetId([
                 'dateDemande' => now(),
@@ -452,8 +518,8 @@ class PetKeepingServiceBooking extends Component
                 'heureDebut' => $firstSlot['heureDebut'] . ':00',
                 'heureFin' => $lastSlot['heureFin'] . ':00',
                 'statut' => 'en_attente',
-                'lieu' => $this->province . ', ' . $this->region,
-                'note_speciales' => $creneauxJson, // Stocker tous les créneaux en JSON
+                'lieu' => $this->ville . ', ' . $this->adresse,
+                'note_speciales' => $creneauxJson,
                 'idClient' => $this->clientId,
                 'idIntervenant' => $this->intervenantId,
                 'idService' => $this->serviceId,
@@ -479,7 +545,6 @@ class PetKeepingServiceBooking extends Component
                         'idClient' => $this->clientId, 
                     ]);
                     
-                    // Créer le lien dans animal_demande
                     DB::table('animal_demande')->insert([
                         'idDemande' => $demandeId,
                         'idAnimal' => $animalId,
@@ -487,29 +552,71 @@ class PetKeepingServiceBooking extends Component
                 }
             }
 
+            $numFacture = intval(date('Ymd') . str_pad($demandeId, 6, '0', STR_PAD_LEFT));
+
             DB::table('factures')->insert([
                 'montantTotal' => $this->prixTotal,
-                'numFacture' => 'FACT-' . date('Ymd') . '-' . $demandeId,
+                'numFacture' => $numFacture,
                 'idDemande' => $demandeId,
             ]);
 
-            // // Mettre à jour la localisation du client
-            // DB::table('localisations')->updateOrInsert(
-            //     ['idUser' => $this->clientId],
-            //     [
-            //         'province' => $this->province,
-            //         'region' => $this->region,
-            //     ]
-            // );
+            DB::table('localisations')->updateOrInsert(
+                ['idUser' => $this->clientId],
+                [
+                    'ville' => $this->ville,
+                    'adresse' => $this->adresse,
+                    'latitude' => 0,
+                    'longitude' => 0,
+                    'updated_at' => now(),
+                ]
+            );
 
             DB::commit();
 
             session()->flash('success', 'Votre demande a été envoyée avec succès !');
-            return redirect()->route('mes-demandes');
+           
+            $this->sendIntervenantNotification($demandeId);
+
+            
+            return redirect()->route('pet-keeping.search-service');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            session()->flash('error', 'Une erreur est survenue : ' . $e->getMessage());
+            // DB::rollBack();
+            // session()->flash('error', 'Une erreur est survenue : ' . $e->getMessage());
+
+             DB::rollBack();
+
+            dd(
+                $e->getMessage(),
+                $e->getTraceAsString()
+            );
+        }
+    }
+
+
+    private function sendIntervenantNotification($demandeId)
+    {
+        try {
+            $intervenantEmail = $this->intervenantDetails['email'];
+            $intervenantNom = $this->intervenantDetails['nom_complet'];
+            $serviceName = $this->serviceDetails['nom'];
+            $clientName = $this->prenom . ' ' . $this->nom;
+            
+            Mail::send('emails.nouvelle-demande', [
+                'intervenantNom' => $intervenantNom,
+                'serviceName' => $serviceName,
+                'clientName' => $clientName,
+                'demandeId' => $demandeId,
+                'dateDebut' => $this->selectedSlots[0]['date'],
+                'nombreCreneaux' => count($this->selectedSlots),
+                'nombreAnimaux' => count($this->animals),
+                'montantTotal' => $this->prixTotal,
+            ], function ($message) use ($intervenantEmail, $serviceName) {
+                $message->to($intervenantEmail)
+                        ->subject('Nouvelle demande de réservation - ' . $serviceName);
+            });
+        } catch (\Exception $e) {
+            Log::error('Erreur envoi email intervenant: ' . $e->getMessage());
         }
     }
 

@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Test User']
         );
 
+        $this->call([
+            AdminSeeder::class,
+        ]);
         // Seed superpourvoirs first
         
 

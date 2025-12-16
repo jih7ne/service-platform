@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Redirect;
 use Livewire\Component;
 
@@ -45,12 +46,50 @@ class SearchService extends Component
     public $cities = [];
     public $currentLocation = null;
 
+
+
+
+
+    // For OpenStreetMap center
+    public $mapCenter = ['lat' => 33.5731, 'lng' => -7.5898]; // Default: Casablanca, Morocco
+    public $mapZoom = 10;
+
+
+
+    //Pagination
+    public $currentPage = 1;
+    public $perPage = 3;
+
     public function mount()
     {
         $this->loadKeepers();
         $this->loadCountries();
         $this->loadCities();
     }
+
+
+    public function getPaginatedServicesProperty()
+    {
+        return collect($this->services)->forPage($this->currentPage, $this->perPage);
+    }
+
+    public function nextPage()
+    {
+        $this->currentPage++;
+    }
+
+    public function previousPage()
+    {
+        if ($this->currentPage > 1) {
+            $this->currentPage--;
+        }
+    }
+
+    public function gotoPage($page)
+    {
+        $this->currentPage = $page;
+    }
+
 
     public function updated($property)
     {
@@ -185,18 +224,18 @@ class SearchService extends Component
     {
         switch ($this->sortBy) {
             case 'rating':
-                $query->orderByDesc('pk.note');
+                $query->orderByDesc('ut.note');
                 break;
             case 'price':
                 $query->orderBy('pk.base_price');
                 break;
-            // case 'demand':
-            //     $query->orderByDesc('s.nombres_services_demandes');
-            //     break;
-            // case 'relevance':
-            //     $query->orderByDesc('s.nombres_services_demandes')
-            //         ->orderByDesc('pk.note');
-            //     break;
+            case 'dateAsc':
+                $query->orderBy('pk.created_at');
+                break;
+            case 'dateDsc':
+                $query->orderByDesc('pk.created_at')
+                    ->orderByDesc('pk.note');
+                break;
         }
     }
 
@@ -208,7 +247,7 @@ class SearchService extends Component
         // Apply location filters
         if ($this->locationQuery) {
             $filteredServices = $filteredServices->filter(function ($service) {
-                $serviceLocation = strtolower($service['city'] . ' ' . $service['country']);
+                $serviceLocation = strtolower($service['ville']);
                 $searchLocation = strtolower($this->locationQuery);
                 return str_contains($serviceLocation, $searchLocation);
             });
@@ -222,17 +261,18 @@ class SearchService extends Component
 
         if ($this->selectedCity) {
             $filteredServices = $filteredServices->filter(function ($service) {
-                return strtolower($service['city']) === strtolower($this->selectedCity);
+                return strtolower($service['ville']) === strtolower($this->selectedCity);
             });
         }
+
+        // Filter out services without coordinates
+        $filteredServices = $filteredServices->filter(function ($service) {
+            return !empty($service['latitude']) && !empty($service['longitude']);
+        });
 
         // Apply radius filter if we have current location
         if ($this->currentLocation && $this->searchRadius > 0) {
             $filteredServices = $filteredServices->filter(function ($service) {
-                if (empty($service['latitude']) || empty($service['longitude'])) {
-                    return false;
-                }
-                
                 $distance = $this->calculateDistance(
                     $this->currentLocation['lat'],
                     $this->currentLocation['lng'],
@@ -263,14 +303,40 @@ class SearchService extends Component
                 'price' => $service['base_price'],
                 'criteria' => $service['paymentCriteria'],
                 'services' => [$service['category']],
-                'lat' => $service['latitude'] ?? (48.8566 + (rand(-100, 100) / 1000)), // Default Paris with random offset
-                'lng' => $service['longitude'] ?? (2.3522 + (rand(-100, 100) / 1000)),
+                'lat' => $service['latitude'],
+                'lng' => $service['longitude'],
                 'distance' => $service['distance'] ?? null,
+                'city' => $service['city'],
+                'address' => $service['address'],
+                'description' => Str::limit($service['description'], 100),
             ];
         })->toArray();
 
+        // Update map center based on filtered markers
+        if (!empty($this->mapMarkers)) {
+            $lats = array_column($this->mapMarkers, 'lat');
+            $lngs = array_column($this->mapMarkers, 'lng');
+            
+            $this->mapCenter = [
+                'lat' => array_sum($lats) / count($lats),
+                'lng' => array_sum($lngs) / count($lngs)
+            ];
+            
+            if (count($this->mapMarkers) === 1) {
+                $this->mapZoom = 14;
+            } elseif (count($this->mapMarkers) <= 5) {
+                $this->mapZoom = 12;
+            } else {
+                $this->mapZoom = 10;
+            }
+        }
+
         // Dispatch event to update map in frontend
-        $this->dispatch('refresh-map', markers: $this->mapMarkers);
+        $this->dispatch('refresh-map', [
+            'markers' => $this->mapMarkers,
+            'center' => $this->mapCenter,
+            'zoom' => $this->mapZoom
+        ]);
     }
 
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
@@ -487,6 +553,9 @@ class SearchService extends Component
         $this->selectedCity = '';
         $this->searchRadius = 25;
 
+        $this->resetPage();
+        $this->perPage = 3;
+
         $this->loadKeepers();
         $this->loadCountries();
         $this->loadCities();
@@ -496,6 +565,7 @@ class SearchService extends Component
     {
         return view('livewire.pet-keeping.search-service')->with([
             'services' => $this->services,
+            'totalPages' => ceil(count($this->services) / $this->perPage),
             'mapMarkers' => $this->mapMarkers,
             'countries' => $this->countries,
             'cities' => $this->cities,

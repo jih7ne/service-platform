@@ -40,6 +40,7 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> En ligne
                 </span>
             </div>
+            
         </div>
 
         <!-- Navigation -->
@@ -49,7 +50,8 @@
                 Tableau de bord
             </a>
             
-            <a href="/petkeeper/missions" class="flex items-center gap-3 px-4 py-3.5 text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all group">
+            <a href="/petkeeper/missions"
+ class="flex items-center gap-3 px-4 py-3.5 text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all group">
                 <svg class="w-5 h-5 group-hover:text-amber-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Mes Missions
             </a>
@@ -236,11 +238,11 @@
                         <!-- BOUTONS ACTIONS (CORRECTEMENT PLACÉS ICI) -->
                         <div class="flex gap-3">
                             <!-- 1. BOUTON CONSULTER -->
-                            <a href="/petkeeper/mission/{{ $demande->id_demande_reelle }}" 
-                               class="px-5 py-2.5 rounded-xl border-2 border-gray-100 text-gray-500 font-bold text-sm bg-white hover:bg-gray-50 hover:text-gray-700 transition-colors flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                Consulter
-                            </a>
+                            <a href="{{ route('petkeeper.mission.show', $demande->id_demande_reelle) }}"
+   class="btn btn-primary">
+   Consulter
+</a>
+
 
                             <!-- 2. BOUTON REFUSER -->
                             <button wire:click="openRefusalModal({{ $demande->id_demande_reelle }})" 
@@ -269,7 +271,20 @@
 
             <!-- COLONNE DROITE (1/3) -->
             <div class="space-y-8">
-                
+                <!-- AVIS CLIENTS (SIDEBAR) -->
+<div class="bg-white p-4 rounded-xl">
+    <h3 class="font-bold mb-3">Avis clients</h3>
+
+    @forelse($feedbacksSidebar as $fb)
+        <div class="mb-3 border-b pb-2">
+            <p class="text-sm font-bold">{{ $fb->prenom }}</p>
+            <p class="text-xs text-gray-600">{{ $fb->commentaire }}</p>
+        </div>
+    @empty
+        <p class="text-xs text-gray-400">Aucun avis</p>
+    @endforelse
+</div>
+
                 <!-- Missions à venir (Si présentes dans le controller, sinon vide) -->
                 @if(count($missionsAVenir) > 0)
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -323,7 +338,8 @@
         
         <!-- Fond sombre avec flou -->
         <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity backdrop-blur-sm" 
+<div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-100 animate-slide-in"
+     wire:click.stop>
                  wire:click="closeRefusalModal"></div>
 
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>

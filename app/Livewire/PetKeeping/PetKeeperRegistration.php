@@ -363,7 +363,6 @@ class PetKeeperRegistration extends Component
                 $g_service = Service::create([
                     'nomService' => $service['service_name'],
                     'description' => $service['service_description'],
-                    'statut' => $service['service_status'],
                 ]);
 
                 PetKeeping::create([
@@ -376,7 +375,6 @@ class PetKeeperRegistration extends Component
                     'pet_type' => $service['service_pet_type'],
                     'payment_criteria' => $service['service_payment_criteria'],
                     'base_price' => $service['service_base_price'],
-                    'statut' => $g_service['statut'],
                 ]);
             }
 
