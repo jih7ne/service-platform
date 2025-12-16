@@ -13,6 +13,7 @@ class OffreService extends Pivot
 
     protected $fillable = [
         'idIntervenant',
-        'idService'
+        'idService',
+        'statut'
     ];
 }
