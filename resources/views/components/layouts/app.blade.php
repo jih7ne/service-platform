@@ -5,11 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <title>{{ $title ?? 'Page Title' }}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        @livewireStyles
         @stack('styles')
     </head>
     <body>
         {{ $slot }}
+        @livewireScripts
         @stack('scripts')
     </body>
 </html>
-@vite('resources/css/app.css')
