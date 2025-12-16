@@ -12,7 +12,7 @@ class Intervenant extends Model
 
     protected $fillable = [
         'statut',
-        'idIntervenant',
+        'IdIntervenant',
         'idAdmin',
     ];
 protected static function newFactory()
