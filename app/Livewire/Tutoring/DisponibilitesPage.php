@@ -2,26 +2,40 @@
 
 namespace App\Livewire\Tutoring;
 
-// On importe la classe PARTAGÉE fournie par l'autre groupe
-use App\Livewire\Shared\GestionDisponibilites; 
+use App\Livewire\Shared\GestionDisponibilites;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
-// On utilise "extends GestionDisponibilites" pour hériter de toute leur logique
-// (save, delete, variables $disponibilites, $viewMode...)
 class DisponibilitesPage extends GestionDisponibilites
 {
     public $prenom;
     public $photo;
 
-    public function mount()
+    // CORRECTION : On doit accepter le paramètre comme le parent ($intervenantId = null)
+    public function mount($intervenantId = null)
     {
-        // On appelle le mount du parent pour charger les données partagées
-        parent::mount(); 
-
-        // On ajoute nos données spécifiques pour la Sidebar
         $user = Auth::user();
+        
+        // 1. Charger les infos pour la Sidebar (Design)
         $this->prenom = $user->prenom;
         $this->photo = $user->photo;
+
+        // 2. LOGIQUE SPÉCIALE : Récupérer le bon ID Intervenant
+        // Le composant partagé s'attend à recevoir l'ID de la table 'intervenants'
+        // Si aucun ID n'est passé, on le cherche via l'utilisateur connecté
+        if (!$intervenantId) {
+            $intervenantData = DB::table('intervenants')
+                ->where('IdIntervenant', $user->idUser) // Lien User -> Intervenant
+                ->first();
+
+            if ($intervenantData) {
+                $intervenantId = $intervenantData->id; // On prend la clé primaire (ex: 1)
+            }
+        }
+
+        // 3. On appelle le parent avec le BON ID
+        // Cela va charger $this->disponibilites, $this->viewMode, etc.
+        parent::mount($intervenantId);
     }
 
     public function logout() {
@@ -33,7 +47,7 @@ class DisponibilitesPage extends GestionDisponibilites
 
     public function render()
     {
-        // On force l'utilisation de TA vue
+        // On utilise TA vue avec le design Bleu/Jaune
         return view('livewire.tutoring.disponibilites');
     }
 }
