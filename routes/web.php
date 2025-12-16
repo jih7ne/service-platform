@@ -54,26 +54,20 @@ use App\Livewire\PetKeeping\PetKeeperMissionDetails;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Livewire\Shared\Feedback;
 
-// ICI : J'ai décommenté et corrigé le chemin (PetKeeping\)
-//use App\Livewire\PetKeeping\PetKeeperMissionDetails;
+use App\Livewire\PetKeeping\PetkeepingServiceBooking;
+use App\Livewire\Babysitter\BabysitterRegistrationSuccess;
+use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
-use App\Livewire\PetKeeping\PetkeepingServiceBooking;
-use App\Livewire\Babysitter\BabysitterRegistrationSuccess;
+
 use App\Livewire\PetKeeping\MyServices as MyPetKeepingServices;
 use App\Livewire\PetKeeping\SingleService as SinglePetKeepingService;
-use App\Livewire\PetKeeping\SearchService as PetKeepingService;
-
-// Route::get('/petkeeper/mission/{id}', PetKeeperMissionDetails::class)
-//     ->name('petkeeper.mission.show');
 
 
-
-Route::get('/petkeeper/missions', PetKeeperMissions::class);
 // Public Routes
 Route::get('/', LandingPage::class)->name('home');
 Route::get('/services', ServicesPage::class)->name('services');
@@ -101,16 +95,20 @@ Route::post('/register-client', [RegisterController::class, 'store'])->name('reg
 Route::post('/connexion', [LoginController::class, 'store'])->name('login.store');
 Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
+// Pet Keeping Routes - UNIQUEMENT ICI, PAS DE DOUBLONS
+Route::prefix('pet-keeping')->group(function (){
+    Route::get('search-service', PetKeepingService::class)->name('pet-keeping.search-service');
+    Route::get('book/{IdService}', PetKeepingServiceBooking::class)->name('pet-keeper.book');
+});
 
 // Pet Keeper Routes (Provider)
 Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
     Route::get('inscription', PetKeeperRegistration::class)->name('inscription');
+    Route::get('profile', PetKeeperProfile::class)->name('profile');
+    Route::get('dashboard', PetKeeperDashboard::class)->name('dashboard');
+    Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.show');
+    Route::get('missions', PetKeeperMissions::class)->name('missions');
 });
-
-Route::prefix('pet-keeping')->group(function (){
-    Route::get('search-service', PetKeepingService::class)->name('pet-keeping.search-service');
-});
-
 
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
@@ -159,7 +157,6 @@ Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
     Route::get('/users', AdminUsers::class)->name('users');
-    // Route::get('/complaints', AdminComplaints::class)->name('complaints');
     Route::get('/intervenants', AdminIntervenants::class)->name('intervenants');
     Route::get('/intervenant/{id}', IntervenantDetails::class)->name('intervenant.details');
 });

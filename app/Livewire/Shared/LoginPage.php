@@ -6,12 +6,14 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Shared\Admin;
+use App\Models\Shared\Utilisateur;
 
 class LoginPage extends Component
 {
     public $email = '';
     public $password = '';
     public $showPassword = false;
+    public $suspendedMessage = ''; // 👈 AJOUTER CETTE LIGNE
 
     protected $rules = [
         'email' => 'required|email',
@@ -51,71 +53,98 @@ class LoginPage extends Component
         }
 
         // ========================================
-        // 2. SINON, VÉRIFIER LES UTILISATEURS NORMAUX
+        // 2. VÉRIFIER L'UTILISATEUR NORMAL
         // ========================================
-        if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
-            session()->regenerate();
-            $user = Auth::user();
+        $user = Utilisateur::where('email', $this->email)->first();
 
-            if ($user->statut !== 'actif') {
-                Auth::logout();
-                $this->addError('email', 'Votre compte est suspendu.');
-                return;
-            }
+        // DEBUG - À SUPPRIMER APRÈS
+        \Log::info('User trouvé:', ['user' => $user ? $user->toArray() : 'null']);
 
-            // --- LOGIQUE DE REDIRECTION UTILISATEUR ---
-            if ($user->role === 'intervenant') {
-                session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
+        // Si l'utilisateur n'existe pas
+        if (!$user) {
+            $this->addError('email', 'Email ou mot de passe incorrect.');
+            return;
+        }
 
-                // 1. On récupère l'intervenant
-                $intervenant = \App\Models\Shared\Intervenant::where('IdIntervenant', $user->idUser)->first();
+        // DEBUG - À SUPPRIMER APRÈS
+        \Log::info('Vérification mot de passe:', [
+            'hash_check' => Hash::check($this->password, $user->password),
+            'password_input' => $this->password,
+            'password_hash' => $user->password
+        ]);
 
-                if ($intervenant) {
-                    // 2. On compte ses services
-                    $services = $intervenant->services; 
-                    $count = $services->count();
+        // Vérifier le mot de passe
+        if (!Hash::check($this->password, $user->password)) {
+            $this->addError('email', 'Email ou mot de passe incorrect.');
+            return;
+        }
 
-                    // CAS 1 : Plusieurs services (ou aucun) -> On envoie vers le HUB
-                    if ($count > 1 || $count === 0) {
-                        return redirect()->route('intervenant.hub');
-                    }
-                    
-                    // CAS 2 : Exactement UN service -> Redirection DIRECTE
-                    if ($count === 1) {
-                        // On récupère le nom du service en minuscule pour comparer
-                        $serviceName = strtolower($services->first()->nomService);
+        // DEBUG - À SUPPRIMER APRÈS
+        \Log::info('Statut utilisateur:', ['statut' => $user->statut]);
 
-                        // Si c'est du soutien scolaire
-                        if (str_contains($serviceName, 'soutien') || str_contains($serviceName, 'scolaire')) {
-                            return redirect()->route('tutoring.dashboard');
-                        }
-                        
-                        // Si c'est du babysitting
-                        if (str_contains($serviceName, 'baby')) {
-                             // return redirect()->route('babysitter.dashboard'); // (Pas encore prêt)
-                             return redirect()->route('intervenant.hub'); // En attendant, on envoie au hub
-                        }
+        // Vérifier le statut
+        if ($user->statut !== 'actif') {
+            \Log::info('Compte suspendu détecté!');
+            $this->suspendedMessage = 'Votre compte est suspendu. Veuillez consulter votre email pour connaître la raison de la désactivation.';
+            return;
+        }
 
-                        // Si c'est du pet keeping
-                        if (str_contains($serviceName, 'pet')) {
-                             // return redirect()->route('petkeeping.dashboard'); // (Pas encore prêt)
-                             return redirect()->route('intervenant.hub'); // En attendant, on envoie au hub
-                        }
-                    }
+        // ========================================
+        // 3. TOUT EST OK - CONNECTER L'UTILISATEUR
+        // ========================================
+        Auth::login($user);
+        session()->regenerate();
+
+        // --- LOGIQUE DE REDIRECTION UTILISATEUR ---
+        if ($user->role === 'intervenant') {
+            session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
+
+            // 1. On récupère l'intervenant
+            $intervenant = \App\Models\Shared\Intervenant::where('IdIntervenant', $user->idUser)->first();
+
+            if ($intervenant) {
+                // 2. On compte ses services
+                $services = $intervenant->services; 
+                $count = $services->count();
+
+                // CAS 1 : Plusieurs services (ou aucun) -> On envoie vers le HUB
+                if ($count > 1 || $count === 0) {
+                    return redirect()->route('intervenant.hub');
                 }
                 
-                // Sécurité : si on est perdu, on va au Hub
-                return redirect()->route('intervenant.hub');
-            }
+                // CAS 2 : Exactement UN service -> Redirection DIRECTE
+                if ($count === 1) {
+                    // On récupère le nom du service en minuscule pour comparer
+                    $serviceName = strtolower($services->first()->nomService);
 
-            if ($user->role === 'client') {
-                return redirect('/');
-            }
+                    // Si c'est du soutien scolaire
+                    if (str_contains($serviceName, 'soutien') || str_contains($serviceName, 'scolaire')) {
+                        return redirect()->route('tutoring.dashboard');
+                    }
+                    
+                    // Si c'est du babysitting
+                    if (str_contains($serviceName, 'baby')) {
+                         // return redirect()->route('babysitter.dashboard'); // (Pas encore prêt)
+                         return redirect()->route('intervenant.hub'); // En attendant, on envoie au hub
+                    }
 
+                    // Si c'est du pet keeping
+                    if (str_contains($serviceName, 'pet')) {
+                         // return redirect()->route('petkeeping.dashboard'); // (Pas encore prêt)
+                         return redirect()->route('intervenant.hub'); // En attendant, on envoie au hub
+                    }
+                }
+            }
+            
+            // Sécurité : si on est perdu, on va au Hub
+            return redirect()->route('intervenant.hub');
+        }
+
+        if ($user->role === 'client') {
             return redirect('/');
         }
 
-        $this->addError('email', 'Email ou mot de passe incorrect.');
+        return redirect('/');
     }
 
     public function navigateToRegister()

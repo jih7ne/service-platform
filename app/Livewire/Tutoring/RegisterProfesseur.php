@@ -9,7 +9,7 @@ use App\Models\Shared\Admin;
 use App\Models\Shared\Intervenant;
 use App\Models\SoutienScolaire\Professeur;
 use App\Models\Shared\Service;
-use App\Models\Shared\OffreService; // NOUVEAU
+use App\Models\Shared\OffreService;
 use App\Models\SoutienScolaire\Matiere;
 use App\Models\SoutienScolaire\Niveau;
 use App\Models\Shared\Localisation;
@@ -27,7 +27,7 @@ class RegisterProfesseur extends Component
 {
     use WithFileUploads;
 
-    // NOUVEAU : Détection si utilisateur déjà connecté
+    // Détection si utilisateur déjà connecté
     public $isExistingUser = false;
     public $existingIntervenant = null;
     public $canAddService = true;
@@ -74,19 +74,19 @@ class RegisterProfesseur extends Component
 
     public function mount()
     {
-        // NOUVEAU : Vérifier si l'utilisateur est déjà connecté
+        // Vérifier si l'utilisateur est déjà connecté
         if (Auth::check()) {
             $user = Auth::user();
             
             // Vérifier si c'est un intervenant
-          $intervenant = Intervenant::where('IdIntervenant', $user->idUser)->first();
+            $intervenant = Intervenant::where('IdIntervenant', $user->idUser)->first();
             
             if ($intervenant) {
                 $this->isExistingUser = true;
                 $this->existingIntervenant = $intervenant;
                 
                 // Compter les services actifs ou en attente
-   $this->currentServicesCount = OffreService::where('idIntervenant', $intervenant->IdIntervenant)
+                $this->currentServicesCount = OffreService::where('idIntervenant', $intervenant->IdIntervenant)
                     ->whereIn('statut', ['EN_ATTENTE', 'VALIDE'])
                     ->count();
                 
@@ -94,7 +94,7 @@ class RegisterProfesseur extends Component
                 if ($this->currentServicesCount >= 2) {
                     $this->canAddService = false;
                     session()->flash('error', 'Vous avez déjà atteint la limite de 2 services. Vous ne pouvez pas en ajouter d\'autres.');
-                    return redirect()->route('dashboard'); // Rediriger vers le dashboard
+                    return redirect()->route('dashboard');
                 }
                 
                 // Pré-remplir les informations de l'utilisateur existant
@@ -130,19 +130,20 @@ class RegisterProfesseur extends Component
     protected function rules()
     {
         $rules = [];
-if ($this->currentStep == 1) {
-    // Si utilisateur existant, pas besoin de valider ces champs
-    if (!$this->isExistingUser) {
-        $rules = [
-            'firstName' => 'required|min:2|max:50',
-            'lastName' => 'required|min:2|max:50',
-            'email' => 'required|email', // ENLEVER unique
-            'password' => 'required|min:8',
-            'telephone' => 'required|min:10|max:20',
-            'dateNaissance' => 'required|date|before:today',
-        ];
-    }
-} elseif ($this->currentStep == 1.5) {
+        
+        if ($this->currentStep == 1) {
+            // Si utilisateur existant, pas besoin de valider ces champs
+            if (!$this->isExistingUser) {
+                $rules = [
+                    'firstName' => 'required|min:2|max:50',
+                    'lastName' => 'required|min:2|max:50',
+                    'email' => 'required|email',
+                    'password' => 'required|min:8',
+                    'telephone' => 'required|min:10|max:20',
+                    'dateNaissance' => 'required|date|before:today',
+                ];
+            }
+        } elseif ($this->currentStep == 1.5) {
             if (!$this->isExistingUser) {
                 $rules = [
                     'verificationCode' => 'required|size:10',
@@ -187,58 +188,83 @@ if ($this->currentStep == 1) {
     {
         $this->showPassword = !$this->showPassword;
     }
-public function checkEmailAvailability()
-{
-    // Vérifier si l'email existe
-    $existingUser = Utilisateur::where('email', $this->email)->first();
-    
-    if ($existingUser) {
-        // Vérifier si c'est un intervenant
-        $intervenant = Intervenant::where('IdIntervenant', $existingUser->idUser)->first();
+
+    public function checkEmailAvailability()
+    {
+        // Vérifier si l'email existe
+        $existingUser = Utilisateur::where('email', $this->email)->first();
         
-        if ($intervenant) {
-            // Compter les services actifs ou en attente
-            $servicesCount = OffreService::where('idIntervenant', $intervenant->IdIntervenant)
-                ->whereIn('statut', ['EN_ATTENTE', 'VALIDE'])
-                ->count();
+        if ($existingUser) {
+            // Vérifier si c'est un intervenant
+            $intervenant = Intervenant::where('IdIntervenant', $existingUser->idUser)->first();
             
-            if ($servicesCount >= 2) {
-                session()->flash('error', 'Cet email est déjà utilisé et a atteint la limite de 2 services.');
-                return false;
+            if ($intervenant) {
+                // Compter les services actifs ou en attente
+                $servicesCount = OffreService::where('idIntervenant', $intervenant->IdIntervenant)
+                    ->whereIn('statut', ['EN_ATTENTE', 'VALIDE'])
+                    ->count();
+                
+                if ($servicesCount >= 2) {
+                    session()->flash('error', 'Cet email est déjà utilisé et a atteint la limite de 2 services.');
+                    return false;
+                } else {
+                    session()->flash('error', 'Cet email existe déjà. Veuillez vous connecter pour ajouter un nouveau service.');
+                    return false;
+                }
             } else {
-                session()->flash('error', 'Cet email existe déjà. Veuillez vous connecter pour ajouter un nouveau service.');
+                // Email existe mais pas en tant qu'intervenant
+                session()->flash('error', 'Cet email est déjà utilisé pour un autre type de compte.');
                 return false;
             }
-        } else {
-            // Email existe mais pas en tant qu'intervenant
-            session()->flash('error', 'Cet email est déjà utilisé pour un autre type de compte.');
-            return false;
+        }
+        
+        return true; // Email disponible
+    }
+
+    public function sendVerificationCode()
+    {
+        // Si utilisateur existant, sauter cette étape
+        if ($this->isExistingUser) {
+            $this->currentStep = 2;
+            return;
+        }
+        
+        $this->validate([
+            'firstName' => 'required|min:2|max:50',
+            'lastName' => 'required|min:2|max:50',
+            'email' => 'required|email',
+            'password' => 'required|min:8',
+            'telephone' => 'required|min:10|max:20',
+            'dateNaissance' => 'required|date|before:today',
+        ]);
+        
+        // Vérifier la disponibilité de l'email
+        if (!$this->checkEmailAvailability()) {
+            return; // Stopper si l'email n'est pas disponible
+        }
+        
+        // Générer le code de vérification
+        $this->generatedCode = str_pad(random_int(0, 9999999999), 10, '0', STR_PAD_LEFT);
+        
+        // Stocker le code dans le cache pour 10 minutes
+        Cache::put('verification_code_' . $this->email, $this->generatedCode, now()->addMinutes(10));
+        
+        // Envoyer l'email avec le code
+        try {
+            Mail::to($this->email)->send(new VerificationCodeEmail(
+                $this->generatedCode,
+                $this->firstName,
+                $this->lastName
+            ));
+            
+            // Passer à l'étape de vérification
+            $this->currentStep = 1.5;
+            session()->flash('success', 'Un code de vérification a été envoyé à votre email.');
+            
+        } catch (\Exception $e) {
+            session()->flash('error', 'Erreur lors de l\'envoi de l\'email : ' . $e->getMessage());
         }
     }
-    
-    return true; // Email disponible
-}
-public function sendVerificationCode()
-{
-    // Si utilisateur existant, sauter cette étape
-    if ($this->isExistingUser) {
-        $this->currentStep = 2;
-        return;
-    }
-    
-    $this->validate([
-        'firstName' => 'required|min:2|max:50',
-        'lastName' => 'required|min:2|max:50',
-        'email' => 'required|email', // ENLEVER unique
-        'password' => 'required|min:8',
-        'telephone' => 'required|min:10|max:20',
-        'dateNaissance' => 'required|date|before:today',
-    ]);
-    
-    // Vérifier la disponibilité de l'email
-    if (!$this->checkEmailAvailability()) {
-        return; // Stopper si l'email n'est pas disponible
-    }}
 
     public function verifyCode()
     {
@@ -335,7 +361,7 @@ public function sendVerificationCode()
                 throw new \Exception('Service "Soutien Scolaire" introuvable');
             }
 
-            // NOUVEAU : Gérer utilisateur existant vs nouveau
+            // Gérer utilisateur existant vs nouveau
             if ($this->isExistingUser) {
                 $user = Auth::user();
                 $intervenant = $this->existingIntervenant;
@@ -366,11 +392,11 @@ public function sendVerificationCode()
                 ]);
 
                 // 3. Créer l'intervenant
-          $intervenant = Intervenant::create([
-    'IdIntervenant' => $user->idUser,
-    'statut' => 'EN_ATTENTE',
-    'idAdmin' => $admin->idAdmin,
-]);
+                $intervenant = Intervenant::create([
+                    'IdIntervenant' => $user->idUser,
+                    'statut' => 'EN_ATTENTE',
+                    'idAdmin' => $admin->idAdmin,
+                ]);
 
                 // 4. Créer la localisation
                 Localisation::create([
@@ -384,12 +410,12 @@ public function sendVerificationCode()
                 ]);
             }
 
-            // NOUVEAU : Insérer dans offre_service
-OffreService::create([
-    'idIntervenant' => $intervenant->IdIntervenant,
-    'idService' => $service->idService,
-    'statut' => 'EN_ATTENTE',
-]);
+            // Insérer dans offre_service
+            OffreService::create([
+                'idIntervenant' => $intervenant->IdIntervenant,
+                'idService' => $service->idService,
+                'statut' => 'EN_ATTENTE',
+            ]);
 
             // 5. Upload des fichiers
             $cinDocumentPath = $this->cinDocument ? $this->cinDocument->store('cin_documents', 'public') : null;
@@ -401,14 +427,14 @@ OffreService::create([
             }
 
             // 6. Créer le professeur
-$professeur = Professeur::create([
-    'CIN' => $cinDocumentPath,
-    'surnom' => $this->surnom,
-    'biographie' => $this->biographie,
-    'diplome' => $diplomePath,
-    'niveau_etudes' => $this->niveauEtudes,
-    'intervenant_id' => $intervenant->IdIntervenant,
-]);
+            $professeur = Professeur::create([
+                'CIN' => $cinDocumentPath,
+                'surnom' => $this->surnom,
+                'biographie' => $this->biographie,
+                'diplome' => $diplomePath,
+                'niveau_etudes' => $this->niveauEtudes,
+                'intervenant_id' => $intervenant->IdIntervenant,
+            ]);
 
             // 7. Créer les services professeur
             $matieresData = [];
