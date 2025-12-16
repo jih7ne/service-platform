@@ -16,8 +16,8 @@ class AdminAccountAlerte extends Mailable
     public string $keeper_email;
     public string $keeper_fname;
     public string $keeper_lname;
-    public array $admin_emails;
-    public array $pet_keeper_data;
+    public array  $admin_emails;
+    public array  $pet_keeper_data;
 
     /**
      * Create a new message instance.

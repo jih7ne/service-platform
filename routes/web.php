@@ -146,9 +146,6 @@ Route::middleware(['auth'])->group(function () {
 
 
 
-    // Maintenant cette ligne va fonctionner car l'import est correct en haut
-    //Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.details');
-});
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
