@@ -4,12 +4,13 @@ namespace App\Livewire\Shared;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\Shared\Admin;
 
 class LoginPage extends Component
 {
     public $email = '';
     public $password = '';
-    // public $remember = false;
     public $showPassword = false;
 
     protected $rules = [
@@ -29,59 +30,29 @@ class LoginPage extends Component
         $this->showPassword = !$this->showPassword;
     }
 
-    // public function fillBabysitterCredentials()
-    // {
-    //     $this->email = 'babysitter@helpora.com';
-    //     $this->password = 'baby123';
-    //     $this->remember = false;
-    // }
-
-    // public function fillClientCredentials()
-    // {
-    //     $this->email = 'client@helpora.com';
-    //     $this->password = 'client123';
-    //     $this->remember = false;
-    // }
-
-    /*
     public function login()
     {
         $this->validate();
 
-        // Tenter l'authentification
-        if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
+        // ========================================
+        // 1. VÉRIFIER SI C'EST UN ADMIN D'ABORD
+        // ========================================
+        $admin = Admin::where('emailAdmin', $this->email)->first();
+        
+        if ($admin && Hash::check($this->password, $admin->passwordAdmin)) {
+            // Connexion admin réussie
             session()->regenerate();
-
-            $user = Auth::user();
-
-            // Vérifier le statut
-            if ($user->statut !== 'actif') {
-                Auth::logout();
-                $this->addError('email', 'Votre compte est suspendu.');
-                return;
-            }
-
-            // Rediriger selon le rôle
-            if ($user->role === 'intervenant') {
-                session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
-                return redirect()->route('babysitter.dashboard');
-            }
-
-            if ($user->role === 'client') {
-                session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
-                return redirect('/');
-            }
-
-            return redirect('/');
+            session()->put('admin_id', $admin->idAdmin);
+            session()->put('admin_email', $admin->emailAdmin);
+            session()->put('is_admin', true);
+            
+            session()->flash('success', 'Bienvenue Admin !');
+            return redirect()->route('admin.dashboard');
         }
 
-        $this->addError('email', 'Email ou mot de passe incorrect.');
-    }*/
-
-    public function login()
-    {
-        $this->validate();
-
+        // ========================================
+        // 2. SINON, VÉRIFIER LES UTILISATEURS NORMAUX
+        // ========================================
         if (Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
             session()->regenerate();
             $user = Auth::user();
@@ -92,7 +63,7 @@ class LoginPage extends Component
                 return;
             }
 
-            // --- LOGIQUE DE REDIRECTION ---
+            // --- LOGIQUE DE REDIRECTION UTILISATEUR ---
             if ($user->role === 'intervenant') {
                 session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
 
@@ -151,11 +122,6 @@ class LoginPage extends Component
     {
         return redirect('/inscriptionClient');
     }
-
-    // public function navigateToForgotPassword()
-    // {
-    //     return redirect()->route('password.request');
-    // }
 
     public function navigateToHome()
     {

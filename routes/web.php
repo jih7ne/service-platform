@@ -1,51 +1,54 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Livewire\Shared\Register;
 
 // Auth Controllers
-use App\Http\Controllers\Api\Auth\LoginController;
-use App\Http\Controllers\Api\Auth\RegisterController;
+use App\Livewire\Shared\LoginPage;
+use App\Livewire\Tutoring\MesCours;
 
 // Shared Livewire Components
-use App\Livewire\Shared\Register;
-use App\Livewire\Shared\LoginPage;
 use App\Livewire\Shared\ContactPage;
 use App\Livewire\Shared\LandingPage;
-use App\Livewire\Shared\ServicesPage;
-use App\Livewire\Shared\IntervenantHub;
+use App\Livewire\Tutoring\Dashboard;
+use App\Livewire\Tutoring\MonProfil;
 use App\Livewire\Shared\ProfilClient;
-use App\Livewire\Shared\RegisterClientPage;
-use App\Livewire\Shared\RegisterIntervenantPage;
+use App\Livewire\Shared\ServicesPage;
+use App\Livewire\Tutoring\MesClients;
+use Illuminate\Support\Facades\Route;
+use App\Livewire\Tutoring\MesDemandes;
 
 // Tutoring Livewire Components
-use App\Livewire\Tutoring\Dashboard;
-use App\Livewire\Tutoring\MesDemandes;
+use App\Livewire\Shared\IntervenantHub;
 use App\Livewire\Tutoring\TutorDetails;
+use App\Livewire\Tutoring\ClientDetails;
 use App\Livewire\Tutoring\BookingProcess;
 use App\Livewire\Tutoring\DemandeDetails;
 use App\Livewire\Tutoring\ProfessorsList;
-use App\Livewire\Tutoring\RegisterProfesseur;
-use App\Livewire\Tutoring\MesClients;
-use App\Livewire\Tutoring\ClientDetails;
 use App\Livewire\Tutoring\StudentProfile;
-use App\Livewire\Tutoring\MesCours;
-use App\Livewire\Tutoring\MonProfil;
+use App\Livewire\Shared\RegisterClientPage;
+use App\Livewire\Babysitter\ListeBabysitter;
+use App\Livewire\PetKeeping\PetKeeperProfile;
+use App\Livewire\Shared\Admin\AdminDashboard;
+use App\Livewire\Shared\Admin\AdminIntervenants;
+use App\Livewire\Shared\Admin\IntervenantDetails;
+use App\Livewire\Tutoring\RegisterProfesseur;
+use App\Livewire\Tutoring\DisponibilitesPage;
 
 // Babysitter Livewire Components
-use App\Livewire\Babysitter\ListeBabysitter;
-use App\Livewire\Babysitter\BabysitterProfilePage;
 use App\Livewire\Babysitter\BabysitterBooking;
-use App\Livewire\Babysitter\BabysitterRegistration;
-use App\Livewire\Babysitter\BabysitterRegistrationSuccess;
-use App\Livewire\Babysitter\BabysitterDashboard;
 use App\Livewire\Babysitter\BabysitterProfile;
+use App\Livewire\PetKeeping\PetKeeperMissions;
+use App\Livewire\PetKeeping\PetKeeperDashboard;
+use App\Livewire\Babysitter\BabysitterDashboard;
+use App\Livewire\Shared\RegisterIntervenantPage;
+use App\Http\Controllers\Api\Auth\LoginController;
 
 // PetKeeping Livewire Components
-use App\Livewire\PetKeeping\SearchService as PetKeepingService;
-use App\Livewire\PetKeeping\PetkeepingServiceBooking;
-use App\Livewire\PetKeeping\PetKeeperProfile;
-use App\Livewire\PetKeeping\PetKeeperDashboard;
+use App\Livewire\Babysitter\BabysitterProfilePage;
 use App\Livewire\PetKeeping\PetKeeperRegistration;
+use App\Livewire\Babysitter\BabysitterRegistration;
+use App\Livewire\PetKeeping\PetKeeperMissionDetails;
+use App\Http\Controllers\Api\Auth\RegisterController;
 // ICI : J'ai décommenté et corrigé le chemin (PetKeeping\)
 //use App\Livewire\PetKeeping\PetKeeperMissionDetails;
 
@@ -54,8 +57,9 @@ use App\Livewire\PetKeeping\PetKeeperRegistration;
 | Web Routes
 |--------------------------------------------------------------------------
 */
-use App\Livewire\PetKeeping\PetKeeperMissions;
-use App\Livewire\PetKeeping\PetKeeperMissionDetails;
+use App\Livewire\PetKeeping\PetkeepingServiceBooking;
+use App\Livewire\Babysitter\BabysitterRegistrationSuccess;
+use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 
 // Route::get('/petkeeper/mission/{id}', PetKeeperMissionDetails::class)
 //     ->name('petkeeper.mission.show');
@@ -114,6 +118,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tutoring/profil-candidat/{id}', StudentProfile::class)->name('tutoring.student.profile');
     Route::get('/tutoring/mes-cours', MesCours::class)->name('tutoring.courses');
     Route::get('/tutoring/mon-profil', MonProfil::class)->name('tutoring.profile');
+    Route::get('/tutoring/disponibilites', DisponibilitesPage::class)->name('tutoring.disponibilites');
     
     // Babysitter
     Route::get('/babysitter/dashboard', BabysitterDashboard::class)->name('babysitter.dashboard');
@@ -135,4 +140,13 @@ Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
 
     // Maintenant cette ligne va fonctionner car l'import est correct en haut
     //Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.details');
+});
+
+// Admin Routes
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
+    // Route::get('/users', AdminUsers::class)->name('users');
+    // Route::get('/complaints', AdminComplaints::class)->name('complaints');
+    Route::get('/intervenants', AdminIntervenants::class)->name('intervenants');
+    Route::get('/intervenant/{id}', IntervenantDetails::class)->name('intervenant.details');
 });

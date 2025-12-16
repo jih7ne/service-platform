@@ -16,6 +16,7 @@ class Professeur extends Model
 
     protected $fillable = [
         'CIN',
+        'cin_document',
         'surnom',
         'biographie',
         'diplome',
