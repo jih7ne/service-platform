@@ -24,13 +24,18 @@ class AdminSidebar extends Component
         $currentUrl = request()->path();
         
         // Mapping des URLs vers les noms de pages
+        // IMPORTANT: Vérifier d'abord les URLs les plus spécifiques
         if (str_contains($currentUrl, 'admin/users')) {
             return 'admin-users';
-        } elseif (str_contains($currentUrl, 'admin/reclamations')) {
+        } elseif (str_contains($currentUrl, 'admin/reclamation')) {
+            // Gère à la fois /admin/reclamations ET /admin/reclamations/{id}/details
             return 'admin-complaints';
-        } elseif (str_contains($currentUrl, 'admin/intervenants')) {
+        } elseif (str_contains($currentUrl, 'admin/intervenant')) {
+            // Gère à la fois /admin/intervenants ET /admin/intervenant/{id}
             return 'admin-intervenants';
-        } elseif (str_contains($currentUrl, 'admin/dashboard') || str_contains($currentUrl, 'admin')) {
+        } elseif (str_contains($currentUrl, 'admin/dashboard')) {
+            return 'admin-dashboard';
+        } elseif (str_contains($currentUrl, 'admin')) {
             return 'admin-dashboard';
         }
         
