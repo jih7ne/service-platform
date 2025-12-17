@@ -167,6 +167,9 @@
                         <div wire:click="$set('filtreStatut', 'refusée')" @click="open = false" class="px-5 py-3 text-sm text-red-600 hover:bg-red-50 cursor-pointer">
                             Refusées
                         </div>
+                        <div wire:click="$set('filtreStatut', 'annulée')" @click="open = false" class="px-5 py-3 text-sm text-gray-500 hover:bg-gray-100 cursor-pointer border-t border-gray-50">
+                            Annulées
+                        </div>
                     </div>
                 </div>
 
@@ -197,6 +200,8 @@
                             <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
                                 @if($demande->statut === 'validée') bg-green-100 text-green-700
                                 @elseif($demande->statut === 'en_attente') bg-amber-100 text-amber-700
+                                @elseif($demande->statut === 'refusée') bg-red-100 text-red-700
+                                @elseif($demande->statut === 'annulée') bg-gray-100 text-gray-700
                                 @else bg-red-100 text-red-700
                                 @endif">
                                 {{ ucfirst(str_replace('_', ' ', $demande->statut)) }}
@@ -275,8 +280,7 @@
         <!-- ================= MODAL DETAILS ================= -->
         @if($showModal && $selectedDemande)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 p-4 transition-opacity backdrop-blur-sm">
-            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden relative transform transition-all scale-100">
-                
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden relative transform transition-all scale-100">
                 <!-- Close Button -->
                 <button wire:click="closeModal" class="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-200 transition z-10">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>

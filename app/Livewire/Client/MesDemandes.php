@@ -39,7 +39,8 @@ class MesDemandes extends Component
     {
         // 1. Récupération de la demande de base
         $this->selectedDemande = DB::table('demandes_intervention')
-            ->join('services', 'demandes_intervention.idService', '=', 'services.idService')
+            // MODIFICATION ICI : leftJoin au lieu de join pour éviter les erreurs si le service n'existe plus
+            ->leftJoin('services', 'demandes_intervention.idService', '=', 'services.idService')
             ->leftJoin('utilisateurs', 'demandes_intervention.idIntervenant', '=', 'utilisateurs.idUser')
             ->select(
                 'demandes_intervention.*',
@@ -83,10 +84,14 @@ class MesDemandes extends Component
 
     public function annulerDemande($id)
     {
+        $user = Auth::user();
+        // Sécurité : vérifier si l'utilisateur est connecté
+        if (!$user) return;
+
         DB::table('demandes_intervention')
             ->where('idDemande', $id)
             ->where('idClient', DB::table('utilisateurs')
-                ->where('email', Auth::user()->email)
+                ->where('email', $user->email)
                 ->value('idUser'))
             ->update(['statut' => 'annulée']);
             
@@ -109,9 +114,11 @@ class MesDemandes extends Component
 
     public function render()
     {
-        $userId = DB::table('utilisateurs')
-            ->where('email', Auth::user()->email)
-            ->value('idUser');
+        // Récupération sécurisée de l'ID utilisateur
+        $user = Auth::user();
+        $userId = $user ? DB::table('utilisateurs')
+            ->where('email', $user->email)
+            ->value('idUser') : null;
 
         if (!$userId) {
             return view('livewire.client.mes-demandes', [
@@ -130,7 +137,8 @@ class MesDemandes extends Component
 
         // Requête principale
         $query = DB::table('demandes_intervention')
-            ->join('services', 'demandes_intervention.idService', '=', 'services.idService')
+            // C'EST ICI LA CORRECTION PRINCIPALE : leftJoin
+            ->leftJoin('services', 'demandes_intervention.idService', '=', 'services.idService')
             ->leftJoin('utilisateurs', 'demandes_intervention.idIntervenant', '=', 'utilisateurs.idUser')
             ->select(
                 'demandes_intervention.*',
@@ -154,7 +162,7 @@ class MesDemandes extends Component
         // Pagination
         $demandes = $query->orderBy('demandes_intervention.dateDemande', 'desc')->paginate(5);
 
-        // AJOUT CRUCIAL : Calculer le prix pour chaque demande
+        // Calcul du prix pour chaque demande
         foreach ($demandes as $demande) {
             $demande->prix_estime = $this->calculerPrix($demande->heureDebut, $demande->heureFin);
         }
