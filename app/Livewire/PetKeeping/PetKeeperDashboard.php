@@ -53,6 +53,7 @@ class PetKeeperDashboard extends Component
         // Vérification basée sur l'enum 'statut' de votre table utilisateurs
         $this->isAvailable = ($this->user->statut === 'actif');
         $this->loadFeedbacks();
+        //
     }
 
 
@@ -95,6 +96,56 @@ class PetKeeperDashboard extends Component
 
         return $prix;
     }
+
+
+/* ===================== CRENEAUX JSON ===================== */
+private function parseCreneaux(?string $json)
+{
+    if (!$json) return [];
+
+    try {
+        return json_decode($json, true) ?? [];
+    } catch (\Exception $e) {
+        return [];
+    }
+}
+
+/* ===================== PRIX DEPUIS CRENEAUX ===================== */
+private function calculerPrixDepuisCreneaux(array $creneaux)
+{
+    $total = 0;
+
+    foreach ($creneaux as $c) {
+        if (!isset($c['heureDebut'], $c['heureFin'])) continue;
+
+        $debut = Carbon::createFromFormat('H:i', $c['heureDebut']);
+        $fin   = Carbon::createFromFormat('H:i', $c['heureFin']);
+
+        $minutes = $debut->diffInMinutes($fin);
+        $heures  = max($minutes / 60, 1);
+
+        $total += $heures * 120;
+    }
+
+    return max($total, 300);
+}
+
+/* ===================== ANIMAUX D’UNE DEMANDE ===================== */
+private function getAnimauxByDemande($idDemande)
+{
+    return DB::table('animal_demande')
+        ->join('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
+        ->where('animal_demande.idDemande', $idDemande)
+        ->select(
+            'animals.nomAnimal',
+            'animals.race',
+            'animals.age',
+            'animals.sexe',
+            'animals.poids'
+        )
+        ->get();
+}
+
 
     /* ===================== REFUS ===================== */
     public function openRefusalModal($idDemande)

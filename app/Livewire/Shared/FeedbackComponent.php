@@ -130,12 +130,8 @@ class FeedbackComponent extends Component
     private function loadData()
     {
         try {
-            // Charger la demande selon le type de service
-            if ($this->typeService === 'tutoring') {
-                $this->demande = DB::table('demandeprofesseur')->find($this->demandeId);
-            } else {
-                $this->demande = DemandesIntervention::find($this->demandeId);
-            }
+            // Charger la demande depuis demandes_intervention pour tous les services
+            $this->demande = DemandesIntervention::find($this->demandeId);
             
             if (!$this->demande) {
                 session()->flash('error', 'Demande introuvable');
@@ -219,6 +215,10 @@ class FeedbackComponent extends Component
         try {
             DB::beginTransaction();
 
+            // Vérifier si la demande existe
+            $demandeExists = DB::table('demandes_intervention')->where('idDemande', $this->demandeId)->exists();
+            $idDemandeToUse = $demandeExists ? $this->demandeId : null;
+
             // Calculer la note moyenne
             $noteMoyenne = ($this->ponctualite + $this->professionnalisme + 
                            $this->relationAvecEnfants + $this->communication + 
@@ -237,7 +237,7 @@ class FeedbackComponent extends Component
                 'qualiteTravail' => $this->communication,
                 'estVisible' => true,
                 'dateCreation' => now(),
-                'idDemande' => $this->demandeId,
+                'idDemande' => $idDemandeToUse,
                 'idService' => $this->serviceId,
             ]);
 

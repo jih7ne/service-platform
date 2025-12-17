@@ -56,9 +56,16 @@
                 Mes Missions
             </a>
 
-            <a href="/petkeeper/profile" class="flex items-center gap-3 px-4 py-3.5 text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all group">
+            <a href="/pet-keeper/profile" class="flex items-center gap-3 px-4 py-3.5 text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all group">
                 <svg class="w-5 h-5 group-hover:text-amber-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 Mon Profil
+            </a>
+
+            <a href="/pet-keeper/dashboard/services" class="flex items-center gap-3 px-4 py-3.5 text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all group">
+                <svg class="w-5 h-5 group-hover:text-amber-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                </svg>
+                Mes Services
             </a>
         </nav>
 
@@ -213,7 +220,14 @@
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="text-xs font-bold text-gray-900 uppercase tracking-wide">Animal</span>
                             </div>
-                            <p class="text-sm text-gray-700 font-semibold">{{ $demande->nom_animal ?? 'Inconnu' }} <span class="text-gray-400 text-xs">({{ $demande->race_animal ?? 'Race inconnue' }})</span></p>
+@foreach($demande->animaux as $animal)
+    <p class="text-sm text-gray-700 font-semibold">
+        🐾 {{ $animal->nomAnimal }}
+        <span class="text-gray-400 text-xs">
+            ({{ $animal->race }}, {{ $animal->age }} ans)
+        </span>
+    </p>
+@endforeach
                         </div>
                         <div class="flex-1 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                             <div class="flex items-center gap-2 mb-2">
@@ -222,7 +236,12 @@
                             <p class="text-sm text-gray-700 font-semibold">
                                 {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->format('d/m/Y') }} <br>
                                 <span class="text-gray-500 font-normal">
-                                    {{ \Carbon\Carbon::parse($demande->heureDebut)->format('H:i') }} - {{ \Carbon\Carbon::parse($demande->heureFin)->format('H:i') }}
+@foreach($demande->creneaux as $c)
+    <div class="text-sm text-gray-600">
+        📅 {{ \Carbon\Carbon::parse($c['date'])->format('d/m/Y') }}
+        ⏰ {{ $c['heureDebut'] }} - {{ $c['heureFin'] }}
+    </div>
+@endforeach
                                 </span>
                             </p>
                         </div>
@@ -232,7 +251,10 @@
                          <div>
                             <p class="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-1">Total estimé</p>
                             <!-- Prix factice pour l'affichage, ajuster selon ton controller -->
-                            <span class="text-3xl font-black text-gray-900">300 <span class="text-sm text-amber-600 font-bold">DH</span></span>
+<span class="text-3xl font-black text-gray-900">
+    {{ $demande->prix_estime }}
+    <span class="text-sm text-amber-600 font-bold">DH</span>
+</span>
                         </div>
 
                         <!-- BOUTONS ACTIONS (CORRECTEMENT PLACÉS ICI) -->

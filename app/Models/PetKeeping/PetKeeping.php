@@ -39,7 +39,7 @@ class PetKeeping extends Model
         'pet_type',
         'payment_criteria',
         'base_price',
-        'statut',
+        // 'statut',
     ];
 
     public function services()

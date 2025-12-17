@@ -14,13 +14,16 @@ class StudentProfile extends Component
     public $photo_prof;
     public $moyenne = 0;
     public $backUrl; 
-    public $enAttente;
+    public $enAttente = 0;
 
     public function mount($id)
     {
         $user = Auth::user();
         $this->prenom_prof = $user->prenom;
         $this->photo_prof = $user->photo;
+
+        // Badge count for sidebar
+        $this->refreshPendingRequests();
 
          $source = request()->query('source');
         $demandeId = request()->query('demande_id');
@@ -56,6 +59,22 @@ class StudentProfile extends Component
         $this->moyenne = DB::table('feedbacks')
             ->where('idCible', $id)
             ->avg('sympathie'); // Ou une moyenne générale
+    }
+
+    public function refreshPendingRequests(): void
+    {
+        $user = Auth::user();
+        if (!$user) { $this->enAttente = 0; return; }
+
+        $this->enAttente = (int) DB::table('demandes_intervention')
+            ->where('idIntervenant', $user->idUser)
+            ->where('statut', 'en_attente')
+            ->count();
+    }
+
+    public function hydrate(): void
+    {
+        $this->refreshPendingRequests();
     }
 
     public function logout() {

@@ -23,7 +23,7 @@ class GestionDisponibilites extends Component
     public $editingId = null;
 
     // View properties
-    public $viewMode = 'weekly'; // 'weekly' or 'calendar'
+    public $viewMode = 'weekly';
     public $selectedWeek = null;
     public $selectedDate = null;
 
@@ -31,12 +31,13 @@ class GestionDisponibilites extends Component
         'heureDebut' => 'required|date_format:H:i',
         'heureFin' => 'required|date_format:H:i|after:heureDebut',
         'jourSemaine' => 'required_if:estRecurrent,true|in:Lundi,Mardi,Mercredi,Jeudi,Vendredi,Samedi,Dimanche',
-        'dateSpecifique' => 'required_if:estRecurrent,false|date|after_or_equal:today',
+        'dateSpecifique' => 'required_if:estRecurrent,false|date',
     ];
 
     protected $messages = [
         'heureFin.after' => 'L\'heure de fin doit être après l\'heure de début.',
-        'dateSpecifique.after_or_equal' => 'La date doit être aujourd\'hui ou dans le futur.',
+        'dateSpecifique.required_if' => 'La date est requise pour une disponibilité ponctuelle.',
+        'dateSpecifique.date' => 'Format de date invalide.',
     ];
 
     public function mount($intervenantId = null)
@@ -54,6 +55,11 @@ class GestionDisponibilites extends Component
         $this->disponibilites = $query->get();
         $this->disponibilitesRecurrentes = $query->recurrent()->get();
         $this->disponibilitesSpecifiques = $query->specific()->get();
+        
+        // Log pour debug
+        \Log::info('Disponibilités chargées - Total: ' . $this->disponibilites->count() . 
+                   ', Récurrentes: ' . $this->disponibilitesRecurrentes->count() . 
+                   ', Ponctuelles: ' . $this->disponibilitesSpecifiques->count());
     }
 
     public function saveDisponibilite()
@@ -71,26 +77,41 @@ class GestionDisponibilites extends Component
             $data['jourSemaine'] = $this->jourSemaine;
             $data['date_specifique'] = null;
         } else {
-            $data['jourSemaine'] = null;
-            $data['date_specifique'] = $this->dateSpecifique;
+            // Mettre une valeur factice car la colonne n'accepte pas NULL ni chaîne vide
+            $data['jourSemaine'] = 'N/A';
+            $data['date_specifique'] = Carbon::parse($this->dateSpecifique)->format('Y-m-d');
         }
 
         try {
             if ($this->editingId) {
-                Disponibilite::find($this->editingId)->update($data);
+                $dispo = Disponibilite::find($this->editingId);
+                $dispo->update($data);
+                
+                \Log::info('Disponibilité mise à jour:', [
+                    'id' => $this->editingId,
+                    'type' => $this->estRecurrent ? 'récurrente' : 'ponctuelle',
+                    'date' => $data['date_specifique'] ?? $data['jourSemaine']
+                ]);
+                
                 session()->flash('success', 'Disponibilité mise à jour avec succès');
             } else {
-                Disponibilite::create($data);
+                $newDispo = Disponibilite::create($data);
+                
+                \Log::info('Nouvelle disponibilité créée:', [
+                    'id' => $newDispo->idDispo,
+                    'type' => $this->estRecurrent ? 'récurrente' : 'ponctuelle',
+                    'date' => $data['date_specifique'] ?? $data['jourSemaine']
+                ]);
+                
                 session()->flash('success', 'Disponibilité ajoutée avec succès');
             }
 
             $this->resetForm();
             $this->loadDisponibilites();
-            
-            // Émettre un événement pour rafraîchir les stats
             $this->dispatch('disponibilite-saved');
             
         } catch (\Exception $e) {
+            \Log::error('Erreur sauvegarde disponibilité: ' . $e->getMessage());
             session()->flash('error', 'Une erreur est survenue: ' . $e->getMessage());
         }
     }
@@ -105,15 +126,23 @@ class GestionDisponibilites extends Component
         }
         
         $this->editingId = $id;
-        $this->heureDebut = $dispo->heureDebut;
-        $this->heureFin = $dispo->heureFin;
+        $this->heureDebut = substr($dispo->heureDebut, 0, 5); // Enlever les secondes
+        $this->heureFin = substr($dispo->heureFin, 0, 5);
         $this->estRecurrent = $dispo->est_reccurent;
         
         if ($dispo->est_reccurent) {
             $this->jourSemaine = $dispo->jourSemaine;
+            $this->dateSpecifique = '';
         } else {
             $this->dateSpecifique = $dispo->date_specifique;
+            $this->jourSemaine = 'Lundi';
         }
+        
+        \Log::info('Édition disponibilité:', [
+            'id' => $id,
+            'type' => $this->estRecurrent ? 'récurrente' : 'ponctuelle',
+            'date' => $this->dateSpecifique ?: $this->jourSemaine
+        ]);
     }
 
     public function deleteDisponibilite($id)
@@ -162,7 +191,22 @@ class GestionDisponibilites extends Component
                 if ($dispo->est_reccurent) {
                     return $dispo->jourSemaine === $dayNameFr;
                 } else {
-                    return $dispo->date_specifique === $dateStr;
+                    // Pour les ponctuels, jourSemaine vaut 'N/A'
+                    if ($dispo->jourSemaine === 'N/A' || empty($dispo->jourSemaine) || is_null($dispo->jourSemaine)) {
+                        // Convertir les deux dates au format Y-m-d pour comparaison
+                        $dispoDate = Carbon::parse($dispo->date_specifique)->format('Y-m-d');
+                        
+                        // Log pour debug
+                        \Log::info('Comparaison dates', [
+                            'date_calendrier' => $dateStr,
+                            'date_dispo_brute' => $dispo->date_specifique,
+                            'date_dispo_formatee' => $dispoDate,
+                            'match' => $dispoDate === $dateStr
+                        ]);
+                        
+                        return $dispoDate === $dateStr;
+                    }
+                    return false;
                 }
             });
 
@@ -180,8 +224,29 @@ class GestionDisponibilites extends Component
     {
         if (!$this->selectedDate) return [];
 
-        return $this->disponibilites->filter(function($dispo) {
-            return $dispo->isAvailableAt($this->selectedDate . ' 12:00:00');
+        $selectedDateFr = Carbon::parse($this->selectedDate)->locale('fr')->dayName;
+        $dayNameFr = ucfirst($selectedDateFr);
+
+        return $this->disponibilites->filter(function($dispo) use ($dayNameFr) {
+            if ($dispo->est_reccurent) {
+                return $dispo->jourSemaine === $dayNameFr;
+            } else {
+                // Pour les ponctuels, jourSemaine vaut 'N/A'
+                if ($dispo->jourSemaine === 'N/A' || empty($dispo->jourSemaine) || is_null($dispo->jourSemaine)) {
+                    // Convertir au même format pour comparaison
+                    $dispoDate = Carbon::parse($dispo->date_specifique)->format('Y-m-d');
+                    $selectedDate = Carbon::parse($this->selectedDate)->format('Y-m-d');
+                    
+                    \Log::info('Vue journée - Comparaison', [
+                        'selected' => $selectedDate,
+                        'dispo' => $dispoDate,
+                        'match' => $dispoDate === $selectedDate
+                    ]);
+                    
+                    return $dispoDate === $selectedDate;
+                }
+                return false;
+            }
         });
     }
 

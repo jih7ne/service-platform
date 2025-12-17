@@ -13,6 +13,7 @@ class ClientDetails extends Component
     public $feedbacks = [];
     public $prenom_prof;
     public $photo_prof;
+    public $enAttente = 0;
     
     public $coursTerminesCount = 0; 
 
@@ -22,6 +23,9 @@ class ClientDetails extends Component
         $this->prenom_prof = $user->prenom;
         $this->photo_prof = $user->photo;
         $profId = $user->idUser;
+
+        // Pending demandes count for sidebar badge
+        $this->refreshPendingRequests();
 
         // 1. Infos Client (Table 'localisations' avec S)
         $this->client = DB::table('utilisateurs')
@@ -65,6 +69,22 @@ class ClientDetails extends Component
             ->select('feedbacks.*', 'utilisateurs.prenom as auteur_prenom', 'utilisateurs.nom as auteur_nom')
             ->orderBy('dateCreation', 'desc')
             ->get();
+    }
+
+    public function refreshPendingRequests(): void
+    {
+        $user = Auth::user();
+        if (!$user) { $this->enAttente = 0; return; }
+
+        $this->enAttente = (int) DB::table('demandes_intervention')
+            ->where('idIntervenant', $user->idUser)
+            ->where('statut', 'en_attente')
+            ->count();
+    }
+
+    public function hydrate(): void
+    {
+        $this->refreshPendingRequests();
     }
     
     public function logout() {

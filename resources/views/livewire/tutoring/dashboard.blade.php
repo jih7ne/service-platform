@@ -8,7 +8,7 @@
         <!-- Partie Haute -->
         <div>
             <!-- Logo -->
-            <div class="px-8 py-6 flex items-center gap-2">
+            <div class="px-14 py-6 flex items-center gap-2">
                 <span class="text-2xl font-bold text-gray-800">Helpora</span>
             </div>
 

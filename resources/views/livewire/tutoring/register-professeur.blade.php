@@ -1,4 +1,6 @@
-<div class="min-h-screen bg-white">
+<div>
+  
+    
     <livewire:shared.header />
 
     <div class="min-h-screen bg-[#F7F7F7] py-12">
@@ -27,7 +29,7 @@
                     </p>
                 </div>
 
-                <!-- Stepper mis à jour -->
+                <!-- Stepper -->
                 @if(!$registrationComplete)
                 <div class="w-full mb-8">
                     <div class="flex items-center justify-between max-w-3xl mx-auto">
@@ -70,209 +72,274 @@
 
                 <div class="mt-8">
                     
-                    {{-- ÉTAPE 1 : INFORMATIONS PERSONNELLES --}}
-                    @if($currentStep == 1)
-                        <div class="space-y-6">
-                            <h2 class="text-xl font-bold text-black mb-4">Informations Personnelles</h2>
-
-                            <div class="grid md:grid-cols-2 gap-4">
+                    <!-- Bandeau informatif si utilisateur existant -->
+                    @if($isExistingUser)
+                        <div class="mb-6 bg-blue-50 border-2 border-blue-500 rounded-xl p-5">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
                                 <div>
-                                    <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
-                                        Prénom <span class="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        wire:model="firstName"
-                                        class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all"
-                                        placeholder="Jean"
-                                    />
-                                    @error('firstName') 
-                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                                    @enderror
+                                    <h3 class="font-bold text-blue-900 mb-2">Ajout d'un nouveau service</h3>
+                                    <p class="text-sm text-blue-800">
+                                        Vous ajoutez un <strong>nouveau service</strong> à votre profil existant.<br>
+                                        Services actuels : <strong>{{ $currentServicesCount }}/2</strong>
+                                    </p>
                                 </div>
-
-                                <div>
-                                    <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
-                                        Nom <span class="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        wire:model="lastName"
-                                        class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all"
-                                        placeholder="Dupont"
-                                    />
-                                    @error('lastName') 
-                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
-                                    Email <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="email"
-                                    wire:model="email"
-                                    class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all"
-                                    placeholder="jean.dupont@email.com"
-                                />
-                                @error('email') 
-                                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
-                                        Téléphone <span class="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        wire:model="telephone"
-                                        class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all"
-                                        placeholder="06XXXXXXXX"
-                                    />
-                                    @error('telephone') 
-                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
-                                        Date de Naissance <span class="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        wire:model="dateNaissance"
-                                        class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all"
-                                    />
-                                    @error('dateNaissance') 
-                                        <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
-                                    Mot de passe <span class="text-red-500">*</span>
-                                </label>
-                                <div class="relative">
-                                    <input
-                                        type="{{ $showPassword ? 'text' : 'password' }}"
-                                        wire:model="password"
-                                        class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all pr-12"
-                                        placeholder="••••••••"
-                                    />
-                                    <button 
-                                        type="button"
-                                        wire:click="togglePassword"
-                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                                    >
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            @if($showPassword)
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-                                            @else
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                            @endif
-                                        </svg>
-                                    </button>
-                                </div>
-                                @error('password') 
-                                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                                @enderror
-                                <p class="text-xs text-gray-500 mt-1">
-                                    Le mot de passe doit contenir au moins 8 caractères
-                                </p>
                             </div>
                         </div>
                     @endif
 
-                    {{-- ÉTAPE 1.5 : VÉRIFICATION EMAIL --}}
-                    @if($currentStep == 1.5)
-                        <div class="space-y-6">
-                            <div class="text-center">
-                                <div class="w-20 h-20 bg-[#E1EAF7] rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg class="w-10 h-10 text-[#2B5AA8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                    </svg>
-                                </div>
-                                <h2 class="text-2xl font-bold text-black mb-2">Vérifiez votre email</h2>
-                                <p class="text-gray-600">
-                                    Nous avons envoyé un code de vérification à<br>
-                                    <span class="font-semibold text-[#2B5AA8]">{{ $email }}</span>
-                                </p>
-                            </div>
+                    {{-- Toutes vos étapes ici (1, 1.5, 2, 3, 4 et page de succès) --}}
+                    {{-- Je ne répète pas tout le code pour gagner de l'espace --}}
+                    
+                    {{-- ÉTAPE 1 --}}
+@if($currentStep == 1)
+    <div class="space-y-6">
+        <h2 class="text-xl font-bold text-black mb-4">
+            @if($isExistingUser)
+                Vos informations personnelles
+            @else
+                Informations Personnelles
+            @endif
+        </h2>
 
-                            <div>
-                                <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold text-center">
-                                    Code de vérification (10 chiffres)
-                                </label>
-                                <input
-                                    type="text"
-                                    wire:model="verificationCode"
-                                    maxlength="10"
-                                    class="w-full px-4 py-4 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-center text-2xl tracking-widest font-mono"
-                                    placeholder="0000000000"
-                                />
-                                @error('verificationCode') 
-                                    <span class="text-red-500 text-sm mt-1 block text-center">{{ $message }}</span>
-                                @enderror
-                            </div>
+        @if($isExistingUser)
+            <div class="bg-gray-100 border border-gray-300 rounded-lg p-4">
+                <p class="text-sm text-gray-700 flex items-start gap-2">
+                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    Vos informations sont déjà enregistrées. Passez à l'étape suivante pour ajouter votre nouveau service.
+                </p>
+            </div>
+        @endif
 
-                            <button
-                                type="button"
-                                wire:click="verifyCode"
-                                class="w-full py-3 bg-[#2B5AA8] text-white rounded-lg hover:bg-[#224A91] transition-all font-bold"
-                            >
-                                Vérifier le code
-                            </button>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
+                    Prénom <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    wire:model="firstName"
+                    @if($isExistingUser) disabled @endif
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
+                    placeholder="Jean"
+                />
+                @error('firstName') 
+                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+                @enderror
+            </div>
 
-                            <div class="text-center">
-                                <p class="text-sm text-gray-600">
-                                    Vous n'avez pas reçu le code ?
-                                    <button
-                                        type="button"
-                                        wire:click="resendCode"
-                                        class="text-[#2B5AA8] font-semibold hover:underline"
-                                    >
-                                        Renvoyer
-                                    </button>
-                                </p>
-                            </div>
+            <div>
+                <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
+                    Nom <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="text"
+                    wire:model="lastName"
+                    @if($isExistingUser) disabled @endif
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
+                    placeholder="Dupont"
+                />
+                @error('lastName') 
+                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
 
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <p class="text-sm text-yellow-800 flex items-start gap-2">
-                                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                                    </svg>
-                                    Le code expire dans 10 minutes. Vérifiez vos spams si vous ne le trouvez pas.
-                                </p>
-                            </div>
-                        </div>
-                    @endif
+        <div>
+            <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
+                Email <span class="text-red-500">*</span>
+            </label>
+            <input
+                type="email"
+                wire:model="email"
+                @if($isExistingUser) disabled @endif
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
+                placeholder="jean.dupont@email.com"
+            />
+            @error('email') 
+                <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+            @enderror
+        </div>
 
-                  {{-- ÉTAPE 2 : LOCALISATION --}}
+        <div class="grid md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
+                    Téléphone <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="tel"
+                    wire:model="telephone"
+                    @if($isExistingUser) disabled @endif
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
+                    placeholder="06XXXXXXXX"
+                />
+                @error('telephone') 
+                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div>
+                <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
+                    Date de Naissance <span class="text-red-500">*</span>
+                </label>
+                <input
+                    type="date"
+                    wire:model="dateNaissance"
+                    @if($isExistingUser) disabled @endif
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
+                />
+                @error('dateNaissance') 
+                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+
+        <!-- Masquer le champ mot de passe si utilisateur existant -->
+        @if(!$isExistingUser)
+            <div>
+                <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
+                    Mot de passe <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    <input
+                        type="{{ $showPassword ? 'text' : 'password' }}"
+                        wire:model="password"
+                        class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all pr-12"
+                        placeholder="••••••••"
+                    />
+                    <button 
+                        type="button"
+                        wire:click="togglePassword"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            @if($showPassword)
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                            @else
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            @endif
+                        </svg>
+                    </button>
+                </div>
+                @error('password') 
+                    <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+                @enderror
+                <p class="text-xs text-gray-500 mt-1">
+                    Le mot de passe doit contenir au moins 8 caractères
+                </p>
+            </div>
+        @endif
+    </div>
+@endif
+
+{{-- ÉTAPE 1.5 : VÉRIFICATION EMAIL - Masquer si utilisateur existant --}}
+@if($currentStep == 1.5 && !$isExistingUser)
+    <div class="space-y-6">
+        <div class="text-center">
+            <div class="w-20 h-20 bg-[#E1EAF7] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-[#2B5AA8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-black mb-2">Vérifiez votre email</h2>
+            <p class="text-gray-600">
+                Nous avons envoyé un code de vérification à<br>
+                <span class="font-semibold text-[#2B5AA8]">{{ $email }}</span>
+            </p>
+        </div>
+
+        <div>
+            <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold text-center">
+                Code de vérification (10 chiffres)
+            </label>
+            <input
+                type="text"
+                wire:model="verificationCode"
+                maxlength="10"
+                class="w-full px-4 py-4 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-center text-2xl tracking-widest font-mono"
+                placeholder="0000000000"
+            />
+            @error('verificationCode') 
+                <span class="text-red-500 text-sm mt-1 block text-center">{{ $message }}</span>
+            @enderror
+        </div>
+
+        <button
+            type="button"
+            wire:click="verifyCode"
+            class="w-full py-3 bg-[#2B5AA8] text-white rounded-lg hover:bg-[#224A91] transition-all font-bold"
+        >
+            Vérifier le code
+        </button>
+
+        <div class="text-center">
+            <p class="text-sm text-gray-600">
+                Vous n'avez pas reçu le code ?
+                <button
+                    type="button"
+                    wire:click="resendCode"
+                    class="text-[#2B5AA8] font-semibold hover:underline"
+                >
+                    Renvoyer
+                </button>
+            </p>
+        </div>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p class="text-sm text-yellow-800 flex items-start gap-2">
+                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+                Le code expire dans 10 minutes. Vérifiez vos spams si vous ne le trouvez pas.
+            </p>
+        </div>
+    </div>
+@endif
+
+
+                {{-- ÉTAPE 2 : LOCALISATION --}}
 @if($currentStep == 2)
     <div class="space-y-6">
-        <h2 class="text-xl font-bold text-black mb-4">Où exercez-vous ?</h2>
+        <h2 class="text-xl font-bold text-black mb-4">
+            @if($isExistingUser)
+                Votre localisation
+            @else
+                Où exercez-vous ?
+            @endif
+        </h2>
 
- <!-- Bouton localisation automatique -->
-<button
-    type="button"
-    id="locationBtn"
-    onclick="getLocationForProfessor()"
-    class="w-full py-3 bg-[#E1EAF7] text-[#2B5AA8] rounded-lg hover:bg-[#d1dbf0] transition-all font-semibold flex items-center justify-center gap-2"
->
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-    </svg>
-    Obtenir ma localisation automatique
-</button>
+        @if($isExistingUser)
+            <div class="bg-gray-100 border border-gray-300 rounded-lg p-4 mb-4">
+                <p class="text-sm text-gray-700 flex items-start gap-2">
+                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    Vos informations de localisation sont déjà enregistrées. Elles seront utilisées pour votre nouveau service.
+                </p>
+            </div>
+        @endif
 
+        <!-- Bouton localisation automatique -->
+        <button
+            type="button"
+            id="locationBtn"
+            onclick="getLocationForProfessor()"
+            @if($isExistingUser) disabled @endif
+            class="w-full py-3 rounded-lg transition-all font-semibold flex items-center justify-center gap-2 @if($isExistingUser) bg-gray-200 text-gray-500 cursor-not-allowed @else bg-[#E1EAF7] text-[#2B5AA8] hover:bg-[#d1dbf0] @endif"
+        >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            Obtenir ma localisation automatique
+        </button>
 
+        @if(!$isExistingUser)
         <div class="relative">
             <div class="absolute inset-0 flex items-center">
                 <div class="w-full border-t border-gray-300"></div>
@@ -281,6 +348,7 @@
                 <span class="px-4 bg-white text-gray-500 font-medium">ou saisissez manuellement</span>
             </div>
         </div>
+        @endif
 
         <div class="grid md:grid-cols-2 gap-4">
             <!-- Pays -->
@@ -290,7 +358,8 @@
                 </label>
                 <select
                     wire:model="pays"
-                    class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all"
+                    @if($isExistingUser) disabled @endif
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
                 >
                     <option value="">Sélectionnez un pays</option>
                     <option value="Maroc">Maroc</option>
@@ -309,7 +378,8 @@
                 </label>
                 <select
                     wire:model="ville"
-                    class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all"
+                    @if($isExistingUser) disabled @endif
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
                 >
                     <option value="">Sélectionnez une ville</option>
                     <option value="Tétouan">Tétouan</option>
@@ -331,7 +401,8 @@
             <input
                 type="text"
                 wire:model="region"
-                class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all"
+                @if($isExistingUser) disabled @endif
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
                 placeholder="Ex: Grand Casablanca"
             />
             @error('region') 
@@ -347,7 +418,8 @@
             <textarea
                 wire:model="adresseComplete"
                 rows="3"
-                class="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all resize-none"
+                @if($isExistingUser) disabled @endif
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all resize-none @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
                 placeholder="Ex: 123 Rue Mohammed V, Quartier Maarif"
             ></textarea>
             @error('adresseComplete') 
@@ -357,8 +429,8 @@
     </div>
 @endif
 
-                    {{-- ÉTAPE 3 : MATIÈRES ET NIVEAUX --}}
-                    @if($currentStep == 3)
+                    {{-- ÉTAPE 3 --}}
+                     @if($currentStep == 3)
                         <div class="space-y-6">
                             <h2 class="text-xl font-bold text-black mb-4">Matières enseignées</h2>
 
@@ -514,7 +586,8 @@
                         </div>
                     @endif
 
-{{-- ÉTAPE 4 : DOCUMENTS ET PHOTOS --}}
+
+                    {{-- ÉTAPE 4 --}}
 @if($currentStep == 4 && !$registrationComplete)
     <div class="space-y-6">
         <h2 class="text-xl font-bold text-black mb-4">Documents & Finalisation</h2>
@@ -744,9 +817,11 @@
     </div>
 @endif
 
+
                 </div>
 
                 <!-- Navigation Buttons -->
+                @if(!$registrationComplete)
                 <div class="flex justify-between mt-8 pt-6 border-t border-gray-200">
                     <button
                         type="button"
@@ -788,89 +863,86 @@
                         Vous avez déjà un compte ? Se connecter
                     </a>
                 </div>
+                @endif
             </div>
         </div>
     </div>
-<livewire:shared.footer />
 
-@script
-<script>
-    // Ce code s'exécute à chaque fois que Livewire met à jour le DOM
-    $wire.on('updateLocation', (data) => {
-        // Ce code s'exécutera quand on recevra l'événement
-    });
+    <livewire:shared.footer />
 
-    // Fonction globale accessible partout
-    window.getLocationForProfessor = function() {
-        const btn = document.getElementById('locationBtn');
-        
-        if (!navigator.geolocation) {
-            alert(' La géolocalisation n\'est pas supportée par votre navigateur.');
-            return;
-        }
+    @script
+    <script>
+        $wire.on('updateLocation', (data) => {
+            // Code événement
+        });
 
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-        btn.disabled = true;
-
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-
-                $wire.set('latitude', lat);
-                $wire.set('longitude', lng);
-
-                try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                    const data = await response.json();
-
-                    if (data.address) {
-                        const address = data.address;
-                        $wire.set('adresseComplete', data.display_name);
-                        $wire.set('ville', address.city || address.town || address.village || '');
-                        $wire.set('region', address.state || address.province || address.region || '');
-                        $wire.set('pays', address.country || '');
-                    }
-
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                  
-                } catch (error) {
-                    console.error('Erreur de géocodage:', error);
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                    alert(' Localisation détectée, mais impossible de récupérer l\'adresse. Veuillez remplir manuellement.');
-                }
-            },
-            (error) => {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        alert('❌ Accès à la localisation refusé. Veuillez autoriser l\'accès dans les paramètres de votre navigateur.');
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        alert('❌ Les informations de localisation ne sont pas disponibles.');
-                        break;
-                    case error.TIMEOUT:
-                        alert('❌ La demande de localisation a expiré.');
-                        break;
-                    default:
-                        alert('❌ Une erreur inconnue s\'est produite.');
-                        break;
-                }
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0
+        window.getLocationForProfessor = function() {
+            const btn = document.getElementById('locationBtn');
+            
+            if (!navigator.geolocation) {
+                alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+                return;
             }
-        );
-    };
-</script>
-@endscript
 
-</div>
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            btn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    $wire.set('latitude', lat);
+                    $wire.set('longitude', lng);
+
+                    try {
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                        const data = await response.json();
+
+                        if (data.address) {
+                            const address = data.address;
+                            $wire.set('adresseComplete', data.display_name);
+                            $wire.set('ville', address.city || address.town || address.village || '');
+                            $wire.set('region', address.state || address.province || address.region || '');
+                            $wire.set('pays', address.country || '');
+                        }
+
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    } catch (error) {
+                        console.error('Erreur de géocodage:', error);
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                        alert('Localisation détectée, mais impossible de récupérer l\'adresse. Veuillez remplir manuellement.');
+                    }
+                },
+                (error) => {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            alert('❌ Accès à la localisation refusé. Veuillez autoriser l\'accès dans les paramètres de votre navigateur.');
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            alert('❌ Les informations de localisation ne sont pas disponibles.');
+                            break;
+                        case error.TIMEOUT:
+                            alert('❌ La demande de localisation a expiré.');
+                            break;
+                        default:
+                            alert('❌ Une erreur inconnue s\'est produite.');
+                            break;
+                    }
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                }
+            );
+        };
+    </script>
+    @endscript
 </div>
