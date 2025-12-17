@@ -29,25 +29,6 @@
 
     
 
-
-
-
-
-
-
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-amber-500 to-yellow-600 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-6">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center justify-center space-x-4">
-                    
-                    <h1 class="text-2xl font-bold text-white">Profil PetKeeper</h1>
-                </div>
-                
-            </div>
-        </div>
-    </div>
-
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Statistiques -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

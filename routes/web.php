@@ -78,6 +78,11 @@ use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 use App\Livewire\PetKeeping\SingleService as SinglePetKeepingService;
 use App\Livewire\Tutoring\DisponibilitesPage as TutoringDisponibilitesPage;
 use App\Livewire\Babysitter\DisponibilitesPage as BabysitterDisponibilitesPage;
+use App\Livewire\PetKeeping\AddPetKeepingService;
+use App\Livewire\PetKeeping\DisponibilitesPetKeeper;
+use App\Livewire\PetKeeping\MesClients as PetKeeperClients;
+
+
 
 
 // Public Routes
@@ -168,9 +173,10 @@ Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
     Route::get('dashboard', PetKeeperDashboard::class)->name('dashboard');
     Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.show');
     Route::get('/dashboard/services', MyPetKeepingServices::class)->name('services');
+    Route::get('dashboard/disponibilites', DisponibilitesPetKeeper::class)->name('disponibilites');
+    Route::get('/dashboard/clients', PetKeeperClients::class)->name('clients');
     Route::get('/dashboard/service/{serviceId}', SinglePetKeepingService::class)->name('services.show');
-    
-
+    Route::get('/dashboard/add-service', AddPetKeepingService::class)->name('addservice');
 
 });
 // Admin Routes
