@@ -265,15 +265,11 @@ class ListeBabysitter extends Component
             });
         }
 
-        // Debug: Vérifier la requête avant exécution
-        \Log::info('Requête babysitters: ' . $query->toSql());
-        \Log::info('Bindings: ' . json_encode($query->getBindings()));
+       
         
         $babysitters = $query->paginate(15);
         
-        // Debug: Vérifier les résultats
-        \Log::info('Nombre de babysitters paginés: ' . $babysitters->count());
-        \Log::info('Total babysitters: ' . $babysitters->total());
+      
 
         // Récupérer les babysitters avec localisation pour la carte
         $locationData = DB::table('babysitters')
@@ -286,15 +282,13 @@ class ListeBabysitter extends Component
                      'babysitters.prixHeure', 'utilisateurs.photo', 'utilisateurs.note')
             ->get();
 
-        // Debug: Afficher le nombre total de babysitters récupérés
-        \Log::info('Total babysitters récupérés pour carte: ' . $locationData->count());
+
 
         $this->babysittersWithLocation = $locationData->filter(function($babysitter) {
             return $babysitter->latitude && $babysitter->longitude;
         });
 
-        // Debug: Vérifier combien ont des coordonnées
-        \Log::info('Babysitters avec coordonnées: ' . $this->babysittersWithLocation->count());
+
 
         // Récupérer tous les services pour le filtre
         $allServices = Superpouvoir::all();
@@ -335,8 +329,7 @@ $babysittersMap = $limitedLocationData->map(function($babysitter) use ($defaultC
     ];
 })->toArray();
 
-// Debug: Afficher les données de la carte
-\Log::info('Babysitters pour carte:', $babysittersMap);
+
 
 // Compter le nombre total de babysitters disponibles
 $totalBabysitters = Babysitter::valide()->count();

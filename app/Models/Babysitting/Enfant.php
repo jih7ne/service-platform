@@ -16,6 +16,7 @@ class Enfant extends Model
         'dateNaissance',
         'besoinsSpecifiques',
         'idDemande',
+        'id_categorie',
     ];
 
     protected $casts = [
@@ -26,6 +27,11 @@ class Enfant extends Model
     public function demande()
     {
         return $this->belongsTo(DemandeIntervention::class, 'idDemande');
+    }
+
+    public function categorie()
+    {
+        return $this->belongsTo(CategorieEnfant::class, 'id_categorie', 'idCategorie');
     }
 
     // Accessors

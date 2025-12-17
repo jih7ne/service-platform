@@ -1,4 +1,5 @@
 <div class="min-h-screen bg-gray-50 font-sans">
+    <livewire:shared.header />
     <!-- Header Section with Gradient -->
     <div class="relative bg-white overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-[#B82E6E]/5 to-[#B82E6E]/10 pointer-events-none"></div>

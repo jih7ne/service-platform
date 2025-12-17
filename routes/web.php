@@ -46,6 +46,8 @@ use App\Livewire\PetKeeping\PetKeeperDashboard;
 use App\Livewire\Babysitter\BabysitterDashboard;
 use App\Livewire\Shared\RegisterIntervenantPage;
 use App\Http\Controllers\Api\Auth\LoginController;
+use App\Livewire\Babysitter\DemandesInterface;
+use App\Livewire\Babysitter\FeedbackBabysitter;
 
 // PetKeeping Livewire Components
 use App\Livewire\Babysitter\BabysitterProfilePage;
@@ -106,6 +108,7 @@ Route::get('/liste-babysitter', ListeBabysitter::class)->name('liste.babysitter'
 Route::get('/babysitter-profile/{id}', BabysitterProfilePage::class)->name('babysitter.profile.page');
 Route::get('/babysitter-booking/{id}', BabysitterBooking::class)->name('babysitter.booking');
 
+
 // Public Tutoring Routes
 Route::get('/services/professors-list', ProfessorsList::class)->name('professors-list');
 Route::get('/professeurs/{id}', TutorDetails::class)->name('professeurs.details');
@@ -155,6 +158,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/babysitter/disponibilites', BabysitterDisponibilitesPage::class)->name('babysitter.disponibilites');
     Route::get('/babysitter/avis', AvisPage::class)->name('babysitter.avis');
     Route::get('/babysitter/profile', BabysitterProfile::class)->name('babysitter.profile');
+    Route::get('/babysitter/demandes', DemandesInterface::class)->name('demandes-sidebar');
+    Route::get('/babysitter/feedback/{id}', FeedbackBabysitter::class)->name('babysitter.feedback');
 
     Route::get('/mes-avis', MesAvis::class)->name('mes-avis');
 });
