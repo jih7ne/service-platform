@@ -15,12 +15,16 @@ class DemandeDetails extends Component
     public $demande;
     public $prenom;
     public $photo;
+    public $enAttente = 0;
 
     public function mount($id)
     {
         $user = Auth::user();
         $this->prenom = $user->prenom;
         $this->photo = $user->photo;
+
+        // Sidebar badge
+        $this->refreshPendingRequests();
 
         $this->demande = DB::table('demandes_intervention')
             ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
@@ -55,6 +59,22 @@ class DemandeDetails extends Component
         if (!$this->demande) {
             return redirect()->route('tutoring.requests');
         }
+    }
+
+    public function refreshPendingRequests(): void
+    {
+        $user = Auth::user();
+        if (!$user) { $this->enAttente = 0; return; }
+
+        $this->enAttente = (int) DB::table('demandes_intervention')
+            ->where('idIntervenant', $user->idUser)
+            ->where('statut', 'en_attente')
+            ->count();
+    }
+
+    public function hydrate(): void
+    {
+        $this->refreshPendingRequests();
     }
 
     public function accepter()

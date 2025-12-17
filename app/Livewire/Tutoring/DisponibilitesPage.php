@@ -10,6 +10,7 @@ use Carbon\Carbon;
 
 class DisponibilitesPage extends GestionDisponibilites
 {
+    public $enAttente = 0;
     public $prenom;
     public $photo;
 
@@ -17,11 +18,25 @@ class DisponibilitesPage extends GestionDisponibilites
     public $totalHeures = 0;
     public $joursDisponibles = 0;
 
+    public function refreshPendingRequests(): void
+    {
+        $user = Auth::user();
+        if (!$user) { $this->enAttente = 0; return; }
+
+        $this->enAttente = (int) DB::table('demandes_intervention')
+            ->where('idIntervenant', $user->idUser)
+            ->where('statut', 'en_attente')
+            ->count();
+    }
+
     public function mount($intervenantId = null)
     {
         $user = Auth::user();
         $this->prenom = $user->prenom;
         $this->photo = $user->photo;
+
+        // Sidebar badge count
+        $this->refreshPendingRequests();
 
         if (!$intervenantId) {
             $intervenantData = Intervenant::where('IdIntervenant', $user->idUser)->first();
@@ -33,6 +48,11 @@ class DisponibilitesPage extends GestionDisponibilites
 
         parent::mount($intervenantId);
         $this->calculateStats();
+    }
+
+    public function hydrate(): void
+    {
+        $this->refreshPendingRequests();
     }
 
     public function saveDisponibilite()

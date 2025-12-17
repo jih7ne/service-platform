@@ -9,6 +9,7 @@ use Livewire\Attributes\Computed;
 
 class MesCours extends Component
 {
+    public $enAttente = 0;
     public $prenom;
     public $photo;
 
@@ -44,10 +45,28 @@ class MesCours extends Component
         $user = Auth::user();
         $this->prenom = $user->prenom;
         $this->photo = $user->photo;
+        // Sidebar badge count
+        $this->refreshPendingRequests();
         
         // On charge les listes pour les formulaires
         $this->niveauxDispo = DB::table('niveaux')->get();
         $this->matieresDispo = DB::table('matieres')->orderBy('nom_matiere')->get();
+    }
+
+    public function refreshPendingRequests(): void
+    {
+        $user = Auth::user();
+        if (!$user) { $this->enAttente = 0; return; }
+
+        $this->enAttente = (int) DB::table('demandes_intervention')
+            ->where('idIntervenant', $user->idUser)
+            ->where('statut', 'en_attente')
+            ->count();
+    }
+
+    public function hydrate(): void
+    {
+        $this->refreshPendingRequests();
     }
 
     #[Computed]
