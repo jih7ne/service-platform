@@ -166,18 +166,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::get('/feedback/test', \App\Livewire\Shared\FeedbackComponent::class)->name('feedback.test');
 
 // Route avec paramètres (pour utilisation réelle)
-Route::get('/feedback/{demandeId}/{auteurId}/{cibleId}/{typeAuteur?}', \App\Livewire\Shared\FeedbackComponent::class)
+Route::get('/feedback/{idService}/{demandeId}/{auteurId}/{cibleId}/{typeAuteur?}', \App\Livewire\Shared\FeedbackComponent::class)
     ->name('feedback.form');
 
 // Routes de feedback pour chaque service avec paramètres
-Route::get('/feedback/babysitter/{demandeId}/{auteurId}/{cibleId}/{typeAuteur?}', function($demandeId, $auteurId, $cibleId, $typeAuteur = 'client') {
-    return view('livewire.babysitter.feedback', compact('demandeId', 'auteurId', 'cibleId', 'typeAuteur'));
+Route::get('/feedback/babysitter/{idService}/{demandeId}/{auteurId}/{cibleId}/{typeAuteur?}', function($idService, $demandeId, $auteurId, $cibleId, $typeAuteur = 'client') {
+    return view('livewire.babysitter.feedback', compact('idService', 'demandeId', 'auteurId', 'cibleId', 'typeAuteur'));
 })->name('feedback.babysitter');
 
-Route::get('/feedback/tutoring/{demandeId}/{auteurId}/{cibleId}/{typeAuteur?}', function($demandeId, $auteurId, $cibleId, $typeAuteur = 'client') {
-    return view('livewire.tutoring.feedback', compact('demandeId', 'auteurId', 'cibleId', 'typeAuteur'));
+Route::get('/feedback/tutoring/{idService}/{demandeId}/{auteurId}/{cibleId}/{typeAuteur?}', function($idService, $demandeId, $auteurId, $cibleId, $typeAuteur = 'client') {
+    return view('livewire.tutoring.feedback', compact('idService', 'demandeId', 'auteurId', 'cibleId', 'typeAuteur'));
 })->name('feedback.tutoring');
 
-Route::get('/feedback/pet-keeping/{demandeId}/{auteurId}/{cibleId}/{typeAuteur?}', function($demandeId, $auteurId, $cibleId, $typeAuteur = 'client') {
-    return view('livewire.pet-keeping.feedback', compact('demandeId', 'auteurId', 'cibleId', 'typeAuteur'));
+Route::get('/feedback/pet-keeping/{idService}/{demandeId}/{auteurId}/{cibleId}/{typeAuteur?}', function($idService, $demandeId, $auteurId, $cibleId, $typeAuteur = 'client') {
+    return view('livewire.pet-keeping.feedback', compact('idService', 'demandeId', 'auteurId', 'cibleId', 'typeAuteur'));
 })->name('feedback.pet-keeping');

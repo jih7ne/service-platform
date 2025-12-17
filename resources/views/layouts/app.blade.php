@@ -8,6 +8,9 @@
     @livewireStyles
 </head>
 <body class="bg-gray-50">
+    <!-- Header -->
+    @livewire('shared.header')
+    
     @yield('content')
     
     @livewireScripts

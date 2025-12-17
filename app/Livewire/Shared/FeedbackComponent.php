@@ -16,6 +16,7 @@ class FeedbackComponent extends Component
     public $cibleId;
     public $typeAuteur;
     public $typeService; // babysitter, tutoring, petkeeping
+    public $serviceId; // ID du service associé
 
     // Informations de la demande
     public $demande;
@@ -59,10 +60,11 @@ class FeedbackComponent extends Component
         'proprete.required' => 'Veuillez noter la propreté',
     ];
 
-    public function mount($demandeId = null, $auteurId = null, $cibleId = null, $typeAuteur = 'client')
+    public function mount($idService = null, $demandeId = null, $auteurId = null, $cibleId = null, $typeAuteur = 'client')
     {
         // Debug logs
         \Log::info('Feedback mount - Parameters: ', [
+            'idService' => $idService,
             'demandeId' => $demandeId,
             'auteurId' => $auteurId,
             'cibleId' => $cibleId,
@@ -70,11 +72,12 @@ class FeedbackComponent extends Component
         ]);
         
         // Valider les paramètres requis
-        if (!$demandeId || !$auteurId || !$cibleId) {
-            session()->flash('error', 'Paramètres manquants: demandeId, auteurId et cibleId sont requis');
+        if (!$idService || !$demandeId || !$auteurId || !$cibleId) {
+            session()->flash('error', 'Paramètres manquants: idService, demandeId, auteurId et cibleId sont requis');
             return;
         }
         
+        $this->serviceId = $idService;
         $this->demandeId = $demandeId;
         $this->auteurId = $auteurId;
         $this->cibleId = $cibleId;
@@ -91,46 +94,32 @@ class FeedbackComponent extends Component
     private function determineServiceType()
     {
         try {
-            // Récupérer l'intervenant pour déterminer son type
-            $intervenant = DB::table('intervenants')
-                ->where('IdIntervenant', $this->cibleId)
+            // Utiliser l'ID service pour déterminer le type
+            $service = DB::table('services')
+                ->where('idService', $this->serviceId)
                 ->first();
             
-            if (!$intervenant) {
-                session()->flash('error', 'Intervenant non trouvé');
+            if (!$service) {
+                session()->flash('error', 'Service non trouvé avec ID: ' . $this->serviceId);
                 return;
             }
             
-            // Vérifier dans chaque table spécifique pour déterminer le type
-            $professeur = DB::table('professeurs')
-                ->where('intervenant_id', $intervenant->IdIntervenant)
-                ->first();
-            
-            if ($professeur) {
-                $this->typeService = 'tutoring';
-                return;
+            // Déterminer le type selon le nom du service
+            switch ($service->nomService) {
+                case 'Soutien Scolaire':
+                    $this->typeService = 'tutoring';
+                    break;
+                case 'Babysitting':
+                    $this->typeService = 'babysitter';
+                    break;
+                case 'Garde d\'Animaux':
+                case 'Pet Keeping':
+                    $this->typeService = 'petkeeping';
+                    break;
+                default:
+                    $this->typeService = 'babysitter'; // Valeur par défaut
+                    break;
             }
-            
-            $babysitter = DB::table('babysitters')
-                ->where('idBabysitter', $intervenant->IdIntervenant)
-                ->first();
-            
-            if ($babysitter) {
-                $this->typeService = 'babysitter';
-                return;
-            }
-            
-            $petkeeper = DB::table('petkeepers')
-                ->where('idPetKeeper', $intervenant->IdIntervenant)
-                ->first();
-            
-            if ($petkeeper) {
-                $this->typeService = 'petkeeping';
-                return;
-            }
-            
-            // Si aucun type trouvé, utiliser babysitter par défaut
-            $this->typeService = 'babysitter';
             
         } catch (\Exception $e) {
             \Log::error('Erreur determineServiceType: ' . $e->getMessage());
@@ -249,6 +238,7 @@ class FeedbackComponent extends Component
                 'estVisible' => true,
                 'dateCreation' => now(),
                 'idDemande' => $this->demandeId,
+                'idService' => $this->serviceId,
             ]);
 
             // Mettre à jour la note de l'utilisateur cible
