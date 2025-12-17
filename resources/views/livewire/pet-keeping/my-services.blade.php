@@ -242,18 +242,37 @@
                             @endif
                         </div>
 
-                        <!-- Action Button -->
-                        <div class="border-t border-gray-100 pt-4">
+                        <!-- Action Buttons -->
+                        <div class="border-t border-gray-100 pt-4 flex gap-3">
+                            <!-- View Details Button -->
                             <button wire:click="viewService({{ $service->service_id }})" 
-                                    class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                                    class="flex-1 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition duration-200 flex items-center justify-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                 </svg>
-                                View Details
+                                Voir détails
                             </button>
+                            
+                            <!-- Status Dropdown -->
+                            <div class="relative flex-1">
+                                <select wire:change="updateServiceStatus({{ $service->service_id }}, $event.target.value)"
+                                        class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition appearance-none bg-white cursor-pointer hover:border-gray-300">
+                                    <option value="ACTIVE">
+                                        Actif
+                                    </option>
+                                    <option value="ARCHIVED">
+                                        Archivé
+                                    </option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
