@@ -20,6 +20,7 @@ use App\Mail\PetKeeping\WelcomePetKeeper;
 use App\Models\PetKeeping\PetKeeping;
 use App\Models\Shared\Admin;
 use App\Models\Shared\Disponibilite;
+use App\Models\Shared\OffreService;
 use App\Models\Shared\Service;
 
 class PetKeeperRegistration extends Component
@@ -377,6 +378,13 @@ class PetKeeperRegistration extends Component
                     'payment_criteria' => $service['service_payment_criteria'],
                     'base_price' => $service['service_base_price'],
                 ]);
+
+
+                OffreService::create([
+                    'idIntervenant' => $petKeeper->idPetKeeper,
+                    'idService' => $g_service->idService,
+                    'statut' => 'ACTIVE'
+                ]);
             }
 
             // Storing availabilities
@@ -423,6 +431,9 @@ class PetKeeperRegistration extends Component
                     $this->nom,
                 )
             );
+
+
+            
 
             DB::commit();
             

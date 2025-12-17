@@ -32,6 +32,10 @@ class AddPetKeepingService extends Component
     {
         $this->user = Auth::user();
         $this->user_id = Auth::id();
+
+        if(!$this->user || $this->user->role != 'intervenant'){
+            return redirect()->route('login');
+        }
         
         
         $this->number_of_services = DB::table('offres_services')
@@ -97,11 +101,9 @@ class AddPetKeepingService extends Component
             OffreService::create([
                 'idIntervenant' => $this->user_id,
                 'idService' => $g_service->idService,
-                'statut' => 'INACTIVE'
+                'statut' => 'ACTIVE'
             ]);
 
-
-            //Sending Email to Admin
 
            DB::commit();
 
