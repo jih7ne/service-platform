@@ -16,6 +16,7 @@ class MonProfil extends Component
     public $localisation;
     public $note = 0;
     public $nbMissions = 0;
+    public $enAttente = 0;
 
     // --- VARIABLES POUR LE FORMULAIRE ---
     public $showEditModal = false;
@@ -29,6 +30,7 @@ class MonProfil extends Component
     {
         $this->refreshData();
         $this->niveauxDispo = DB::table('niveaux')->get(); // Pour la liste déroulante
+        $this->refreshPendingRequests();
     }
 
     // Fonction pour recharger les données fraîches
@@ -44,6 +46,22 @@ class MonProfil extends Component
             ->where('idIntervenant', $userId)
             ->whereIn('statut', ['validée', 'terminée'])
             ->count();
+    }
+
+    public function refreshPendingRequests(): void
+    {
+        $user = Auth::user();
+        if (!$user) { $this->enAttente = 0; return; }
+
+        $this->enAttente = (int) DB::table('demandes_intervention')
+            ->where('idIntervenant', $user->idUser)
+            ->where('statut', 'en_attente')
+            ->count();
+    }
+
+    public function hydrate(): void
+    {
+        $this->refreshPendingRequests();
     }
 
     // --- ACTION : OUVRIR LA POPUP ---
