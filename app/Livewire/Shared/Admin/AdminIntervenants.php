@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Shared\Intervenant;
 use App\Models\Shared\Utilisateur;
+use App\Models\Shared\Service;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\IntervenantAccepte;
@@ -39,19 +40,19 @@ class AdminIntervenants extends Component
 
     public function render()
     {
-        // Requête basée sur offres_services
-        $query = DB::table('offres_services')
-            ->join('intervenants', 'offres_services.idintervenant', '=', 'intervenants.IdIntervenant')
+        // Base sur intervenants pour inclure ceux sans entrée dans offres_services (ex: Babysitting)
+        $query = DB::table('intervenants')
             ->join('utilisateurs', 'intervenants.IdIntervenant', '=', 'utilisateurs.idUser')
-            ->join('services', 'offres_services.idService', '=', 'services.idService')
+            ->leftJoin('offres_services as os', 'os.idintervenant', '=', 'intervenants.IdIntervenant')
+            ->leftJoin('services', 'os.idService', '=', 'services.idService')
             ->leftJoin('localisations', 'utilisateurs.idUser', '=', 'localisations.idUser')
+            ->leftJoin('babysitters', 'babysitters.idBabysitter', '=', 'intervenants.IdIntervenant')
+            ->leftJoin('petkeepers', 'petkeepers.idPetKeeper', '=', 'intervenants.IdIntervenant')
             ->select(
-                'offres_services.idintervenant',
-                'offres_services.idService',
-                'offres_services.statut as offre_statut',
+                'intervenants.IdIntervenant',
                 'intervenants.created_at',
                 'intervenants.id',
-                'intervenants.IdIntervenant',
+                'intervenants.statut as intervenant_statut',
                 'utilisateurs.nom',
                 'utilisateurs.prenom',
                 'utilisateurs.email',
@@ -59,7 +60,10 @@ class AdminIntervenants extends Component
                 'utilisateurs.photo',
                 'localisations.ville',
                 'localisations.adresse',
-                'services.nomService'
+                'os.idintervenant',
+                'os.idService',
+                'os.statut as offre_statut',
+                DB::raw("COALESCE(services.nomService, CASE WHEN babysitters.idBabysitter IS NOT NULL THEN 'Babysitting' WHEN petkeepers.idPetKeeper IS NOT NULL THEN 'Pet Keeping' ELSE 'Service' END) as nomService")
             );
 
         // Filtre de recherche
@@ -73,31 +77,40 @@ class AdminIntervenants extends Component
             });
         }
 
-        // Filtre de statut sur offres_services
+        // Filtre de statut sur statut combiné (offre ou intervenant)
         if ($this->statusFilter !== 'tous') {
             $statusMap = [
                 'en_attente' => 'EN_ATTENTE',
                 'valide' => 'ACTIVE',
                 'refuse' => 'ARCHIVED'
             ];
-            $query->where('offres_services.statut', $statusMap[$this->statusFilter]);
+            $query->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), $statusMap[$this->statusFilter]);
         }
 
-        $intervenants = $query->orderBy('intervenants.created_at', 'desc')->paginate(10);
+        $intervenants = $query
+            ->orderBy('intervenants.created_at', 'desc')
+            ->paginate(10);
 
         // Charger les données spécifiques pour chaque offre
         foreach ($intervenants as $intervenant) {
             $this->loadOffreTypeData($intervenant);
-            // Mapper le statut
-            $intervenant->statut = $intervenant->offre_statut;
+            // Mapper le statut combiné (offre si dispo sinon intervenant)
+            $intervenant->statut = $intervenant->offre_statut ?? $intervenant->intervenant_statut;
+            // Injecter un idService résolu si absent (pour activer le lien détails)
+            if (empty($intervenant->idService) && isset($intervenant->derivedServiceId)) {
+                $intervenant->idService = $intervenant->derivedServiceId;
+            }
         }
 
-        // Statistiques basées sur offres_services
+        // Statistiques basées sur le statut combiné
+        $baseStatsQuery = DB::table('intervenants')
+            ->leftJoin('offres_services as os', 'os.idintervenant', '=', 'intervenants.IdIntervenant');
+
         $stats = [
-            'total' => DB::table('offres_services')->count(),
-            'en_attente' => DB::table('offres_services')->where('statut', 'EN_ATTENTE')->count(),
-            'valides' => DB::table('offres_services')->where('statut', 'ACTIVE')->count(),
-            'refuses' => DB::table('offres_services')->where('statut', 'ARCHIVED')->count(),
+            'total' => (clone $baseStatsQuery)->count(),
+            'en_attente' => (clone $baseStatsQuery)->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), 'EN_ATTENTE')->count(),
+            'valides' => (clone $baseStatsQuery)->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), 'ACTIVE')->count(),
+            'refuses' => (clone $baseStatsQuery)->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), 'ARCHIVED')->count(),
         ];
 
         return view('livewire.shared.admin.admin-intervenants', [
@@ -108,7 +121,7 @@ class AdminIntervenants extends Component
 
     private function loadOffreTypeData($intervenant)
     {
-        $serviceName = strtolower($intervenant->nomService);
+        $serviceName = strtolower($intervenant->nomService ?? '');
         
         if ($serviceName === 'soutien scolaire') {
             $intervenant->service_type = 'Soutien scolaire';
@@ -127,6 +140,7 @@ class AdminIntervenants extends Component
                 
                 $intervenant->service_details = $matiere ? $matiere->nom_matiere . ' - ' . $matiere->type_service : 'Cours de soutien scolaire';
             }
+            $intervenant->derivedServiceId = $intervenant->derivedServiceId ?? Service::where('nomService', 'Soutien Scolaire')->value('idService');
         } elseif ($serviceName === 'babysitting') {
             $intervenant->service_type = 'Babysitting';
             $intervenant->service_icon = '👶';
@@ -136,6 +150,7 @@ class AdminIntervenants extends Component
                 ->first();
             
             $intervenant->service_details = $babysitter ? 'Garde d\'enfants - ' . $babysitter->prixHeure . ' DH/h' : 'Garde d\'enfants';
+            $intervenant->derivedServiceId = $intervenant->derivedServiceId ?? Service::where('nomService', 'Babysitting')->value('idService');
         } elseif ($serviceName === 'pet keeping') {
             $intervenant->service_type = 'Garde d\'animaux';
             $intervenant->service_icon = '🐾';
@@ -145,10 +160,16 @@ class AdminIntervenants extends Component
                 ->first();
             
             $intervenant->service_details = $petkeeper ? 'Spécialité: ' . ($petkeeper->specialite ?? 'Non spécifié') : 'Garde d\'animaux';
+            $intervenant->derivedServiceId = $intervenant->derivedServiceId ?? Service::where('nomService', 'Pet Keeping')->value('idService');
         } else {
             $intervenant->service_type = $intervenant->nomService;
             $intervenant->service_icon = '💼';
             $intervenant->service_details = 'Service disponible';
+        }
+
+        // Fallback statut si aucune offre liée
+        if (!isset($intervenant->statut)) {
+            $intervenant->statut = $intervenant->intervenant_statut;
         }
     }
 }

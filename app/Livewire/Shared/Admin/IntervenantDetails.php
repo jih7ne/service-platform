@@ -33,21 +33,36 @@ class IntervenantDetails extends Component
 
         $this->intervenantId = $idintervenant;
         $this->serviceId = $idservice;
+
+        // Résoudre un idService manquant selon la catégorie détectée
+        if (empty($this->serviceId)) {
+            $resolved = null;
+
+            if (DB::table('babysitters')->where('idBabysitter', $this->intervenantId)->exists()) {
+                $resolved = DB::table('services')->where('nomService', 'Babysitting')->value('idService');
+            }
+
+            if (!$resolved && DB::table('petkeepers')->where('idPetKeeper', $this->intervenantId)->exists()) {
+                $resolved = DB::table('services')->where('nomService', 'Pet Keeping')->value('idService');
+            }
+
+            if (!$resolved && DB::table('professeurs')->where('intervenant_id', $this->intervenantId)->exists()) {
+                $resolved = DB::table('services')->where('nomService', 'Soutien Scolaire')->value('idService');
+            }
+
+            $this->serviceId = $resolved;
+        }
+
         $this->loadIntervenantData();
     }
 
     private function loadIntervenantData()
     {
-        // Get the specific offer from offres_services
+        // Get the specific offer from offres_services (peut être absente pour certains flux)
         $this->offre = DB::table('offres_services')
             ->where('idintervenant', $this->intervenantId)
-            ->where('idService', $this->serviceId)
+            ->when($this->serviceId, fn($q) => $q->where('idService', $this->serviceId))
             ->first();
-        
-        if (!$this->offre) {
-            session()->flash('error', 'Offre non trouvée');
-            return redirect()->route('admin.intervenants');
-        }
 
         // Get intervenant data
         $this->intervenant = Intervenant::where('IdIntervenant', $this->intervenantId)->first();
@@ -55,6 +70,16 @@ class IntervenantDetails extends Component
         if (!$this->intervenant) {
             session()->flash('error', 'Intervenant non trouvé');
             return redirect()->route('admin.intervenants');
+        }
+
+        // Si aucune offre n'existe, créer un stub minimal pour l'affichage
+        if (!$this->offre && $this->serviceId) {
+            $this->offre = (object) [
+                'idintervenant' => $this->intervenantId,
+                'idService' => $this->serviceId,
+                'statut' => $this->intervenant->statut ?? 'EN_ATTENTE',
+                'created_at' => $this->intervenant->created_at,
+            ];
         }
 
         // Get user data
@@ -119,6 +144,14 @@ class IntervenantDetails extends Component
                     ->where('choisir_categories.idBabysitter', $idIntervenant)
                     ->pluck('categorie_enfants.categorie')
                     ->toArray();
+
+                // Documents uploadés lors de l'inscription babysitter
+                $this->babysitterData->documents = collect([
+                    ['label' => 'Casier judiciaire', 'path' => $babysitter->procedeJuridique ?? null],
+                    ['label' => 'Radiographie thorax', 'path' => $babysitter->radiographieThorax ?? null],
+                    ['label' => 'Coproculture des selles', 'path' => $babysitter->coprocultureSelles ?? null],
+                    ['label' => "Certificat d'aptitude mentale", 'path' => $babysitter->certifAptitudeMentale ?? null],
+                ])->filter(fn($doc) => !empty($doc['path']));
             }
             return;
         }
@@ -194,8 +227,7 @@ class IntervenantDetails extends Component
             ->where('idintervenant', $this->intervenantId)
             ->where('idService', $this->serviceId)
             ->update([
-                'statut' => 'ARCHIVED',
-                'updated_at' => now()
+                'statut' => 'ARCHIVED'
             ]);
 
         // Check if intervenant has any other active offers
