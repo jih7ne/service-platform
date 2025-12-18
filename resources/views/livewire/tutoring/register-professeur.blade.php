@@ -302,6 +302,7 @@
 @endif
 
 {{-- ÉTAPE 2 : LOCALISATION --}}
+{{-- ÉTAPE 2 : LOCALISATION --}}
 @if($currentStep == 2)
     <div class="space-y-6">
         <h2 class="text-xl font-bold text-black mb-4">
@@ -348,6 +349,23 @@
             </div>
         </div>
         @endif
+
+        <!-- Ville -->
+        <div>
+            <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
+                Ville <span class="text-red-500">*</span>
+            </label>
+            <input
+                type="text"
+                wire:model="ville"
+                @if($isExistingUser) disabled @endif
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @else bg-white @endif"
+                placeholder="Ex: Casablanca"
+            />
+            @error('ville') 
+                <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
+            @enderror
+        </div>
 
         <!-- Adresse complète -->
         <div>
@@ -807,9 +825,17 @@
                 $wire.set('longitude', lng);
 
                 try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
                     const data = await response.json();
 
+                    // Extraire la ville
+                    const ville = data.address.city || data.address.town || data.address.village || '';
+                    
+                    // Remplir les champs
+                    if (ville) {
+                        $wire.set('ville', ville);
+                    }
+                    
                     if (data.display_name) {
                         $wire.set('adresseComplete', data.display_name);
                     }
