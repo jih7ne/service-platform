@@ -90,17 +90,6 @@
                         </label>
                     </div>
 
-                    <!-- reCAPTCHA -->
-                    <div>
-                        <div class="g-recaptcha" 
-                             data-sitekey="{{ config('services.recaptcha.site_key') }}"
-                             data-callback="onRecaptchaSuccess">
-                        </div>
-                        @error('recaptcha') 
-                            <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
-                        @enderror
-                    </div>
-
                     <!-- Submit Button -->
                     <button
                         type="submit"
@@ -128,20 +117,3 @@
 
     <livewire:shared.footer />
 </div>
-
-@push('scripts')
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<script>
-    function onRecaptchaSuccess(token) {
-        @this.set('recaptchaToken', token);
-    }
-
-    // Listen for reset event
-    window.addEventListener('reset-recaptcha', () => {
-        if (typeof grecaptcha !== 'undefined') {
-            grecaptcha.reset();
-            @this.set('recaptchaToken', '');
-        }
-    });
-</script>
-@endpush

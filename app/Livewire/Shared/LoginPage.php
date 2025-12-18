@@ -5,7 +5,6 @@ namespace App\Livewire\Shared;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use App\Models\Shared\Admin;
 use App\Models\Shared\Utilisateur;
 
@@ -13,10 +12,8 @@ class LoginPage extends Component
 {
     public $email = '';
     public $password = '';
-    public $remember = false;
     public $showPassword = false;
     public $suspendedMessage = '';
-    public $recaptchaToken = '';
 
     protected $rules = [
         'email' => 'required|email',
@@ -35,36 +32,9 @@ class LoginPage extends Component
         $this->showPassword = !$this->showPassword;
     }
 
-    private function verifyRecaptcha($token)
-    {
-        $secret = config('services.recaptcha.secret_key');
-        
-        $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => $secret,
-            'response' => $token,
-        ]);
-
-        $result = $response->json();
-        
-        return $result['success'] ?? false;
-    }
-
     public function login()
     {
         $this->validate();
-
-        // Verify reCAPTCHA
-        if (empty($this->recaptchaToken)) {
-            $this->addError('recaptcha', 'Veuillez compléter le reCAPTCHA.');
-            $this->dispatch('reset-recaptcha');
-            return;
-        }
-
-        if (!$this->verifyRecaptcha($this->recaptchaToken)) {
-            $this->addError('recaptcha', 'Vérification reCAPTCHA échouée. Veuillez réessayer.');
-            $this->dispatch('reset-recaptcha');
-            return;
-        }
 
         // Vérifier si c'est un admin d'abord
         $admin = Admin::where('emailAdmin', $this->email)->first();
@@ -84,24 +54,21 @@ class LoginPage extends Component
 
         if (!$user) {
             $this->addError('email', 'Email ou mot de passe incorrect.');
-            $this->dispatch('reset-recaptcha');
             return;
         }
 
         if (!Hash::check($this->password, $user->password)) {
             $this->addError('email', 'Email ou mot de passe incorrect.');
-            $this->dispatch('reset-recaptcha');
             return;
         }
 
         if ($user->statut !== 'actif') {
             $this->suspendedMessage = 'Votre compte est suspendu. Veuillez consulter votre email pour connaître la raison de la désactivation.';
-            $this->dispatch('reset-recaptcha');
             return;
         }
 
         // Connecter l'utilisateur
-        Auth::login($user, $this->remember);
+        Auth::login($user);
         session()->regenerate();
 
         // Logique de redirection utilisateur
