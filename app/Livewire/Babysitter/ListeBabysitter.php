@@ -161,34 +161,6 @@ class ListeBabysitter extends Component
         $this->dispatch('map-toggled');
     }
 
-    public function updatedSearch()
-    {
-        if ($this->showMap) {
-            $this->dispatch('map-updated');
-        }
-    }
-
-    public function updatedPriceMin()
-    {
-        if ($this->showMap) {
-            $this->dispatch('map-updated');
-        }
-    }
-
-    public function updatedPriceMax()
-    {
-        if ($this->showMap) {
-            $this->dispatch('map-updated');
-        }
-    }
-
-    public function updatedVille()
-    {
-        if ($this->showMap) {
-            $this->dispatch('map-updated');
-        }
-    }
-
     public function render()
     {
         $query = Babysitter::with([

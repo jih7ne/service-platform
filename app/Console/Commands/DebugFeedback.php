@@ -72,8 +72,3 @@ class DebugFeedback extends Command
         return 0;
     }
 }
-        
-        $this->line("");
-    }
-}
-

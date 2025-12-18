@@ -9,7 +9,7 @@ class Enfant extends Model
     protected $table = 'enfants';
     protected $primaryKey = 'idEnfant';
     
-    public $timestamps = true; // Activer created_at et updated_at
+    public $timestamps = false; // Désactiver created_at et updated_at
     
     protected $fillable = [
         'nomComplet',
@@ -17,8 +17,6 @@ class Enfant extends Model
         'besoinsSpecifiques',
         'idDemande',
         'id_categorie',
-        'id_client',
-        'sexe',
     ];
 
     protected $casts = [

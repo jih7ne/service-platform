@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gray-50 font-sans" wire:poll.10s>
+<div class="min-h-screen bg-gray-50 font-sans">
     <livewire:shared.header-babysitting />
     <!-- Header Section with Gradient -->
     <div class="relative bg-white overflow-hidden">
@@ -21,7 +21,8 @@
                     </h1>
                     <p class="text-lg text-gray-600 max-w-2xl leading-relaxed">
                         Des professionnels de confiance pour prendre soin de vos enfants. 
-                        
+                        <span class="font-semibold text-[#B82E6E]">{{ $totalBabysitters }} profils vérifiés</span> disponibles maintenant.
+                    </p>
                 </div>
                 
                 <!-- Search Bar and Toggle -->
@@ -349,7 +350,7 @@
                                 <svg class="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                                 {{ number_format($utilisateur->note, 1) }}
                             </div>
-                            @if($babysitter->estDisponible)
+                            @if($babysitter->estDispo)
                             <div class="absolute top-3 left-3 bg-green-500/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow-sm">
                                 Disponible
                             </div>
@@ -552,20 +553,6 @@
                     }
                 } else {
                     destroyMap();
-                }
-            });
-
-            // Mettre à jour la carte lors des changements de filtres
-            Livewire.on('map-updated', () => {
-                const mapElement = document.getElementById('babysitters-map');
-                if (mapElement && mapInstance) {
-                    const babysittersData = @json($babysittersMap);
-                    console.log('Map updated - nouvelles données:', babysittersData);
-                    if (babysittersData && babysittersData.length > 0) {
-                        // Détruire et recréer la carte avec les nouvelles données
-                        destroyMap();
-                        initializeMap(babysittersData);
-                    }
                 }
             });
         });

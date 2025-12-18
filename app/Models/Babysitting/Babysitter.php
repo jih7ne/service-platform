@@ -224,35 +224,6 @@ class Babysitter extends Model
         };
     }
 
-    /**
-     * Vérifie si la babysitter est disponible aujourd'hui
-     */
-    public function getEstDisponibleAttribute()
-    {
-        // Si elle a des disponibilités, on considère qu'elle est disponible
-        $hasDispos = $this->disponibilites && $this->disponibilites->count() > 0;
-        
-        \Log::info('Babysitter disponibilité vérifiée', [
-            'babysitter_id' => $this->idBabysitter,
-            'has_disponibilites' => $hasDispos,
-            'disponibilites_count' => $this->disponibilites ? $this->disponibilites->count() : 0
-        ]);
-        
-        return $hasDispos;
-    }
-
-    /**
-     * Vérifie si la babysitter est disponible pour un jour spécifique
-     */
-    public function isAvailableOnDay($day)
-    {
-        if (!$this->disponibilites || $this->disponibilites->count() === 0) {
-            return false;
-        }
-
-        return $this->disponibilites->contains('jourSemaine', $day);
-    }
-
     // public function disponibilites()
     // {
     //     return $this->hasMany(Disponibilite::class, 'idIntervenant', 'idBabysitter');

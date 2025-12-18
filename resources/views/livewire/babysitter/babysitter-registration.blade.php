@@ -731,29 +731,68 @@
 @push('scripts')
 <script>
     document.addEventListener('livewire:init', () => {
+        // Écouter l'événement de géolocalisation
         Livewire.on('getLocation', () => {
+            console.log('Événement getLocation reçu');
+            
             if (navigator.geolocation) {
+                console.log('Géolocalisation supportée, demande de position...');
+                
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
+                        console.log('Position obtenue:', position);
                         const lat = position.coords.latitude;
                         const lng = position.coords.longitude;
-                        const lon = position.coords.longitude;
+                        
+                        console.log('Coordonnées:', lat, lng);
                         
                         // Utiliser l'API de géocodage inversé (Nominatim OpenStreetMap)
-                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                             .then(response => response.json())
                             .then(data => {
-                                const ville = data.address.city || data.address.town || data.address.village || '';
-                                @this.call('setLocation', lat, lon, ville);
+                                console.log('Données de géocodage:', data);
+                                const ville = data.address?.city || data.address?.town || data.address?.village || '';
+                                console.log('Ville détectée:', ville);
+                                
+                                // Appeler la méthode PHP pour mettre à jour les coordonnées
+                                @this.set('latitude', lat);
+                                @this.set('longitude', lng);
+                                @this.set('ville', ville);
+                                
+                                console.log('Coordonnées envoyées à Livewire');
                             })
                             .catch(error => {
                                 console.error('Erreur de géocodage:', error);
-                                @this.call('setLocation', lat, lon, '');
+                                @this.set('latitude', lat);
+                                @this.set('longitude', lng);
+                                @this.set('ville', '');
                             });
                     },
                     (error) => {
                         console.error('Erreur de géolocalisation:', error);
-                        alert('Impossible d\'obtenir votre position. Veuillez vérifier vos paramètres de localisation.');
+                        let message = 'Impossible d\'obtenir votre position. ';
+                        
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                message += 'Veuillez autoriser l\'accès à votre localisation.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                message += 'Les informations de localisation ne sont pas disponibles.';
+                                break;
+                            case error.TIMEOUT:
+                                message += 'La demande de localisation a expiré.';
+                                break;
+                            default:
+                                message += 'Veuillez vérifier vos paramètres de localisation.';
+                                break;
+                        }
+                        
+                        alert(message);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
                     }
                 );
             } else {
@@ -762,4 +801,4 @@
         });
     });
 </script>
-@endpush    
+@endpush
