@@ -52,9 +52,7 @@ class RegisterProfesseur extends Component
     public $codeVerified = false;
 
     // Étape 2 : Localisation
-   // public $pays = '';
-    //public $ville = '';
-   // public $region = '';
+    public $ville = ''; // ← MODIFIÉ : Ajout du champ ville
     public $adresseComplete = '';
     public $latitude = null;
     public $longitude = null;
@@ -107,7 +105,7 @@ class RegisterProfesseur extends Component
                 // Récupérer la localisation existante
                 $localisation = Localisation::where('idUser', $user->idUser)->first();
                 if ($localisation) {
-             
+                    $this->ville = $localisation->ville; // ← MODIFIÉ
                     $this->adresseComplete = $localisation->adresse;
                     $this->latitude = $localisation->latitude;
                     $this->longitude = $localisation->longitude;
@@ -147,21 +145,21 @@ class RegisterProfesseur extends Component
                     'verificationCode' => 'required|size:10',
                 ];
             }
-        }    elseif ($this->currentStep == 2) {
-        $rules = [
-            'adresseComplete' => 'required|string',
-        ];
-    } elseif ($this->currentStep == 3) {
-        $rules = [
-            'matieres' => 'required|array|min:1',
-            'matieres.*.matiere_id' => 'required',
-            'matieres.*.matiere_autre' => 'nullable|string|max:100',
-            'matieres.*.niveau_id' => 'required|exists:niveaux,id_niveau',
-            'matieres.*.prix_par_heure' => 'required|numeric|min:0',
-            'surnom' => 'nullable|string|max:100',
-            'biographie' => 'nullable|string',
-        ];
-    
+        } elseif ($this->currentStep == 2) {
+            $rules = [
+                'ville' => 'required|string', // ← MODIFIÉ : Validation de la ville
+                'adresseComplete' => 'required|string',
+            ];
+        } elseif ($this->currentStep == 3) {
+            $rules = [
+                'matieres' => 'required|array|min:1',
+                'matieres.*.matiere_id' => 'required',
+                'matieres.*.matiere_autre' => 'nullable|string|max:100',
+                'matieres.*.niveau_id' => 'required|exists:niveaux,id_niveau',
+                'matieres.*.prix_par_heure' => 'required|numeric|min:0',
+                'surnom' => 'nullable|string|max:100',
+                'biographie' => 'nullable|string',
+            ];
         } elseif ($this->currentStep == 4) {
             $rules = [
                 'cinDocument' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
@@ -178,11 +176,27 @@ class RegisterProfesseur extends Component
         'verificationCode.required' => 'Le code de vérification est obligatoire',
         'verificationCode.size' => 'Le code doit contenir exactement 10 caractères',
         'cinDocument.required' => 'Le document CIN est obligatoire',
+        'ville.required' => 'La ville est obligatoire', // ← AJOUTÉ
     ];
 
     public function togglePassword()
     {
         $this->showPassword = !$this->showPassword;
+    }
+
+    // ← AJOUTÉ : Méthode pour recevoir les données de géolocalisation
+    public function setLocationData($latitude, $longitude, $ville, $adresse)
+    {
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
+        $this->ville = $ville;
+        $this->adresseComplete = $adresse;
+    }
+
+    // ← AJOUTÉ : Méthode pour déclencher la géolocalisation
+    public function getAutoLocation()
+    {
+        $this->dispatch('requestGeolocation');
     }
 
     public function checkEmailAvailability()
@@ -394,17 +408,14 @@ class RegisterProfesseur extends Component
                     'idAdmin' => $admin->idAdmin,
                 ]);
 
-              if (!$this->isExistingUser) {
-            Localisation::create([
-                'latitude' => $this->latitude ?? 0,
-                'longitude' => $this->longitude ?? 0,
-                'ville' => '', // Valeur vide par défaut
-                'region' => '', // Valeur vide par défaut
-                'pays' => '', // Valeur vide par défaut
-                'adresse' => $this->adresseComplete,
-                'idUser' => $user->idUser,
-            ]);
-        }
+                // 4. Créer la localisation pour un nouvel utilisateur
+                Localisation::create([
+                    'latitude' => $this->latitude ?? 0,
+                    'longitude' => $this->longitude ?? 0,
+                    'ville' => $this->ville, // ← MODIFIÉ
+                    'adresse' => $this->adresseComplete,
+                    'idUser' => $user->idUser,
+                ]);
             }
 
             // Insérer dans offre_service
@@ -433,28 +444,28 @@ class RegisterProfesseur extends Component
                 'intervenant_id' => $intervenant->IdIntervenant,
             ]);
 
-      // 7. Créer les services professeur
-        $matieresData = [];
-        foreach ($this->matieres as $matiere) {
-            $matiereId = $matiere['matiere_id'];
-            if ($matiereId === 'autre' && !empty($matiere['matiere_autre'])) {
-                $newMatiere = Matiere::create([
-                    'nom_matiere' => $matiere['matiere_autre'],
-                    'description' => 'Matière ajoutée par un professeur'
-                ]);
-                $matiereId = $newMatiere->id_matiere;
-            }
+            // 7. Créer les services professeur
+            $matieresData = [];
+            foreach ($this->matieres as $matiere) {
+                $matiereId = $matiere['matiere_id'];
+                if ($matiereId === 'autre' && !empty($matiere['matiere_autre'])) {
+                    $newMatiere = Matiere::create([
+                        'nom_matiere' => $matiere['matiere_autre'],
+                        'description' => 'Matière ajoutée par un professeur'
+                    ]);
+                    $matiereId = $newMatiere->id_matiere;
+                }
 
-            \App\Models\SoutienScolaire\ServiceProf::create([
-                'titre' => $matiere['titre'] ?? 'Cours de matière',
-                'description' => $matiere['description'] ?? '',
-                'prix_par_heure' => $matiere['prix_par_heure'],
-                'status' => 'actif',
-                'type_service' => 'enligne', // VALEUR PAR DÉFAUT
-                'professeur_id' => $professeur->id_professeur,
-                'matiere_id' => $matiereId,
-                'niveau_id' => $matiere['niveau_id'],
-            ]);
+                \App\Models\SoutienScolaire\ServiceProf::create([
+                    'titre' => $matiere['titre'] ?? 'Cours de matière',
+                    'description' => $matiere['description'] ?? '',
+                    'prix_par_heure' => $matiere['prix_par_heure'],
+                    'status' => 'actif',
+                    'type_service' => 'enligne',
+                    'professeur_id' => $professeur->id_professeur,
+                    'matiere_id' => $matiereId,
+                    'niveau_id' => $matiere['niveau_id'],
+                ]);
 
                 $matiereModel = Matiere::find($matiereId);
                 $niveauModel = Niveau::find($matiere['niveau_id']);
@@ -467,14 +478,14 @@ class RegisterProfesseur extends Component
             }
 
             // 8. Envoyer les emails
-      $emailDataProf = [
-            'prenom' => $this->firstName,
-            'nom' => $this->lastName,
-            'email' => $this->email,
-            'telephone' => $this->telephone,
-            'adresse' => $this->adresseComplete, // MODIFIÉ
-            'niveau_etudes' => $this->niveauEtudes,
-            'nombre_matieres' => count($this->matieres),
+            $emailDataProf = [
+                'prenom' => $this->firstName,
+                'nom' => $this->lastName,
+                'email' => $this->email,
+                'telephone' => $this->telephone,
+                'adresse' => $this->adresseComplete,
+                'niveau_etudes' => $this->niveauEtudes,
+                'nombre_matieres' => count($this->matieres),
             ];
 
             Mail::to($this->email)->send(new InscriptionProfesseurEnCours($emailDataProf));
@@ -485,6 +496,7 @@ class RegisterProfesseur extends Component
                 'nom' => $this->lastName,
                 'email' => $this->email,
                 'telephone' => $this->telephone,
+                'ville' => $this->ville, // ← AJOUTÉ
                 'adresse' => $this->adresseComplete,
                 'niveau_etudes' => $this->niveauEtudes,
                 'date_naissance' => Carbon::parse($this->dateNaissance)->format('d/m/Y'),
