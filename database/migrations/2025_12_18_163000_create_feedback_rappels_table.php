@@ -11,24 +11,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('feedback_rappels', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('idDemande');
-            $table->unsignedBigInteger('idClient');
-            $table->unsignedBigInteger('idIntervenant');
-            $table->enum('type_destinataire', ['client', 'intervenant']);
-            $table->integer('rappel_number')->default(1); // 1, 2, 3... (semaine 1, semaine 2, etc.)
-            $table->timestamp('date_envoi');
-            $table->timestamp('prochain_rappel')->nullable();
-            $table->boolean('feedback_fourni')->default(false);
-            $table->timestamps();
+        // Check if table already exists to avoid conflicts
+        if (!Schema::hasTable('feedback_rappels')) {
+            Schema::create('feedback_rappels', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('idDemande');
+                $table->unsignedBigInteger('idClient');
+                $table->unsignedBigInteger('idIntervenant');
+                $table->enum('type_destinataire', ['client', 'intervenant']);
+                $table->integer('rappel_number')->default(1); // 1, 2, 3... (semaine 1, semaine 2, etc.)
+                $table->timestamp('date_envoi');
+                $table->timestamp('prochain_rappel')->nullable();
+                $table->boolean('feedback_fourni')->default(false);
+                $table->timestamps();
 
-            $table->foreign('idDemande')->references('idDemande')->on('demandes_intervention')->onDelete('cascade');
-            $table->foreign('idClient')->references('idUser')->on('utilisateurs')->onDelete('cascade');
-            $table->foreign('idIntervenant')->references('idIntervenant')->on('intervenants')->onDelete('cascade');
-            
-            $table->index(['idDemande', 'type_destinataire', 'feedback_fourni']);
-        });
+                $table->foreign('idDemande')->references('idDemande')->on('demandes_intervention')->onDelete('cascade');
+                $table->foreign('idClient')->references('idUser')->on('utilisateurs')->onDelete('cascade');
+                $table->foreign('idIntervenant')->references('idIntervenant')->on('intervenants')->onDelete('cascade');
+                
+                $table->index(['idDemande', 'type_destinataire', 'feedback_fourni']);
+            });
+        }
     }
 
     /**

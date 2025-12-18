@@ -85,7 +85,9 @@ class DebugFeedback extends Command
             if (!$demande->dateSouhaitee || !$demande->heureFin) {
                 return false;
             }
-            $finIntervention = Carbon::parse($demande->dateSouhaitee . ' ' . $demande->heureFin);
+            // Extraire seulement la partie date de dateSouhaitee si elle contient déjà un timestamp
+            $dateOnly = explode(' ', $demande->dateSouhaitee)[0];
+            $finIntervention = Carbon::parse($dateOnly . ' ' . $demande->heureFin);
             return Carbon::now()->greaterThan($finIntervention);
         });
         
@@ -95,7 +97,8 @@ class DebugFeedback extends Command
             $this->line("");
             $this->line("Dernières demandes terminées:");
             foreach ($demandesTerminees->take(5) as $demande) {
-                $finIntervention = Carbon::parse($demande->dateSouhaitee . ' ' . $demande->heureFin);
+                $dateOnly = explode(' ', $demande->dateSouhaitee)[0];
+                $finIntervention = Carbon::parse($dateOnly . ' ' . $demande->heureFin);
                 $joursDepuis = Carbon::now()->diffInDays($finIntervention);
                 
                 $this->line("  • ID: {$demande->idDemande} | Client: {$demande->idClient} | Intervenant: {$demande->idIntervenant}");
@@ -174,14 +177,16 @@ class DebugFeedback extends Command
                 if (!$demande->dateSouhaitee || !$demande->heureFin) {
                     return false;
                 }
-                $finIntervention = Carbon::parse($demande->dateSouhaitee . ' ' . $demande->heureFin);
+                $dateOnly = explode(' ', $demande->dateSouhaitee)[0];
+                $finIntervention = Carbon::parse($dateOnly . ' ' . $demande->heureFin);
                 return Carbon::now()->greaterThan($finIntervention);
             });
         
         $prochainsRappels = [];
         
         foreach ($demandesTerminees as $demande) {
-            $finIntervention = Carbon::parse($demande->dateSouhaitee . ' ' . $demande->heureFin);
+            $dateOnly = explode(' ', $demande->dateSouhaitee)[0];
+            $finIntervention = Carbon::parse($dateOnly . ' ' . $demande->heureFin);
             $joursDepuis = Carbon::now()->diffInDays($finIntervention);
             
             // Vérifier client
@@ -198,7 +203,7 @@ class DebugFeedback extends Command
             if (!$clientFeedback) {
                 if (!$clientRappel && $joursDepuis >= 1) {
                     $prochainsRappels[] = "Demande #{$demande->idDemande} - Client (J+{$joursDepuis}) - Premier rappel à envoyer";
-                } elseif ($clientRappel && $clientRappel->rappel_number == 1 && $joursDepuis >= 6) {
+                } elseif ($clientRappel && $clientRappel->rappel_number == 1 && $joursDepuis >= 3) {
                     $prochainsRappels[] = "Demande #{$demande->idDemande} - Client (J+{$joursDepuis}) - Deuxième rappel à envoyer";
                 }
             }
@@ -217,7 +222,7 @@ class DebugFeedback extends Command
             if (!$intervenantFeedback) {
                 if (!$intervenantRappel && $joursDepuis >= 1) {
                     $prochainsRappels[] = "Demande #{$demande->idDemande} - Intervenant (J+{$joursDepuis}) - Premier rappel à envoyer";
-                } elseif ($intervenantRappel && $intervenantRappel->rappel_number == 1 && $joursDepuis >= 6) {
+                } elseif ($intervenantRappel && $intervenantRappel->rappel_number == 1 && $joursDepuis >= 3) {
                     $prochainsRappels[] = "Demande #{$demande->idDemande} - Intervenant (J+{$joursDepuis}) - Deuxième rappel à envoyer";
                 }
             }

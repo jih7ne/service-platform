@@ -50,7 +50,9 @@ class SendFeedbackReminderJob implements ShouldQueue
             return false;
         }
 
-        $finIntervention = Carbon::parse($demande->dateSouhaitee . ' ' . $demande->heureFin);
+        // Extraire seulement la partie date de dateSouhaitee si elle contient déjà un timestamp
+        $dateOnly = explode(' ', $demande->dateSouhaitee)[0];
+        $finIntervention = Carbon::parse($dateOnly . ' ' . $demande->heureFin);
         return Carbon::now()->greaterThan($finIntervention);
     }
 
@@ -103,7 +105,8 @@ class SendFeedbackReminderJob implements ShouldQueue
     private function sendReminderToUser(DemandeIntervention $demande, string $userType)
     {
         // Calculer la date de fin de l'intervention
-        $finIntervention = Carbon::parse($demande->dateSouhaitee . ' ' . $demande->heureFin);
+        $dateOnly = explode(' ', $demande->dateSouhaitee)[0];
+        $finIntervention = Carbon::parse($dateOnly . ' ' . $demande->heureFin);
         $joursDepuisFin = Carbon::now()->diffInDays($finIntervention, false);
         
         // Vérifier si un rappel existe déjà
@@ -113,8 +116,8 @@ class SendFeedbackReminderJob implements ShouldQueue
             ->first();
 
         if ($existingRappel) {
-            // Vérifier si on doit envoyer le 2ème rappel (jour 6)
-            if ($existingRappel->rappel_number == 1 && $joursDepuisFin >= 6) {
+            // Vérifier si on doit envoyer le 2ème rappel (jour 3)
+            if ($existingRappel->rappel_number == 1 && $joursDepuisFin >= 3) {
                 $this->sendSecondReminder($demande, $userType, $existingRappel);
             }
         } else {
