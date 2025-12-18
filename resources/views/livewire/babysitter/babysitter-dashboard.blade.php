@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-[#F3F4F6] font-sans flex text-left">
+<div class="min-h-screen bg-[#F3F4F6] font-sans flex text-left" wire:poll.3s="refreshData">
 
     <!-- Sidebar -->
     @include('livewire.babysitter.babysitter-sidebar')
@@ -19,7 +19,8 @@
                 <div class="hidden md:flex items-center space-x-4">
                     <div class="text-right">
                         <p class="text-sm font-bold text-gray-800">{{ $babysitter?->utilisateur?->nom ?? '' }}
-                            {{ $babysitter?->utilisateur?->prenom ?? '' }}</p>
+                            {{ $babysitter?->utilisateur?->prenom ?? '' }}
+                        </p>
                         <p class="text-xs text-green-500 font-semibold flex items-center justify-end">
                             <span class="w-2 h-2 rounded-full bg-green-500 mr-1 animate-pulse"></span> En ligne
                         </p>
@@ -215,7 +216,8 @@
                                         </div>
                                         <div class="text-right">
                                             <div class="text-lg font-semibold text-gray-800">
-                                                {{ number_format($sitting['price'], 0) }} MAD</div>
+                                                {{ number_format($sitting['price'], 0) }} MAD
+                                            </div>
                                             <div class="mt-2">
                                                 @if($sitting['status'] === 'validée')
                                                     <span
@@ -278,95 +280,95 @@
     </div>
 </div>
 
-    <!-- Chart.js Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('livewire:init', () => {
-            // Monthly Earnings Chart
-            const earningsCtx = document.getElementById('earningsChart').getContext('2d');
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('livewire:init', () => {
+        // Monthly Earnings Chart
+        const earningsCtx = document.getElementById('earningsChart').getContext('2d');
 
-            // Création d'un dégradé pour le fond
-            const gradient = earningsCtx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(143, 36, 88, 0.3)'); // #8F2458 à 30%
-            gradient.addColorStop(1, 'rgba(245, 208, 227, 0.1)'); // #F5D0E3 à 10%
+        // Création d'un dégradé pour le fond
+        const gradient = earningsCtx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(143, 36, 88, 0.3)'); // #8F2458 à 30%
+        gradient.addColorStop(1, 'rgba(245, 208, 227, 0.1)'); // #F5D0E3 à 10%
 
-            new Chart(earningsCtx, {
-                type: 'line',
-                data: {
-                    labels: @json(is_array($monthlyEarnings) ? array_column($monthlyEarnings, 'month') : []),
-                    datasets: [{
-                        label: 'Revenus (MAD)',
-                        data: @json(is_array($monthlyEarnings) ? array_column($monthlyEarnings, 'earnings') : []),
-                        borderColor: '#8F2458',
-                        backgroundColor: gradient, // Utilisation du dégradé
-                        borderWidth: 3,
-                        fill: true,
-                        pointBackgroundColor: '#8F2458',
-                        pointBorderColor: '#FFFFFF',
-                        pointBorderWidth: 2,
-                        pointRadius: 5,
-                        tension: 0.4
-                    }]
+        new Chart(earningsCtx, {
+            type: 'line',
+            data: {
+                labels: @json(is_array($monthlyEarnings) ? array_column($monthlyEarnings, 'month') : []),
+                datasets: [{
+                    label: 'Revenus (MAD)',
+                    data: @json(is_array($monthlyEarnings) ? array_column($monthlyEarnings, 'earnings') : []),
+                    borderColor: '#8F2458',
+                    backgroundColor: gradient, // Utilisation du dégradé
+                    borderWidth: 3,
+                    fill: true,
+                    pointBackgroundColor: '#8F2458',
+                    pointBorderColor: '#FFFFFF',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#8F2458' // Chiffres en rose foncé
                         }
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                color: '#8F2458' // Chiffres en rose foncé
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: '#8F2458' // Mois en rose foncé
-                            }
+                    x: {
+                        ticks: {
+                            color: '#8F2458' // Mois en rose foncé
                         }
                     }
                 }
-            });
-
-            // Rating Distribution Chart
-            const ratingCtx = document.getElementById('ratingChart').getContext('2d');
-            new Chart(ratingCtx, {
-                type: 'bar',
-                data: {
-                    labels: @json(is_array($ratingDistribution) ? array_map(fn($r) => $r['rating'] . ' étoiles', $ratingDistribution) : []),
-                    datasets: [{
-                        label: 'Nombre d\'avis',
-                        data: @json(is_array($ratingDistribution) ? array_column($ratingDistribution, 'count') : []),
-                        backgroundColor: [
-                            'rgba(251, 191, 36, 0.8)',
-                            'rgba(251, 191, 36, 0.7)',
-                            'rgba(251, 191, 36, 0.6)',
-                            'rgba(251, 191, 36, 0.5)',
-                            'rgba(251, 191, 36, 0.4)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    }
-                }
-            });
+            }
         });
-    </script>
+
+        // Rating Distribution Chart
+        const ratingCtx = document.getElementById('ratingChart').getContext('2d');
+        new Chart(ratingCtx, {
+            type: 'bar',
+            data: {
+                labels: @json(is_array($ratingDistribution) ? array_map(fn($r) => $r['rating'] . ' étoiles', $ratingDistribution) : []),
+                datasets: [{
+                    label: 'Nombre d\'avis',
+                    data: @json(is_array($ratingDistribution) ? array_column($ratingDistribution, 'count') : []),
+                    backgroundColor: [
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(251, 191, 36, 0.7)',
+                        'rgba(251, 191, 36, 0.6)',
+                        'rgba(251, 191, 36, 0.5)',
+                        'rgba(251, 191, 36, 0.4)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
