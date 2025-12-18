@@ -38,35 +38,32 @@ class SearchService extends Component
     // Map View Attributes
     public $viewMode = 'list'; 
     public $locationQuery = '';
-    public $selectedCountry = '';
     public $selectedCity = '';
+    public $selectedCountry = '';
     public $searchRadius = 25; 
     public $mapMarkers = [];
-    public $countries = [];
     public $cities = [];
     public $currentLocation = null;
-
-
-
-
 
     // For OpenStreetMap center
     public $mapCenter = ['lat' => 33.5731, 'lng' => -7.5898]; // Default: Casablanca, Morocco
     public $mapZoom = 10;
 
-
-
-    //Pagination
+    // Pagination
     public $currentPage = 1;
     public $perPage = 3;
+    public $countries = ['Morocco', 'France'];
 
     public function mount()
     {
         $this->loadKeepers();
-        $this->loadCountries();
         $this->loadCities();
+        
+        // Initialize map markers if in map view
+        if ($this->viewMode === 'map') {
+            $this->updateMapMarkers();
+        }
     }
-
 
     public function getPaginatedServicesProperty()
     {
@@ -90,18 +87,17 @@ class SearchService extends Component
         $this->currentPage = $page;
     }
 
-
     public function updated($property)
     {
-        // Don't trigger loadKeepers when updating map view properties
-        $mapProperties = ['viewMode', 'locationQuery', 'selectedCountry', 'selectedCity', 'searchRadius'];
+        // Always load keepers when non-map properties change
+        $mapOnlyProperties = ['locationQuery', 'selectedCity', 'searchRadius', 'selectedCountry'];
         
-        if (!in_array($property, $mapProperties)) {
+        if (!in_array($property, $mapOnlyProperties)) {
             $this->loadKeepers();
         }
         
-        // If switching to map view, update map markers
-        if ($property === 'viewMode' && $this->viewMode === 'map') {
+        // If in map view, update map markers
+        if ($this->viewMode === 'map') {
             $this->updateMapMarkers();
         }
     }
@@ -117,8 +113,72 @@ class SearchService extends Component
             ->join('services as s', 's.idService', '=', 'pk.idPetKeeping')
             ->join('petkeepers as k', 'k.idPetKeeper', '=', 'pk.idPetKeeper')
             ->join('utilisateurs as ut', 'ut.idUser', '=', 'pk.idPetKeeper')
-            ->select();
+            ->leftJoin('localisations as loc', 'loc.idUser', '=', 'ut.idUser')
+            ->select(
+                'pk.*',
+                's.idService',
+                's.nomService',
+                's.description',
+                'k.*',
+                'ut.idUser',
+                'ut.prenom',
+                'ut.nom',
+                'ut.photo',
+                'ut.note as user_note',
+                'pk.note as service_note',
+                'ut.nbrAvis',
+                'loc.latitude',
+                'loc.longitude',
+                'loc.ville',
+                'loc.adresse',
+            );
 
+        // Apply all filters
+        $this->applyFilters($query);
+        
+        // Apply sorting
+        $this->applySorting($query);
+
+        // Fetch and map results
+        $this->services = $query->get()->map(function ($service) {
+            return [
+                "id" => $service->idPetKeeping,
+                "nomService" => $service->nomService,
+                "avatar" => $service->photo ?? "https://api.dicebear.com/7.x/avataaars/svg?seed=" . urlencode($service->prenom . $service->nom),
+                "note" => $service->service_note,
+                "nbrAvis" => $service->nbrAvis,
+                "location" => $service->ville ?? "", 
+                "base_price" => $service->base_price,
+                "petType" => $service->pet_type, 
+                "description" => $service->description,
+                "status" => $service->statut ?? 'ACTIVE', 
+                "verified" => 1, 
+                "experience" => round($service->service_note * 2), 
+                "responseTime" => rand(1, 4), 
+                "availability" => "available",
+                "providerName" => $service->prenom . ' ' . $service->nom,
+                "providerId" => $service->idUser,
+                "serviceId" => $service->idService,
+                "serviceType" => $service->nomService,
+                "category" => Constants::getCategoryLabel($service->categorie_petkeeping),
+                "acceptsAggressivePets" => (bool)$service->accepts_aggressive_pets,
+                "acceptsUntrainedPets" => (bool)$service->accepts_untrained_pets,
+                "vaccinationRequired" => (bool)$service->vaccination_required,
+                "paymentCriteria" => Constants::getCriteriaLabel($service->payment_criteria),
+                "speciality" => $service->specialite ?? '',
+                "nombres_services_demandes" => $service->nombres_services_demandes,
+                "city" => $service->ville ?? '',
+                "address" => $service->adresse ?? '',
+                "latitude" => $service->latitude ?? null,
+                "longitude" => $service->longitude ?? null,
+                "country" => $service->pays ?? '',
+                "photo" => $service->photo ?? "https://api.dicebear.com/7.x/avataaars/svg?seed=" . urlencode($service->prenom . $service->nom),
+            ];
+        })->toArray();
+    }
+
+    private function applyFilters($query)
+    {
         // Search
         if (!empty($this->searchQuery)) {
             $query->where(function ($q) {
@@ -174,50 +234,6 @@ class SearchService extends Component
         if ($this->acceptsUntrainedPets) {
             $query->where('pk.accepts_untrained_pets', '=', 1);
         }
-
-        // Apply sorting
-        $this->applySorting($query);
-
-        // Fetch and map results
-        $this->services = $query->get()->map(function ($service) {
-            return [
-                "id" => $service->idPetKeeping,
-                "nomService" => $service->nomService,
-                "avatar" => $service->photo ?? "https://api.dicebear.com/7.x/avataaars/svg?seed=" . urlencode($service->prenom . $service->nom),
-                "note" => $service->note,
-                "nbrAvis" => $service->nbrAvis,
-                "location" => "", 
-                "base_price" => $service->base_price,
-                "petType" => $service->pet_type, 
-                "description" => $service->description,
-                "status" => $service->statut, 
-                "verified" => ($service->statut === 'actif') ? 1 : 0, 
-                "experience" => round($service->note * 2), 
-                "responseTime" => rand(1, 4), 
-                "availability" => ($service->statut === 'actif') ? "available" : "booked",
-                "providerName" => $service->prenom . ' ' . $service->nom,
-                "providerId" => $service->idUser,
-                "serviceId" => $service->idService,
-                "serviceType" => $service->nomService,
-                "category" => Constants::getCategoryLabel($service->categorie_petkeeping),
-                "acceptsAggressivePets" => (bool)$service->accepts_aggressive_pets,
-                "acceptsUntrainedPets" => (bool)$service->accepts_untrained_pets,
-                "vaccinationRequired" => (bool)$service->vaccination_required,
-                "paymentCriteria" => Constants::getCriteriaLabel($service->payment_criteria),
-                "speciality" => $service->specialite ?? '',
-                "nombres_services_demandes" => $service->nombres_services_demandes,
-                "city" => $service->ville ?? '',
-                "country" => $service->pays ?? '',
-                "latitude" => $service->latitude ?? null,
-                "longitude" => $service->longitude ?? null,
-                "photo" => $service->photo ?? "https://api.dicebear.com/7.x/avataaars/svg?seed=" . urlencode($service->prenom . $service->nom),
-            ];
-        })->toArray();
-
-        // If in map view, also update map markers
-        if ($this->viewMode === 'map') {
-            $this->updateMapMarkers();
-        }
     }
 
     private function applySorting($query)
@@ -241,27 +257,76 @@ class SearchService extends Component
 
     public function updateMapMarkers()
     {
-        // Start with filtered services
-        $filteredServices = collect($this->services);
+        // Load ALL services for map view with fresh query
+        $query = DB::table('petkeeping as pk')
+            ->join('services as s', 's.idService', '=', 'pk.idPetKeeping')
+            ->join('petkeepers as k', 'k.idPetKeeper', '=', 'pk.idPetKeeper')
+            ->join('utilisateurs as ut', 'ut.idUser', '=', 'pk.idPetKeeper')
+            ->leftJoin('localisations as loc', 'loc.idUser', '=', 'ut.idUser')
+            ->select(
+                'pk.*',
+                's.idService',
+                's.nomService',
+                's.description',
+                'k.*',
+                'ut.idUser',
+                'ut.prenom',
+                'ut.nom',
+                'ut.photo',
+                'ut.note as user_note',
+                'pk.note as service_note',
+                'ut.nbrAvis',
+                'loc.latitude',
+                'loc.longitude',
+                'loc.ville',
+                'loc.adresse',
+            );
+
+        // Apply the same filters as loadKeepers()
+        $this->applyFilters($query);
+        
+        // Get all services for map
+        $allServices = $query->get()->map(function ($service) {
+            return [
+                "id" => $service->idPetKeeping,
+                "nomService" => $service->nomService,
+                "note" => $service->service_note ?? 0,
+                "providerName" => $service->prenom . ' ' . $service->nom,
+                "base_price" => $service->base_price,
+                "paymentCriteria" => Constants::getCriteriaLabel($service->payment_criteria),
+                "category" => Constants::getCategoryLabel($service->categorie_petkeeping),
+                "latitude" => $service->latitude ?? null,
+                "longitude" => $service->longitude ?? null,
+                "photo" => $service->photo ?? "https://api.dicebear.com/7.x/avataaars/svg?seed=" . urlencode($service->prenom . $service->nom),
+                "city" => $service->ville ?? '',
+                "country" => $service->pays ?? '',
+                "address" => $service->adresse ?? '',
+                "description" => $service->description,
+                "services" => [Constants::getCategoryLabel($service->categorie_petkeeping)],
+                "status" => $service->statut ?? 'actif'
+            ];
+        })->toArray();
+
+        $filteredServices = collect($allServices);
 
         // Apply location filters
         if ($this->locationQuery) {
             $filteredServices = $filteredServices->filter(function ($service) {
-                $serviceLocation = strtolower($service['ville']);
+                $serviceLocation = strtolower($service['city'] . ' ' . $service['country']);
                 $searchLocation = strtolower($this->locationQuery);
                 return str_contains($serviceLocation, $searchLocation);
+            });
+        }
+
+        if ($this->selectedCity) {
+            $filteredServices = $filteredServices->filter(function ($service) {
+                return strtolower($service['city']) === strtolower($this->selectedCity);
             });
         }
 
         if ($this->selectedCountry) {
             $filteredServices = $filteredServices->filter(function ($service) {
                 return strtolower($service['country']) === strtolower($this->selectedCountry);
-            });
-        }
-
-        if ($this->selectedCity) {
-            $filteredServices = $filteredServices->filter(function ($service) {
-                return strtolower($service['ville']) === strtolower($this->selectedCity);
             });
         }
 
@@ -302,15 +367,16 @@ class SearchService extends Component
                 'status' => $service['status'],
                 'price' => $service['base_price'],
                 'criteria' => $service['paymentCriteria'],
-                'services' => [$service['category']],
-                'lat' => $service['latitude'],
-                'lng' => $service['longitude'],
+                'services' => $service['services'],
+                'lat' => (float)$service['latitude'],
+                'lng' => (float)$service['longitude'],
                 'distance' => $service['distance'] ?? null,
                 'city' => $service['city'],
+                'country' => $service['country'],
                 'address' => $service['address'],
                 'description' => Str::limit($service['description'], 100),
             ];
-        })->toArray();
+        })->values()->toArray();
 
         // Update map center based on filtered markers
         if (!empty($this->mapMarkers)) {
@@ -329,6 +395,10 @@ class SearchService extends Component
             } else {
                 $this->mapZoom = 10;
             }
+        } else {
+            // Default to Casablanca if no markers
+            $this->mapCenter = ['lat' => 33.5731, 'lng' => -7.5898];
+            $this->mapZoom = 10;
         }
 
         // Dispatch event to update map in frontend
@@ -355,112 +425,60 @@ class SearchService extends Component
         return $earthRadius * $c;
     }
 
-    public function loadCountries()
-    {
-        $cacheKey = 'countries_list';
-        $cacheDuration = now()->addDays(30); 
-        
-        $this->countries = Cache::remember($cacheKey, $cacheDuration, function () {
-            try {
-                $response = Http::withoutVerifying()->timeout(10)->get('https://restcountries.com/v3.1/all?fields=name');
-                
-                if ($response->successful()) {
-                    $countries = $response->json();
-                    return collect($countries)
-                        ->map(function ($country) {
-                            return $country['name']['common'];
-                        })
-                        ->sort()
-                        ->values()
-                        ->toArray();
-                }
-            } catch (\Exception $e) {
-               
-                Log::warning('Failed to fetch countries from API', ['error' => $e->getMessage()]);
-            }
-            
-            
-            return Countries::getStaticCountries();
-        });
-    }
-
     public function loadCities()
     {
-        if (!$this->selectedCountry) {
-            $this->cities = [];
-            return;
-        }
-        
-        $cacheKey = "cities_{$this->selectedCountry}";
-        $cacheDuration = now()->addDays(7); 
+        $cacheKey = 'morocco_cities';
+        $cacheDuration = now()->addDays(30);
         
         $this->cities = Cache::remember($cacheKey, $cacheDuration, function () {
-            try {
-    
-                $countryCode = $this->getCountryCodeFromApi($this->selectedCountry);
-                
-                if (!$countryCode) {
-                    return Countries::getStaticCities($this->selectedCountry);
-                }
-                
-                
-                $username = $username = config('services.geonames.username', 'demo');
-                $response = Http::timeout(10)->get("http://api.geonames.org/searchJSON", [
-                    'country' => $countryCode,
-                    'featureClass' => 'P',
-                    'maxRows' => 200, 
-                    'username' => $username,
-                ]);
-                
-                if ($response->successful()) {
-                    $data = $response->json();
-                    return collect($data['geonames'] ?? [])
-                        ->pluck('name')
-                        ->sort()
-                        ->values()
-                        ->toArray();
-                }
-            } catch (\Exception $e) {
-                Log::warning('Failed to fetch cities from API', [
-                    'country' => $this->selectedCountry,
-                    'error' => $e->getMessage()
-                ]);
-
-                
+            // Get distinct cities from localisations table
+            $dbCities = DB::table('localisations')
+                ->select('ville')
+                ->distinct()
+                ->whereNotNull('ville')
+                ->where('ville', '!=', '')
+                ->orderBy('ville')
+                ->pluck('ville')
+                ->toArray();
+            
+            if (!empty($dbCities)) {
+                return $dbCities;
             }
             
-            return Countries::getStaticCities($this->selectedCountry);
+            // Fallback to static Moroccan cities if database is empty
+            return [
+                'Casablanca',
+                'Rabat',
+                'Fès',
+                'Marrakech',
+                'Tanger',
+                'Agadir',
+                'Meknès',
+                'Oujda',
+                'Kénitra',
+                'Tétouan',
+                'Safi',
+                'Témara',
+                'Mohammédia',
+                'El Jadida',
+                'Khouribga',
+                'Béni Mellal',
+                'Nador',
+                'Taza',
+                'Settat',
+                'Khémisset'
+            ];
         });
     }
 
-
-    private function getCountryCodeFromApi($countryName)
+    public function updatedSelectedCity()
     {
-        try {
-            $response = Http::timeout(5)->get("https://restcountries.com/v3.1/name/{$countryName}");
-            
-            if ($response->successful()) {
-                $data = $response->json();
-                return $data[0]['cca2'] ?? null; // ISO 3166-1 alpha-2 code
-            }
-        } catch (\Exception $e) {
-            
-        }
-        
-        return Countries::getStaticCode($countryName);
-    }
-
-    public function updatedSelectedCountry()
-    {
-        $this->loadCities();
-        $this->selectedCity = '';
-        
         if ($this->viewMode === 'map') {
             $this->updateMapMarkers();
         }
     }
 
-    public function updatedSelectedCity()
+    public function updatedSelectedCountry()
     {
         if ($this->viewMode === 'map') {
             $this->updateMapMarkers();
@@ -524,10 +542,15 @@ class SearchService extends Component
         }
     }
 
-    public function switchedToMapView()
+    public function switchView($mode)
     {
-        $this->updateMapMarkers();
-        $this->dispatch('switched-to-map-view');
+        $this->viewMode = $mode;
+        $this->currentPage = 1;
+        
+        if ($mode === 'map') {
+            $this->updateMapMarkers();
+            $this->dispatch('switched-to-map-view');
+        }
     }
 
     public function resetFilters()
@@ -549,16 +572,19 @@ class SearchService extends Component
 
         // Reset map filters
         $this->locationQuery = '';
-        $this->selectedCountry = '';
         $this->selectedCity = '';
+        $this->selectedCountry = '';
         $this->searchRadius = 25;
 
-        $this->resetPage();
+        $this->currentPage = 1;
         $this->perPage = 3;
 
         $this->loadKeepers();
-        $this->loadCountries();
         $this->loadCities();
+        
+        if ($this->viewMode === 'map') {
+            $this->updateMapMarkers();
+        }
     }
 
     public function render()
@@ -567,7 +593,6 @@ class SearchService extends Component
             'services' => $this->services,
             'totalPages' => ceil(count($this->services) / $this->perPage),
             'mapMarkers' => $this->mapMarkers,
-            'countries' => $this->countries,
             'cities' => $this->cities,
         ]);
     }

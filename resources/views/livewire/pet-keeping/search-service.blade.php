@@ -1,5 +1,3 @@
-
-
 <div class="min-h-screen bg-white">
     <livewire:shared.header />
     
@@ -31,7 +29,7 @@
                     <span class="text-gray-600">Vue:</span>
                     <div class="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
                         <button 
-                            wire:click="$set('viewMode', 'list')"
+                            wire:click="switchView('list')"
                             class="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 {{ $viewMode === 'list' ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
                             <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -39,7 +37,7 @@
                             Liste
                         </button>
                         <button 
-                            wire:click="$set('viewMode', 'map')"
+                            wire:click="switchView('map')"
                             class="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 {{ $viewMode === 'map' ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }}">
                             <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
@@ -412,8 +410,6 @@
 
                                                 <!-- Action Buttons -->
                                                 <div class="flex flex-wrap gap-2">
-                                                    
-
                                                     <button wire:click="bookService({{ $service['id'] ?? 0 }})" 
                                                             class="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition shadow-sm">
                                                         <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -429,8 +425,20 @@
                                 </div>
                             @empty
                                 <!-- Empty state -->
+                                <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+                                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun service trouvé</h3>
+                                    <p class="text-gray-600 mb-4">Essayez de modifier vos critères de recherche</p>
+                                    <button wire:click="resetFilters" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
+                                        Réinitialiser les filtres
+                                    </button>
+                                </div>
                             @endforelse
                         </div>
+                        
+                        
                     @else
                         <!-- Map View -->
                         @if($viewMode === 'map')
@@ -438,7 +446,7 @@
                                 <!-- Map Container -->
                                 <div id="map" class="w-full h-[600px] rounded-lg"></div>
                                 
-                                <!-- Loading indicator (hidden by default) -->
+                                <!-- Loading indicator -->
                                 <div id="map-loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 z-10 hidden">
                                     <div class="text-center">
                                         <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
@@ -448,19 +456,19 @@
                                 
                                 <!-- Map Controls -->
                                 <div class="absolute top-4 right-4 z-20 flex flex-col gap-2">
-                                    <button onclick="zoomIn()" 
+                                    <button onclick="window.zoomIn()" 
                                             class="p-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-all hover:bg-gray-50 active:scale-95">
                                         <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                         </svg>
                                     </button>
-                                    <button onclick="zoomOut()" 
+                                    <button onclick="window.zoomOut()" 
                                             class="p-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-all hover:bg-gray-50 active:scale-95">
                                         <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
                                         </svg>
                                     </button>
-                                    <button onclick="locateMe()" 
+                                    <button onclick="window.locateMe()" 
                                             class="p-3 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors active:scale-95">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -500,7 +508,63 @@
                                 </div>
                             </div>
                             
-                            <!-- Rest of your map results sidebar... -->
+                            <!-- Map Results List -->
+                            @if(count($mapMarkers) > 0)
+                                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    @foreach($mapMarkers as $marker)
+                                        <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-4">
+                                            <div class="flex items-start gap-3 mb-3">
+                                                <img src="{{ $marker['photo'] }}" 
+                                                     class="w-12 h-12 rounded-full object-cover border border-gray-200">
+                                                <div class="flex-1">
+                                                    <h4 class="font-semibold text-gray-900 text-sm">{{ $marker['name'] }}</h4>
+                                                    <div class="flex items-center gap-1 mb-1">
+                                                        <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                                        </svg>
+                                                        <span class="text-sm font-medium">{{ number_format($marker['rating'], 1) }}</span>
+                                                    </div>
+                                                    <p class="text-xs text-gray-600">📍 {{ $marker['city'] }}, {{ $marker['country'] }}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <div class="text-lg font-bold text-gray-900 mb-1">
+                                                    ${{ number_format($marker['price'], 2) }} / {{ $marker['criteria'] }}
+                                                </div>
+                                                <div class="flex flex-wrap gap-1 mb-2">
+                                                    @foreach($marker['services'] as $service)
+                                                        <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs">{{ $service }}</span>
+                                                    @endforeach
+                                                </div>
+                                                <p class="text-sm text-gray-600">{{ $marker['description'] }}</p>
+                                            </div>
+                                            
+                                            <div class="flex gap-2">
+                                                <button onclick="window.viewServiceDetails({{ $marker['id'] }})" 
+                                                        class="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
+                                                    Voir détails
+                                                </button>
+                                                <button onclick="window.bookService({{ $marker['id'] }})" 
+                                                        class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors">
+                                                    Réserver
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="mt-6 bg-white rounded-2xl shadow-lg p-8 text-center">
+                                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                                    </svg>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucun pet-sitter dans cette zone</h3>
+                                    <p class="text-gray-600 mb-4">Essayez d'élargir votre recherche ou modifier les filtres</p>
+                                    <button wire:click="resetFilters" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
+                                        Réinitialiser les filtres
+                                    </button>
+                                </div>
+                            @endif
                         @endif
                     @endif
                 </div>
@@ -510,14 +574,6 @@
 </div>
 
 @push('scripts')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin="" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""></script>
-
-<!-- Include Leaflet CSS and JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin="" />
@@ -537,18 +593,20 @@
     function initMap() {
         if (isMapInitialized) return;
         
+        console.log('Initializing map...');
+        
         try {
-            // Use Morocco center as default
-            const defaultCenter = [33.5731, -7.5898]; // Casablanca
-            const defaultZoom = 10;
+            // Use initial center from Livewire or default
+            const initialCenter = @json($mapCenter) || [33.5731, -7.5898];
+            const initialZoom = @json($mapZoom) || 10;
             
-            console.log('Initializing map at:', defaultCenter);
+            console.log('Map center:', initialCenter, 'Zoom:', initialZoom);
             
             // Create map
             map = L.map('map', {
-                center: defaultCenter,
-                zoom: defaultZoom,
-                zoomControl: false, // We'll add our own
+                center: initialCenter,
+                zoom: initialZoom,
+                zoomControl: false,
                 attributionControl: true
             });
 
@@ -556,8 +614,7 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19,
-                minZoom: 3,
-                noWrap: true
+                minZoom: 3
             }).addTo(map);
 
             // Add zoom control
@@ -565,49 +622,30 @@
                 position: 'topright'
             }).addTo(map);
 
-            // Add scale control
-            L.control.scale({
-                imperial: false,
-                metric: true
-            }).addTo(map);
-
-            // Add attribution
-            L.control.attribution({
-                position: 'bottomright'
-            }).addTo(map);
-
-            // Check if map container is visible
+            // Fit the map to its container after a short delay
             setTimeout(() => {
                 if (map) {
                     map.invalidateSize();
-                    console.log('Map initialized and invalidated size');
+                    console.log('Map size invalidated');
+                    
+                    // Add initial markers
+                    const initialMarkers = @json($mapMarkers);
+                    if (initialMarkers && initialMarkers.length > 0) {
+                        console.log('Adding initial markers:', initialMarkers.length);
+                        updateMarkers(initialMarkers);
+                    }
                 }
             }, 100);
 
             isMapInitialized = true;
             
-            // Add initial markers if available
-            const initialMarkers = @json($mapMarkers);
-            if (initialMarkers && initialMarkers.length > 0) {
-                console.log('Adding initial markers:', initialMarkers.length);
-                updateMarkers(initialMarkers);
-            }
-
-            // Debug: Check if tiles are loading
-            map.on('tileload', function(e) {
-                console.log('Tile loaded:', e.tile.src);
-            });
-            
-            map.on('tileerror', function(e) {
-                console.error('Tile error:', e.tile.src, e.error);
-            });
-
         } catch (error) {
             console.error('Error initializing map:', error);
             showMapError('Erreur lors de l\'initialisation de la carte. Veuillez recharger la page.');
         }
     }
 
+    // Show map error
     function showMapError(message) {
         const mapContainer = document.getElementById('map');
         if (mapContainer) {
@@ -626,13 +664,14 @@
         }
     }
 
-    function updateMarkers(markersData) {
+    // Update markers on map
+    function updateMarkers(markersData, center = null, zoom = null) {
         if (!map) {
             console.error('Map not initialized');
             return;
         }
 
-        console.log('Updating markers:', markersData);
+        console.log('Updating markers with data:', markersData);
 
         // Clear existing markers
         markers.forEach(marker => {
@@ -642,71 +681,30 @@
         });
         markers = [];
 
-        // If no markers, show message
-        if (!markersData || markersData.length === 0) {
-            console.log('No markers to display');
-            
-            // Remove any existing overlay
-            const existingOverlay = document.getElementById('no-markers-overlay');
-            if (existingOverlay) {
-                existingOverlay.remove();
-            }
-            
-            // Add overlay message
-            const bounds = map.getBounds();
-            const center = bounds.getCenter();
-            
-            const overlay = L.marker(center, {
-                icon: L.divIcon({
+        // Add new markers
+        if (markersData && markersData.length > 0) {
+            markersData.forEach(data => {
+                if (!data.lat || !data.lng) {
+                    console.warn('Marker missing coordinates:', data);
+                    return;
+                }
+
+                // Create custom icon
+                const icon = L.divIcon({
                     html: `
-                        <div id="no-markers-overlay" class="bg-white p-4 rounded-lg shadow-lg border border-gray-200 max-w-xs">
-                            <div class="text-center">
-                                <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <div class="relative">
+                            <div class="w-10 h-10 rounded-full ${getMarkerColor(data)} border-2 border-white shadow-lg flex items-center justify-center transition-transform hover:scale-110 cursor-pointer">
+                                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
                                 </svg>
-                                <p class="text-sm text-gray-600">Aucun pet-sitter dans cette zone</p>
-                                <p class="text-xs text-gray-500 mt-1">Essayez d'élargir votre recherche</p>
                             </div>
                         </div>
                     `,
-                    className: 'no-markers-icon',
-                    iconSize: [250, 80],
-                    iconAnchor: [125, 40]
-                })
-            }).addTo(map);
-            
-            markers.push(overlay);
-            return;
-        }
+                    className: 'custom-div-icon',
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 40]
+                });
 
-        // Add new markers
-        markersData.forEach(data => {
-            if (!data.lat || !data.lng) {
-                console.warn('Marker missing coordinates:', data);
-                return;
-            }
-
-            const markerColor = getMarkerColor(data);
-            const iconSize = [32, 32];
-            
-            const icon = L.divIcon({
-                html: `
-                    <div class="relative">
-                        <div class="w-8 h-8 rounded-full ${markerColor} border-2 border-white shadow-lg flex items-center justify-center transition-transform hover:scale-110 cursor-pointer">
-                            <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                            </svg>
-                        </div>
-                    </div>
-                `,
-                className: 'custom-div-icon',
-                iconSize: iconSize,
-                iconAnchor: [16, 32],
-                popupAnchor: [0, -32]
-            });
-
-            try {
                 const marker = L.marker([data.lat, data.lng], { 
                     icon: icon,
                     title: data.name
@@ -714,36 +712,44 @@
 
                 // Create popup content
                 const popupContent = `
-                    <div class="p-2 min-w-[240px]">
+                    <div class="p-3 min-w-[280px]">
                         <div class="flex items-start gap-3 mb-3">
-                            <img src="${data.photo || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(data.name)}" 
-                                 class="w-12 h-12 rounded-full object-cover border border-gray-200">
+                            <img src="${data.photo}" 
+                                 class="w-14 h-14 rounded-full object-cover border border-gray-200">
                             <div class="flex-1">
-                                <h4 class="font-semibold text-gray-900 text-sm mb-1">${data.name}</h4>
+                                <h4 class="font-bold text-gray-900 text-sm mb-1">${data.name}</h4>
                                 <div class="flex items-center gap-1 mb-1">
-                                    <svg class="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                    </svg>
-                                    <span class="text-xs font-medium">${data.rating || 0}</span>
+                                    ${data.rating ? `
+                                        <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                        </svg>
+                                        <span class="text-sm font-medium">${data.rating.toFixed(1)}</span>
+                                    ` : ''}
                                 </div>
+                                ${data.city ? `<p class="text-xs text-gray-600">📍 ${data.city}, ${data.country || ''}</p>` : ''}
                             </div>
                         </div>
                         
                         <div class="mb-3">
+                            <div class="text-lg font-bold text-gray-900 mb-2">
+                                $${data.price.toFixed(2)} / ${data.criteria}
+                            </div>
                             <div class="flex flex-wrap gap-1 mb-2">
                                 ${(data.services || []).map(service => 
-                                    `<span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs">${service}</span>`
+                                    `<span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs">${service}</span>`
                                 ).join('')}
                             </div>
-                            <div class="text-sm font-medium text-gray-900">
-                                $${data.price || 0} / ${data.criteria || ''}
-                            </div>
+                            ${data.description ? `<p class="text-sm text-gray-600">${data.description}</p>` : ''}
                         </div>
                         
                         <div class="flex gap-2">
-                            <button onclick="window.viewServiceDetails('${data.id}')" 
-                                    class="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-medium transition-colors">
+                            <button onclick="window.viewServiceDetails(${data.id})" 
+                                    class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
                                 Voir détails
+                            </button>
+                            <button onclick="window.bookService(${data.id})" 
+                                    class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors">
+                                Réserver
                             </button>
                         </div>
                     </div>
@@ -751,44 +757,67 @@
 
                 marker.bindPopup(popupContent);
                 
-                // Add click handler
                 marker.on('click', function() {
                     this.openPopup();
                 });
 
                 markers.push(marker);
+            });
 
-            } catch (error) {
-                console.error('Error adding marker:', error, data);
-            }
-        });
-
-        // Fit bounds to show all markers if we have them
-        if (markers.length > 0) {
-            try {
+            // Fit bounds to show all markers
+            if (markers.length > 0) {
                 const group = L.featureGroup(markers);
                 const bounds = group.getBounds();
                 
-                // Check if bounds are valid
                 if (bounds.isValid()) {
-                    // Add some padding
+                    // Add padding
                     bounds.pad(0.1);
                     
-                    // Fit bounds with animation
-                    map.fitBounds(bounds, {
-                        padding: [50, 50],
-                        animate: true,
-                        duration: 1
-                    });
-                    
-                    console.log('Fitted bounds:', bounds);
+                    // Use provided center/zoom or fit to bounds
+                    if (center && zoom) {
+                        map.setView([center.lat, center.lng], zoom, {
+                            animate: true,
+                            duration: 1
+                        });
+                    } else {
+                        map.fitBounds(bounds, {
+                            padding: [50, 50],
+                            animate: true,
+                            duration: 1
+                        });
+                    }
                 }
-            } catch (error) {
-                console.error('Error fitting bounds:', error);
             }
+        } else {
+            // No markers - show message
+            const bounds = map.getBounds();
+            const center = bounds.getCenter();
+            
+            const overlay = L.marker(center, {
+                icon: L.divIcon({
+                    html: `
+                        <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200 max-w-xs">
+                            <div class="text-center">
+                                <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <p class="text-sm text-gray-600">Aucun pet-sitter dans cette zone</p>
+                                <p class="text-xs text-gray-500 mt-1">Modifiez vos filtres pour voir plus de résultats</p>
+                            </div>
+                        </div>
+                    `,
+                    className: 'no-markers-icon',
+                    iconSize: [250, 100],
+                    iconAnchor: [125, 50]
+                })
+            }).addTo(map);
+            
+            markers.push(overlay);
         }
     }
 
+    // Get marker color based on data
     function getMarkerColor(data) {
         if (data.rating >= 4.5) return 'bg-yellow-500';
         if (data.status === 'actif') return 'bg-green-500';
@@ -900,6 +929,11 @@
         Livewire.dispatch('view-details', {id: id});
     }
 
+    // Book service
+    window.bookService = function(id) {
+        Livewire.dispatch('book-service', {id: id});
+    }
+
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM loaded, checking for map view...');
@@ -907,7 +941,7 @@
         // Check if we're in map view
         if (@json($viewMode) === 'map') {
             console.log('Initializing map on DOM load...');
-            setTimeout(initMap, 300); // Short delay to ensure DOM is fully ready
+            setTimeout(initMap, 300);
         }
     });
 
@@ -917,17 +951,16 @@
         
         // Initialize map when in map view
         if (@this.get('viewMode') === 'map') {
-            console.log('Initializing map from Livewire...');
+            console.log('Already in map view, initializing...');
             setTimeout(initMap, 100);
         }
 
-        // Reinitialize map when switching to map view
-        @this.on('switched-to-map-view', () => {
+        // Listen for view mode changes
+        Livewire.on('switched-to-map-view', () => {
             console.log('Switched to map view, initializing map...');
-            isMapInitialized = false; // Reset flag
+            isMapInitialized = false;
             setTimeout(() => {
                 initMap();
-                // Invalidate size to fix rendering issues
                 setTimeout(() => {
                     if (map) {
                         map.invalidateSize();
@@ -937,22 +970,14 @@
         });
 
         // Update markers when data changes
-        @this.on('refresh-map', (data) => {
+        Livewire.on('refresh-map', (data) => {
             console.log('Refreshing map with data:', data);
             if (!isMapInitialized) {
                 initMap();
             }
             
             if (map && data.markers) {
-                updateMarkers(data.markers);
-            }
-        });
-
-        // Handle view mode changes
-        Livewire.on('view-mode-changed', (mode) => {
-            console.log('View mode changed to:', mode);
-            if (mode === 'map' && !isMapInitialized) {
-                setTimeout(initMap, 100);
+                updateMarkers(data.markers, data.center, data.zoom);
             }
         });
 
@@ -980,10 +1005,16 @@
     #map {
         z-index: 1;
         border-radius: 0.5rem;
+        min-height: 600px;
+        height: 600px;
+        width: 100%;
     }
     
     .leaflet-container {
         font-family: inherit;
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 0.5rem;
     }
     
     .custom-div-icon {
