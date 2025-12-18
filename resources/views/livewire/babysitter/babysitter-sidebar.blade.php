@@ -70,7 +70,7 @@
             </li>
 
             <li>
-                <a href="{{ route('demandes-sidebar') }}"
+                <a href="{{ route('demandes-sidebar') }}" wire:navigate
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
                           {{ request()->routeIs('demandes-sidebar') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

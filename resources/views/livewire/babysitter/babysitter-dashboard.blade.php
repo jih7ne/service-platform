@@ -124,7 +124,7 @@
                 <!-- Charts Section -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <!-- Monthly Earnings Chart -->
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100" wire:ignore>
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Revenus mensuels</h3>
                         <div class="h-64">
                             <canvas id="earningsChart"></canvas>
@@ -132,7 +132,7 @@
                     </div>
 
                     <!-- Rating Distribution Chart -->
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100" wire:ignore>
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Distribution des notes</h3>
                         <div class="h-64">
                             <canvas id="ratingChart"></canvas>
@@ -183,107 +183,9 @@
                     </div>
                 </div>
 
-                <!-- Upcoming Sittings -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div class="p-6 border-b border-gray-100">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Prochaines gardes</h3>
-                            <button class="text-[#B82E6E] hover:text-[#B82E6E] text-sm font-medium">Voir tout</button>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        @if(is_array($upcomingSittings) && count($upcomingSittings) > 0)
-                            <div class="space-y-4">
-                                @foreach($upcomingSittings as $sitting)
-                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-3">
-                                                <div
-                                                    class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                                                    <span
-                                                        class="text-purple-600 font-semibold">{{ substr($sitting['clientName'], 0, 1) }}</span>
-                                                </div>
-                                                <div>
-                                                    <h4 class="font-medium text-gray-800">{{ $sitting['clientName'] }}</h4>
-                                                    <p class="text-sm text-gray-600">{{ $sitting['children'] }}</p>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2 flex items-center space-x-4 text-sm text-gray-600">
-                                                <span>{{ $sitting['date'] }}</span>
-                                                <span>{{ $sitting['time'] }}</span>
-                                                <span>{{ $sitting['location'] }}</span>
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <div class="text-lg font-semibold text-gray-800">
-                                                {{ number_format($sitting['price'], 0) }} MAD
-                                            </div>
-                                            <div class="mt-2">
-                                                @if($sitting['status'] === 'validée')
-                                                    <span
-                                                        class="inline-flex px-3 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">Confirmé</span>
-                                                @else
-                                                    <span
-                                                        class="inline-flex px-3 py-1 text-xs font-medium text-orange-800 bg-orange-100 rounded-full">En
-                                                        attente</span>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-center py-8">
-                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <p class="text-gray-600">Aucune garde à venir</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
 
-                <!-- Recent Activities -->
-                <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-100">
-                    <div class="p-6 border-b border-gray-100">
-                        <h3 class="text-lg font-semibold text-gray-800">Activités récentes</h3>
-                    </div>
-                    <div class="p-6">
-                        @if(is_array($recentActivities) && count($recentActivities) > 0)
-                            <div class="space-y-3">
-                                @foreach($recentActivities as $activity)
-                                    <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                                        <div class="flex items-center space-x-3">
-                                            <div
-                                                class="w-2 h-2 rounded-full @if($activity['status'] === 'validée') bg-green-500 @elseif($activity['status'] === 'en_attente') bg-orange-500 @elseif($activity['status'] === 'refusée') bg-red-500 @else bg-gray-500 @endif">
-                                            </div>
-                                            <div>
-                                                <p class="text-sm font-medium text-gray-800">{{ $activity['type'] }}</p>
-                                                <p class="text-xs text-gray-600">{{ $activity['description'] }}</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            @if($activity['status'] === 'terminée' || $activity['status'] === 'completed')
-                                                <a href="{{ route('feedback.babysitter', ['idService' => 2, 'demandeId' => $activity['idDemande'] ?? 1, 'auteurId' => auth()->id(), 'cibleId' => $activity['idClient'] ?? 1, 'typeAuteur' => 'intervenant']) }}" 
-                                                   class="px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-                                                    Avis
-                                                </a>
-                                            @endif
-                                            <span class="text-xs text-gray-500">{{ $activity['date'] }}</span>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-center py-8">
-                                <p class="text-gray-600">Aucune activité récente</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
+
+
             </div>
         </main>
     </div>
@@ -292,24 +194,25 @@
 <!-- Chart.js Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('livewire:init', () => {
-        // Monthly Earnings Chart
-        const earningsCtx = document.getElementById('earningsChart').getContext('2d');
+    let earningsChart = null;
+    let ratingChart = null;
 
-        // Création d'un dégradé pour le fond
-        const gradient = earningsCtx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(143, 36, 88, 0.3)'); // #8F2458 à 30%
-        gradient.addColorStop(1, 'rgba(245, 208, 227, 0.1)'); // #F5D0E3 à 10%
+    function initEarningsChart(data) {
+        if (earningsChart) { earningsChart.destroy(); }
+        const ctx = document.getElementById('earningsChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(143, 36, 88, 0.3)');
+        gradient.addColorStop(1, 'rgba(245, 208, 227, 0.1)');
 
-        new Chart(earningsCtx, {
+        earningsChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: @json(is_array($monthlyEarnings) ? array_column($monthlyEarnings, 'month') : []),
+                labels: data.map(i => i.month),
                 datasets: [{
                     label: 'Revenus (MAD)',
-                    data: @json(is_array($monthlyEarnings) ? array_column($monthlyEarnings, 'earnings') : []),
+                    data: data.map(i => i.earnings),
                     borderColor: '#8F2458',
-                    backgroundColor: gradient, // Utilisation du dégradé
+                    backgroundColor: gradient,
                     borderWidth: 3,
                     fill: true,
                     pointBackgroundColor: '#8F2458',
@@ -322,36 +225,25 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: '#8F2458' // Chiffres en rose foncé
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            color: '#8F2458' // Mois en rose foncé
-                        }
-                    }
+                    y: { beginAtZero: true, ticks: { color: '#8F2458' } },
+                    x: { ticks: { color: '#8F2458' } }
                 }
             }
         });
+    }
 
-        // Rating Distribution Chart
-        const ratingCtx = document.getElementById('ratingChart').getContext('2d');
-        new Chart(ratingCtx, {
+    function initRatingChart(data) {
+        if (ratingChart) { ratingChart.destroy(); }
+        const ctx = document.getElementById('ratingChart').getContext('2d');
+        ratingChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: @json(is_array($ratingDistribution) ? array_map(fn($r) => $r['rating'] . ' étoiles', $ratingDistribution) : []),
+                labels: data.map(i => i.label),
                 datasets: [{
                     label: 'Nombre d\'avis',
-                    data: @json(is_array($ratingDistribution) ? array_column($ratingDistribution, 'count') : []),
+                    data: data.map(i => i.count),
                     backgroundColor: [
                         'rgba(251, 191, 36, 0.8)',
                         'rgba(251, 191, 36, 0.7)',
@@ -364,20 +256,30 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
                 }
             }
+        });
+    }
+
+    document.addEventListener('livewire:init', () => {
+        // Initial load
+        initEarningsChart(@json($monthlyEarnings));
+        initRatingChart(@json($ratingDistribution));
+
+        // Re-init on DOM updates (simplest fix for disappearing charts on poll)
+        Livewire.hook('morph.updated', ({ el, component }) => {
+             // Optional: specific check
+        });
+
+        // Listen for specific chart updates from Livewire
+        Livewire.on('updateCharts', (data) => {
+             if(data && data[0]) {
+                 initEarningsChart(data[0].monthlyEarnings);
+                 initRatingChart(data[0].ratingDistribution);
+             }
         });
     });
 </script>
