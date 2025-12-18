@@ -174,13 +174,16 @@
                                 </td>
 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
     <div class="text-xs text-gray-500 mb-1">ID: {{ $intervenant->IdIntervenant }}</div>
-    
-<a 
-    href="{{ route('admin.intervenant.details', ['idintervenant' => $intervenant->idintervenant, 'idservice' => $intervenant->idService]) }}"
-    class="text-blue-600 hover:text-blue-900 font-medium"
->
-    Voir détails
-</a>
+    @if($intervenant->idService)
+        <a 
+            href="{{ route('admin.intervenant.details', ['idintervenant' => $intervenant->idintervenant ?? $intervenant->IdIntervenant, 'idservice' => $intervenant->idService]) }}"
+            class="text-blue-600 hover:text-blue-900 font-medium"
+        >
+            Voir détails
+        </a>
+    @else
+        <span class="text-gray-400">Détails non disponibles</span>
+    @endif
 </td>
                             </tr>
                         @empty

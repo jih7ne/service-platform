@@ -287,6 +287,20 @@
                                             </div>
                                         </div>
                                     @endif
+
+                                    @if(isset($babysitterData->documents) && $babysitterData->documents->count() > 0)
+                                        <div class="pt-4 border-t border-gray-100">
+                                            <p class="text-sm font-semibold text-gray-900 mb-3">📂 Documents fournis</p>
+                                            <div class="space-y-2">
+                                                @foreach($babysitterData->documents as $doc)
+                                                    <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                                                        <span class="text-sm font-medium text-gray-800">{{ $doc['label'] }}</span>
+                                                        <a href="{{ asset('storage/' . $doc['path']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">Voir</a>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
 
@@ -313,8 +327,13 @@
                                             <p class="text-sm font-semibold text-gray-900 mb-4">🏆 Certifications</p>
                                             <div class="space-y-3">
                                                 @foreach($petkeeperData->certifications as $cert)
-                                                    <div class="py-3 px-4 bg-gray-50 rounded-lg">
+                                                    <div class="py-3 px-4 bg-gray-50 rounded-lg flex items-center justify-between">
                                                         <p class="text-sm font-medium text-gray-900">{{ $cert->certification }}</p>
+                                                        @if(!empty($cert->document))
+                                                            <a href="{{ asset('storage/' . $cert->document) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">Voir</a>
+                                                        @else
+                                                            <span class="text-xs text-gray-500">Aucun fichier</span>
+                                                        @endif
                                                     </div>
                                                 @endforeach
                                             </div>

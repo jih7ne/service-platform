@@ -10,9 +10,13 @@ use Carbon\Carbon;
 use App\Mail\DemandeAccepteeMail;
 use App\Mail\RefusDemandeMail;
 use Livewire\Attributes\Computed;
+use Livewire\WithFileUploads;
+use App\Models\Shared\Reclamation;
+
 
 class PetKeeperDashboard extends Component
 {
+    use WithFileUploads;
     public $feedbacksSidebar = [];
 
     public $user;
@@ -21,6 +25,18 @@ class PetKeeperDashboard extends Component
     public $showRefusalModal = false;
     public $selectedDemandeId = null;
     public $refusalReason = '';
+
+    //Reclamation
+
+    public $showReclamationModal = false;
+
+    public $reclamationFeedbackId = null; // idFeedback
+    public $reclamationCibleId = null;
+
+    public $sujet;
+    public $description;
+    public $priorite = 'moyenne';
+    public $preuves;
 
     
     public function mount()
@@ -45,6 +61,80 @@ class PetKeeperDashboard extends Component
         $this->isAvailable = ($this->user->statut === 'actif');
         $this->loadFeedbacks();
         
+    }
+
+
+    public function openReclamationModal($idFeedback)
+    {
+        $this->reclamationFeedbackId = $idFeedback;
+        
+
+        $avis = DB::table('feedbacks')
+            ->where('idFeedBack', $idFeedback)
+            ->first();
+
+        if (!$avis) {
+            session()->flash('error', 'Avis introuvable.');
+            return;
+        }
+
+        $this->reclamationFeedbackId  = $idFeedback;
+        $this->reclamationCibleId = $avis->idAuteur;
+
+        $this->reset([
+            'sujet',
+            'description',
+            'priorite',
+            'preuves',
+        ]);
+
+        $this->priorite = 'moyenne';
+        $this->showReclamationModal = true;
+    }
+
+    public function closeReclamationModal()
+    {
+        $this->reset([
+            'showReclamationModal',
+            'reclamationAvisId',
+            'reclamationCibleId',
+            'sujet',
+            'description',
+            'priorite',
+            'preuves',
+        ]);
+    }
+
+
+    public function submitReclamation()
+    {
+        $this->validate([
+            'sujet' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'priorite' => 'required|in:faible,moyenne,urgente',
+            'preuves' => 'nullable|file|max:2048',
+        ]);
+
+        $preuvePath = null;
+
+        if ($this->preuves) {
+            $preuvePath = $this->preuves->store('reclamations', 'public');
+        }
+
+        Reclamation::create([
+            'idAuteur'    => $this->user->idUser,
+            'idCible'     => $this->reclamationCibleId,
+            'idFeedback'  => $this->reclamationAvisId,
+            'sujet'       => $this->sujet,
+            'description' => $this->description,
+            'priorite'    => $this->priorite,
+            'preuves'     => $preuvePath,
+            'statut'      => 'en_attente',
+        ]);
+
+        $this->closeReclamationModal();
+
+        session()->flash('success', 'Réclamation envoyée avec succès.');
     }
 
 

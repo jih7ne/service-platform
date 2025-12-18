@@ -1,403 +1,498 @@
-<div>
-
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-pink-50 to-yellow-50 font-sans text-gray-800 flex relative">
-
-    <!-- SIDEBAR GAUCHE -->
-    <aside class="w-72 bg-white h-screen fixed left-0 top-0 border-r border-gray-100 flex flex-col z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-        <!-- Changed logo to simple text "Helpora" in blue -->
-        <div class="p-8">
-            <span class="text-2xl font-extrabold text-blue-600 tracking-tight">Helpora</span>
-        </div>
-
-        <div class="px-6 pb-6">
-            <p class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-wider pl-2">Espace Client</p>
-            <!-- Carte Profil Miniature -->
-            <div class="bg-gradient-to-br from-blue-50 via-pink-50 to-yellow-50 rounded-2xl p-3 flex items-center gap-3 border border-gray-100 shadow-sm group hover:border-pink-200 transition-colors cursor-pointer">
-                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-pink-400 p-0.5 border-2 border-white shadow-sm overflow-hidden">
-                    @if(isset($user->photo) && $user->photo)
-                        <img src="{{ Storage::url($user->photo) }}" class="w-full h-full rounded-full object-cover">
-                    @else
-                        <img class="w-full h-full rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ $user->prenom }}+{{ $user->nom }}&background=ec4899&color=fff" alt="Avatar">
-                    @endif
-                </div>
-                <div class="flex-1">
-                    <h4 class="text-sm font-bold text-gray-900 leading-tight group-hover:text-pink-700 transition-colors">
-                        {{ $user->prenom }} {{ $user->nom }}
-                    </h4>
-                </div>
-            </div>
-        </div>
-
-        <!-- Navigation -->
-        <!-- Removed Dashboard button -->
-        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
-            <a href="/services" class="flex items-center gap-3 px-4 py-3.5 text-gray-500 font-medium hover:bg-gradient-to-r hover:from-blue-50 hover:to-pink-50 hover:text-gray-900 rounded-xl transition-all group">
-                <svg class="w-5 h-5 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Services
-            </a>
-
-            <a href="/mes-avis" class="flex items-center gap-3 px-4 py-3.5 bg-gradient-to-r from-pink-50 via-yellow-50 to-blue-50 text-pink-800 font-bold rounded-xl transition-all shadow-sm border-l-4 border-pink-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-                Mes Avis
-            </a>
-
-            <a href="/profil" class="flex items-center gap-3 px-4 py-3.5 text-gray-500 font-medium hover:bg-gradient-to-r hover:from-yellow-50 hover:to-pink-50 hover:text-gray-900 rounded-xl transition-all group">
-                <svg class="w-5 h-5 group-hover:text-yellow-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                Mon Profil
-            </a>
-        </nav>
-
-        <div class="p-6">
-            <button class="flex items-center gap-3 text-gray-400 font-bold text-sm hover:text-red-500 transition-colors w-full px-4 py-2 hover:bg-red-50 rounded-xl">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                Déconnexion
-            </button>
-        </div>
-    </aside>
-
-    <!-- CONTENU PRINCIPAL -->
-    <main class="flex-1 ml-72 p-10 bg-gradient-to-br from-blue-50 via-pink-50 to-yellow-50 z-10">
+<div class="py-8 bg-gray-50 min-h-screen font-sans">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <!-- Messages Flash -->
-        @if(session()->has('success'))
-            <div class="fixed top-6 right-6 z-50 animate-slide-in">
-                <div class="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-2xl shadow-lg flex items-center">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    <span class="font-bold">{{ session('success') }}</span>
-                </div>
-            </div>
-        @endif
-
-        @if(session()->has('error'))
-            <div class="fixed top-6 right-6 z-50 animate-slide-in">
-                <div class="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-2xl shadow-lg flex items-center">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="font-bold">{{ session('error') }}</span>
-                </div>
-            </div>
-        @endif
-
-        <!-- En-tête de la page -->
+        <!-- En-tête adapté pour Mes avis -->
         <div class="mb-8">
-            <div class="flex items-center gap-4 mb-2">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-100 to-yellow-100 flex items-center justify-center text-pink-500 shadow-inner text-2xl">
-                    ⭐
-                </div>
+            <h1 class="text-3xl font-bold text-gray-900">Mes avis</h1>
+            <p class="text-gray-500 mt-1">Consultez les avis reçus des intervenants</p>
+        </div>
+
+        <!-- 1. CARTES STATISTIQUES - 3 cartes au lieu de 4 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <!-- Total -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
                 <div>
-                    <h1 class="text-3xl font-extrabold text-gray-900">Mes Avis</h1>
-                    <p class="text-sm text-gray-500 font-medium mt-1">Consultez les avis reçus et signalez les avis inappropriés</p>
+                    <p class="text-sm font-semibold text-gray-500">Total</p>
+                    <p class="text-4xl font-bold text-gray-900 mt-1">{{ $stats['total_avis'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                </div>
+            </div>
+            <!-- Positifs -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+                <div>
+                    <p class="text-sm font-semibold text-gray-500">Positifs</p>
+                    <p class="text-4xl font-bold text-gray-900 mt-1">{{ $stats['avis_positifs'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+            <!-- Négatifs -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+                <div>
+                    <p class="text-sm font-semibold text-gray-500">Négatifs</p>
+                    <p class="text-4xl font-bold text-gray-900 mt-1">{{ $stats['avis_negatifs'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center text-red-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
             </div>
         </div>
 
-        <!-- Removed note_moyenne from statistics -->
-        <!-- Statistiques -->
-        <div class="grid grid-cols-3 gap-6 mb-8">
-            <!-- Total Avis -->
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-blue-100 hover:shadow-xl hover:shadow-blue-200/50 hover:-translate-y-1 transition-all duration-300">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
-                    </div>
-                </div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Avis</p>
-                <h3 class="text-3xl font-extrabold text-gray-900 mt-1">{{ $stats['total_avis'] }}</h3>
-            </div>
-
-            <!-- Avis Positifs -->
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-pink-100 hover:shadow-xl hover:shadow-pink-200/50 hover:-translate-y-1 transition-all duration-300">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center text-pink-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path></svg>
-                    </div>
-                </div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Avis Positifs</p>
-                <h3 class="text-3xl font-extrabold text-gray-900 mt-1">{{ $stats['avis_positifs'] }}</h3>
-            </div>
-
-            <!-- Avis Négatifs -->
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-yellow-100 hover:shadow-xl hover:shadow-yellow-200/50 hover:-translate-y-1 transition-all duration-300">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center text-yellow-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018a2 2 0 01.485.06l3.76.94m-7 10v5a2 2 0 002 2h.096c.5 0 .905-.405.905-.904 0-.715.211-1.413.608-2.008L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5"></path></svg>
-                    </div>
-                </div>
-                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Avis Négatifs</p>
-                <h3 class="text-3xl font-extrabold text-gray-900 mt-1">{{ $stats['avis_negatifs'] }}</h3>
-            </div>
-        </div>
-
-        <!-- Added Filters Bar -->
-        <!-- Filtres -->
-        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-6">
-            <div class="flex items-center gap-3 mb-4">
-                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                <h2 class="text-lg font-bold text-gray-900">Filtres</h2>
-            </div>
+        <!-- 2. SECTION FILTRES - adaptée pour les avis -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8">
             
-            <div class="grid grid-cols-3 gap-4">
-                <!-- Barre de recherche -->
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        wire:model.live="searchTerm"
-                        placeholder="Rechercher..."
-                        class="w-full px-4 py-3 pl-10 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all placeholder-gray-400 text-sm"
-                    >
-                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <div class="flex flex-col lg:flex-row gap-5 items-center">
+                
+                <!-- LABEL "FILTRES" AVEC ICONE ENTONNOIR -->
+                <div class="flex items-center gap-2 text-gray-900 font-bold text-lg min-w-max mr-2">
+                    <svg class="w-6 h-6 text-blue-900" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 4.6C3 4.03995 3 3.75992 3.10899 3.54601C3.20487 3.35785 3.35785 3.20487 3.54601 3.10899C3.75992 3 4.03995 3 4.6 3H19.4C19.9601 3 20.2401 3 20.454 3.10899C20.6422 3.20487 20.7951 3.35785 20.891 3.54601C21 3.75992 21 4.03995 21 4.6V6.33726C21 6.58185 21 6.70414 20.9724 6.81923C20.9479 6.92127 20.9075 7.01881 20.8526 7.10828C20.7908 7.2092 20.7043 7.29568 20.5314 7.46863L14.4686 13.5314C14.2957 13.7043 14.2092 13.7908 14.1474 13.8917C14.0925 13.9812 14.0521 14.0787 14.0276 14.1808C14 14.2959 14 14.4182 14 14.6627V20L10 21V14.6627C10 14.4182 10 14.2959 9.97237 14.1808C9.94787 14.0787 9.90747 13.9812 9.85264 13.8917C9.7908 13.7908 9.70432 13.7043 9.53137 13.5314L3.46863 7.46863C3.29568 7.29568 3.2092 7.2092 3.14736 7.10828C3.09253 7.01881 3.05213 6.92127 3.02763 6.81923C3 6.70414 3 6.58185 3 6.33726V4.6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Filtres</span>
                 </div>
 
-                <!-- Filtre par service -->
-                <div>
-                    <select 
-                        wire:model.live="filterService"
-                        class="w-full px-4 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all text-sm appearance-none cursor-pointer"
-                    >
-                        <option value="">Tous les services</option>
-                        @foreach($services as $service)
-                            <option value="{{ $service }}">{{ $service }}</option>
-                        @endforeach
-                    </select>
+                <!-- 1. BARRE DE RECHERCHE -->
+                <div class="relative w-full lg:w-1/3">
+                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </span>
+                    <input wire:model.live="searchTerm" type="text" 
+                           class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 focus:bg-white focus:border-blue-500 rounded-full text-gray-600 transition outline-none shadow-sm" 
+                           placeholder="Rechercher...">
+                </div>
+                
+                <!-- 2. DROPDOWN SERVICES -->
+                <div x-data="{ open: false }" class="relative w-full lg:w-1/3">
+                    
+                    <!-- BOUTON DECLENCHEUR -->
+                    <button @click="open = !open" @click.away="open = false" type="button" 
+                            class="w-full py-3 px-6 bg-white border-2 border-blue-800 text-gray-800 rounded-full text-sm font-medium flex justify-between items-center shadow-sm hover:bg-gray-50 transition">
+                        <span class="truncate">
+                            @if($filterService == 'Soutien scolaire') Soutien scolaire
+                            @elseif($filterService == 'Babysitting') Babysitting
+                            @elseif($filterService == 'Garde d\'animaux') Garde d'animaux
+                            @else Tous les services
+                            @endif
+                        </span>
+                        <svg class="w-5 h-5 text-gray-800 transform transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+
+                    <!-- MENU DÉROULANT -->
+                    <div x-show="open" 
+                         style="display: none;" 
+                         class="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded shadow-xl overflow-hidden">
+                        
+                        <!-- EN-TÊTE GRIS FONCÉ -->
+                        <div class="bg-gray-600 text-white px-4 py-3 text-sm font-bold">
+                            Tous les services
+                        </div>
+                        
+                        <!-- LISTE DES OPTIONS -->
+                        <div class="max-h-60 overflow-y-auto">
+                            
+                            <!-- Option 1 : Afficher tout -->
+                            <div wire:click="$set('filterService', '')" @click="open = false" 
+                                 class="px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer border-b border-gray-100 transition-colors">
+                                Afficher tout
+                            </div>
+
+                            <!-- Option 2 : Soutien scolaire -->
+                            <div wire:click="$set('filterService', 'Soutien scolaire')" @click="open = false" 
+                                 class="px-4 py-3 text-sm text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors flex justify-between items-center">
+                                <span>Soutien scolaire</span>
+                                @if($filterService == 'Soutien scolaire')
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                @endif
+                            </div>
+
+                            <!-- Option 3 : Babysitting -->
+                            <div wire:click="$set('filterService', 'Babysitting')" @click="open = false" 
+                                 class="px-4 py-3 text-sm text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors flex justify-between items-center">
+                                <span>Babysitting</span>
+                                @if($filterService == 'Babysitting')
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                @endif
+                            </div>
+
+                            <!-- Option 4 : Garde d'animaux -->
+                            <div wire:click="$set('filterService', 'Garde d\'animaux')" @click="open = false" 
+                                 class="px-4 py-3 text-sm text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors flex justify-between items-center">
+                                <span>Garde d'animaux</span>
+                                @if($filterService == 'Garde d\'animaux')
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                @endif
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 3. DROPDOWN TYPE D'AVIS -->
+                <div x-data="{ open: false }" class="relative w-full lg:w-1/3">
+                    <button @click="open = !open" @click.away="open = false" type="button" 
+                            class="w-full py-3 px-6 bg-gray-50 border border-gray-200 text-gray-700 rounded-full text-sm font-medium flex justify-between items-center hover:bg-gray-100 transition shadow-sm">
+                        <span>
+                            @if($filterNote == 'positive') Positifs
+                            @elseif($filterNote == 'negative') Négatifs
+                            @else Tous les statuts
+                            @endif
+                        </span>
+                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+
+                    <div x-show="open" style="display: none;" class="absolute z-40 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden py-1">
+                        <div wire:click="$set('filterNote', '')" @click="open = false" class="px-5 py-3 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer border-b border-gray-50">
+                            Tous les statuts
+                        </div>
+                        <div wire:click="$set('filterNote', 'positive')" @click="open = false" class="px-5 py-3 text-sm text-green-600 hover:bg-green-50 cursor-pointer">
+                            Positifs (≥4)
+                        </div>
+                        <div wire:click="$set('filterNote', 'negative')" @click="open = false" class="px-5 py-3 text-sm text-red-600 hover:bg-red-50 cursor-pointer">
+                            Négatifs (<3)
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Filtre par note -->
-                <div>
-                    <select 
-                        wire:model.live="filterNote"
-                        class="w-full px-4 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition-all text-sm appearance-none cursor-pointer"
-                    >
-                        <option value="">Toutes les notes</option>
-                        <option value="positive">Positifs (≥4)</option>
-                        <option value="negative">Négatifs (<3)</option>
-                    </select>
-                </div>
             </div>
         </div>
 
-        <!-- Liste des avis -->
-        <div class="space-y-6">
-            @forelse($avis as $avis_item)
-            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300">
-                <div class="flex items-start gap-6">
-                    <!-- Photo de l'auteur -->
-                    <div class="flex-shrink-0">
-                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-pink-400 p-0.5 border-2 border-white shadow-md overflow-hidden">
-                            @if($avis_item->auteur_photo)
-                                <img src="{{ Storage::url($avis_item->auteur_photo) }}" class="w-full h-full rounded-full object-cover">
-                            @else
-                                <img class="w-full h-full rounded-full object-cover" src="https://ui-avatars.com/api/?name={{ $avis_item->auteur_prenom }}+{{ $avis_item->auteur_nom }}&background=3b82f6&color=fff" alt="Avatar">
-                            @endif
-                        </div>
-                    </div>
+        <!-- 3. LISTE DES AVIS (AFFICHÉE EN DESSOUS DES FILTRES) -->
+        <div class="space-y-4">
+            @if($avis->count() === 0)
+                <div class="bg-white p-10 rounded-2xl shadow text-center text-gray-500">
+                    <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-lg font-medium">Aucun avis trouvé</p>
+                    <p class="text-sm mt-2">Essayez de modifier vos filtres de recherche</p>
+                </div>
+            @endif
 
-                    <!-- Contenu de l'avis -->
-                    <div class="flex-1">
-                        <div class="flex items-start justify-between mb-3">
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900">{{ $avis_item->auteur_prenom }} {{ $avis_item->auteur_nom }}</h3>
-                                <div class="flex items-center gap-3 mt-1">
-                                    @if($avis_item->nom_service)
-                                        <span class="text-xs bg-gradient-to-r from-blue-100 to-pink-100 text-blue-700 px-3 py-1 rounded-full font-bold">{{ $avis_item->nom_service }}</span>
-                                    @endif
-                                    <span class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($avis_item->dateCreation)->format('d M Y') }}</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Note moyenne -->
-                            <div class="flex items-center gap-2 bg-gradient-to-r from-yellow-100 to-yellow-200 px-4 py-2 rounded-xl">
-                                <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                <span class="text-lg font-extrabold text-yellow-700">{{ $avis_item->note_moyenne }}</span>
-                            </div>
+            @foreach($avis as $avis_item)
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-md transition-shadow duration-200">
+                    
+                    <!-- SECTION GAUCHE : Informations de l'avis -->
+                    <div class="space-y-3 flex-1">
+                        <div class="flex items-start justify-between">
+                            <h3 class="text-lg font-bold text-gray-900">
+                                {{ $avis_item->nom_service }}
+                            </h3>
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
+                                @if($avis_item->note_moyenne >= 4) bg-green-100 text-green-700
+                                @else bg-red-100 text-red-700
+                                @endif">
+                                @if($avis_item->note_moyenne >= 4) Positif
+                                @else Négatif
+                                @endif
+                            </span>
                         </div>
 
-                        <!-- Critères détaillés -->
-                        <div class="grid grid-cols-5 gap-4 mb-4 pb-4 border-b border-gray-100">
-                            <div class="text-center">
-                                <p class="text-xs text-gray-500 font-medium mb-1">Crédibilité</p>
-                                <p class="text-sm font-bold text-gray-900">{{ $avis_item->credibilite }}/5</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-xs text-gray-500 font-medium mb-1">Sympathie</p>
-                                <p class="text-sm font-bold text-gray-900">{{ $avis_item->sympathie }}/5</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-xs text-gray-500 font-medium mb-1">Ponctualité</p>
-                                <p class="text-sm font-bold text-gray-900">{{ $avis_item->ponctualite }}/5</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-xs text-gray-500 font-medium mb-1">Propreté</p>
-                                <p class="text-sm font-bold text-gray-900">{{ $avis_item->proprete }}/5</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-xs text-gray-500 font-medium mb-1">Qualité</p>
-                                <p class="text-sm font-bold text-gray-900">{{ $avis_item->qualiteTravail }}/5</p>
-                            </div>
-                        </div>
-
-                        <!-- Commentaire -->
                         @if($avis_item->commentaire)
-                        <div class="bg-gradient-to-r from-blue-50 via-pink-50 to-yellow-50 p-4 rounded-xl mb-4">
-                            <p class="text-sm text-gray-700 leading-relaxed">{{ $avis_item->commentaire }}</p>
-                        </div>
+                            <p class="text-sm text-gray-600 line-clamp-2">
+                                {{ $avis_item->commentaire }}
+                            </p>
                         @endif
 
-                        <!-- Bouton de réclamation -->
-                        <div class="flex justify-end">
-                            @if($avis_item->has_reclamation)
-                                <span class="px-4 py-2 rounded-xl bg-gray-100 text-gray-500 font-bold text-sm flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                            <span class="flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                {{ \Carbon\Carbon::parse($avis_item->dateCreation)->format('d M Y') }} • {{ \Carbon\Carbon::parse($avis_item->dateCreation)->format('H:i') }}
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                Intervenant: {{ $avis_item->auteur_prenom }} {{ $avis_item->auteur_nom }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- SECTION DROITE : Note et actions -->
+                    <div class="text-right space-y-3 min-w-[200px]">
+                        <div>
+                            <p class="text-sm text-gray-500">Note moyenne</p>
+                            <p class="text-3xl font-extrabold text-gray-900">
+                                {{ number_format($avis_item->note_moyenne, 1) }}/5
+                            </p>
+                            <p class="text-xs text-gray-400 mt-1">Reçu le {{ \Carbon\Carbon::parse($avis_item->dateCreation)->format('d M Y') }}</p>
+                        </div>
+
+                        <div class="flex gap-2 justify-end">
+                            <button wire:click="openAvisModal({{ $avis_item->idFeedBack }})"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Voir détails
+                            </button>
+
+                            @if(!$avis_item->has_reclamation)
+                                <button wire:click="openReclamationModal({{ $avis_item->idFeedBack }})"
+                                        class="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-full text-sm font-medium hover:bg-red-100 transition-colors duration-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                    Réclamation
+                                </button>
+                            @else
+                                <span class="px-4 py-2 bg-gray-100 text-gray-500 rounded-full text-sm font-medium">
                                     Réclamation envoyée
                                 </span>
-                            @else
-                                <button wire:click="openReclamationModal({{ $avis_item->idFeedBack }})" 
-                                    class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold text-sm shadow-lg shadow-pink-200 hover:shadow-pink-300 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                    Faire une réclamation
-                                </button>
                             @endif
                         </div>
                     </div>
                 </div>
-            </div>
-            @empty
-            <div class="bg-white p-12 rounded-3xl text-center border border-gray-100 flex flex-col items-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-blue-50 via-pink-50 to-yellow-50 rounded-full flex items-center justify-center mb-4 text-3xl">📭</div>
-                <p class="text-gray-900 font-bold text-lg">Aucun avis trouvé</p>
-                <p class="text-sm text-gray-500 mt-2">Aucun avis ne correspond à vos critères de recherche</p>
-            </div>
-            @endforelse
+            @endforeach
+
+            <!-- PAGINATION -->
+            @if($avis->hasPages())
+                <div class="mt-8">
+                    {{ $avis->links() }}
+                </div>
+            @endif
         </div>
-    </main>
 
-    <!-- ================= MODAL DE RÉCLAMATION ================= -->
-    @if($showReclamationModal)
-    <div class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <!-- Fond sombre avec flou -->
-            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" 
-                 wire:click="closeReclamationModal"></div>
+        <!-- ================= MODAL DETAILS AVIS ================= -->
+        @if($showAvisModal && $selectedAvis)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 p-4 transition-opacity backdrop-blur-sm">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden relative transform transition-all scale-100">
+                <!-- Close Button -->
+                <button wire:click="closeAvisModal" class="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition z-10">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
 
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-            <!-- Contenu du Modal -->
-            <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl w-full border border-gray-100 animate-slide-in"
-                 wire:click.stop>
-                
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-8 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <!-- Icone Attention -->
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br from-red-100 to-pink-100 sm:mx-0 sm:h-10 sm:w-10">
-                            <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
+                <!-- Header Modal -->
+                <div class="p-8 pb-4">
+                    <div class="flex items-center gap-4 mb-2">
+                         <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
                         </div>
-                        
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                            <h3 class="text-xl leading-6 font-extrabold text-gray-900" id="modal-title">
-                                Créer une réclamation
-                            </h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500 mb-4 font-medium">
-                                    Si cet avis vous semble inapproprié ou faux, vous pouvez faire une réclamation avec des preuves.
-                                </p>
-                                
-                                <!-- Sujet -->
-                                <div class="mb-4">
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Sujet de la réclamation</label>
-                                    <input type="text" 
-                                           wire:model="sujet" 
-                                           maxlength="255"
-                                           class="w-full px-4 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all placeholder-gray-400 text-sm"
-                                           placeholder="Ex: Avis mensonger sur ma ponctualité">
-                                    @error('sujet') 
-                                        <span class="text-red-500 text-xs mt-1 block font-bold flex items-center gap-1">
-                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            {{ $message }}
-                                        </span> 
-                                    @enderror
-                                </div>
-
-                                <!-- Priorité -->
-                                <div class="mb-4">
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Priorité</label>
-                                    <select wire:model="priorite" 
-                                            class="w-full px-4 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-sm">
-                                        <option value="faible">Faible</option>
-                                        <option value="moyenne">Moyenne</option>
-                                        <option value="urgente">Urgente</option>
-                                    </select>
-                                </div>
-
-                                <!-- Description -->
-                                <div class="mb-4">
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Description détaillée</label>
-                                    <textarea wire:model="description" 
-                                              rows="4"
-                                              class="w-full px-4 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 resize-none transition-all placeholder-gray-400 text-sm"
-                                              placeholder="Expliquez en détail pourquoi cet avis est inapproprié..."></textarea>
-                                    @error('description') 
-                                        <span class="text-red-500 text-xs mt-1 block font-bold flex items-center gap-1">
-                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            {{ $message }}
-                                        </span> 
-                                    @enderror
-                                </div>
-
-                                <!-- Upload de preuves -->
-                                <div class="mb-4">
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Preuves (Photos, PDF)</label>
-                                    <input type="file" 
-                                           wire:model="preuves" 
-                                           multiple
-                                           accept=".jpg,.jpeg,.png,.pdf"
-                                           class="w-full px-4 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-2 focus:ring-pink-200 transition-all text-sm">
-                                    <p class="text-xs text-gray-500 mt-1">Formats acceptés: JPG, PNG, PDF (max 5Mo par fichier)</p>
-                                    @error('preuves.*') 
-                                        <span class="text-red-500 text-xs mt-1 block font-bold flex items-center gap-1">
-                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            {{ $message }}
-                                        </span> 
-                                    @enderror
-                                </div>
-                            </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">{{ $selectedAvis->nom_service }}</h2>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+                                {{ $selectedAvis->note_moyenne >= 4 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                {{ $selectedAvis->note_moyenne >= 4 ? 'Positif' : 'Négatif' }}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Boutons du Modal -->
-                <div class="bg-gradient-to-r from-blue-50 via-pink-50 to-yellow-50 px-4 py-4 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
-                    <button type="button" 
-                            wire:click="createReclamation"
-                            wire:loading.attr="disabled"
-                            class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-lg shadow-pink-200 px-5 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 text-base font-bold text-white hover:from-red-600 hover:to-pink-600 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed items-center transition-all">
-                        
-                        <span wire:loading.remove wire:target="createReclamation">Envoyer la réclamation</span>
-                        <span wire:loading wire:target="createReclamation" class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            Envoi...
-                        </span>
-                    </button>
+                <!-- Note Moyenne -->
+                <div class="bg-gray-50 py-8 text-center border-y border-gray-100">
+                    <p class="text-sm text-gray-500 font-semibold uppercase tracking-wider">Note Moyenne</p>
+                    <p class="text-4xl font-black text-gray-900 mt-1">{{ number_format($selectedAvis->note_moyenne, 1) }}/5</p>
+                </div>
+
+                <!-- Body -->
+                <div class="p-8 space-y-6 max-h-[60vh] overflow-y-auto">
                     
-                    <button type="button" 
-                            wire:click="closeReclamationModal"
-                            class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-200 shadow-sm px-5 py-2.5 bg-white text-base font-bold text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-all">
-                        Annuler
+                    <!-- Intervenant -->
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Intervenant</h3>
+                        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                            <div class="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
+                                {{ strtoupper(substr($selectedAvis->auteur_prenom, 0, 1)) }}{{ strtoupper(substr($selectedAvis->auteur_nom, 0, 1)) }}
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 font-medium">Nom complet</p>
+                                <p class="font-bold text-gray-900">{{ $selectedAvis->auteur_prenom }} {{ $selectedAvis->auteur_nom }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Détaillées -->
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Critères d'évaluation</h3>
+                        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Crédibilité</span>
+                                <span class="font-bold text-gray-900">{{ $selectedAvis->credibilite }}/5</span>
+                            </div>
+                            <div class="border-t border-gray-50"></div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Sympathie</span>
+                                <span class="font-bold text-gray-900">{{ $selectedAvis->sympathie }}/5</span>
+                            </div>
+                            <div class="border-t border-gray-50"></div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Ponctualité</span>
+                                <span class="font-bold text-gray-900">{{ $selectedAvis->ponctualite }}/5</span>
+                            </div>
+                            <div class="border-t border-gray-50"></div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Propreté</span>
+                                <span class="font-bold text-gray-900">{{ $selectedAvis->proprete }}/5</span>
+                            </div>
+                            <div class="border-t border-gray-50"></div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Qualité du travail</span>
+                                <span class="font-bold text-gray-900">{{ $selectedAvis->qualiteTravail }}/5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commentaire -->
+                    @if($selectedAvis->commentaire)
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Commentaire</h3>
+                        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+                            <p class="text-sm font-medium text-gray-800 leading-relaxed">{{ $selectedAvis->commentaire }}</p>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="text-center pt-4">
+                        <p class="text-xs text-gray-400">Avis #{{ $selectedAvis->idFeedBack }} reçu le {{ \Carbon\Carbon::parse($selectedAvis->dateCreation)->format('d/m/Y à H:i') }}</p>
+                    </div>
+
+                </div>
+
+                <!-- Footer Modal -->
+                <div class="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
+                    @if(!$selectedAvis->has_reclamation)
+                        <button wire:click="openReclamationModalFromDetails" class="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition shadow-lg transform hover:-translate-y-0.5">
+                            Faire une réclamation
+                        </button>
+                    @endif
+                    <button wire:click="closeAvisModal" class="flex-1 py-3.5 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition shadow-lg transform hover:-translate-y-0.5">
+                        Fermer
                     </button>
                 </div>
+
             </div>
         </div>
+        @endif
+
+        <!-- ================= MODAL RECLAMATION ================= -->
+        @if($showReclamationModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-60 p-4 transition-opacity backdrop-blur-sm">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden relative transform transition-all scale-100">
+                <!-- Close Button -->
+                <button wire:click="closeReclamationModal" class="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 transition z-10">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+
+                <!-- Header Modal -->
+                <div class="p-8 pb-4 border-b border-gray-100">
+                    <div class="flex items-center gap-4">
+                         <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Créer une réclamation</h2>
+                            <p class="text-sm text-gray-500 mt-1">Signalez un problème avec cet avis</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <form wire:submit.prevent="createReclamation" class="p-8 space-y-6 max-h-[60vh] overflow-y-auto">
+                    
+                    <!-- Sujet -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">Sujet de la réclamation *</label>
+                        <input 
+                            type="text" 
+                            wire:model="sujet"
+                            placeholder="Ex: Avis inapproprié, fausses informations..."
+                            class="w-full px-4 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+                        >
+                        @error('sujet') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">Description détaillée *</label>
+                        <textarea 
+                            wire:model="description"
+                            rows="5"
+                            placeholder="Décrivez en détail le problème avec cet avis..."
+                            class="w-full px-4 py-3 text-gray-700 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+                        ></textarea>
+                        @error('description') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Priorité -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Priorité *</label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <label class="relative cursor-pointer">
+                                <input type="radio" wire:model="priorite" value="faible" class="peer sr-only">
+                                <div class="px-4 py-3 text-center text-sm font-bold border-2 border-gray-200 rounded-xl transition-all peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-700 hover:border-green-300">
+                                    Faible
+                                </div>
+                            </label>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" wire:model="priorite" value="moyenne" class="peer sr-only">
+                                <div class="px-4 py-3 text-center text-sm font-bold border-2 border-gray-200 rounded-xl transition-all peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-700 hover:border-amber-300">
+                                    Moyenne
+                                </div>
+                            </label>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" wire:model="priorite" value="haute" class="peer sr-only">
+                                <div class="px-4 py-3 text-center text-sm font-bold border-2 border-gray-200 rounded-xl transition-all peer-checked:border-red-500 peer-checked:bg-red-50 peer-checked:text-red-700 hover:border-red-300">
+                                    Haute
+                                </div>
+                            </label>
+                        </div>
+                        @error('priorite') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Preuves (Photos/PDF) -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-900 mb-2 uppercase tracking-wide">Preuves (Photos ou PDF)</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition-colors bg-gray-50">
+                            <input 
+                                type="file" 
+                                wire:model="preuves"
+                                multiple
+                                accept="image/*,.pdf"
+                                class="hidden"
+                                id="preuves-upload"
+                            >
+                            <label for="preuves-upload" class="cursor-pointer">
+                                <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <p class="text-sm text-gray-600 font-medium">Cliquez pour télécharger des fichiers</p>
+                                <p class="text-xs text-gray-400 mt-1">Images ou PDF (max 10MB par fichier)</p>
+                            </label>
+                        </div>
+                        @if($preuves)
+                            <div class="mt-3 space-y-2">
+                                @foreach($preuves as $index => $preuve)
+                                    <div class="flex items-center justify-between bg-blue-50 px-4 py-2 rounded-lg">
+                                        <span class="text-sm text-gray-700 font-medium truncate">{{ $preuve->getClientOriginalName() }}</span>
+                                        <button type="button" wire:click="removePreuve({{ $index }})" class="text-red-500 hover:text-red-700">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                        @error('preuves.*') <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                </form>
+
+                <!-- Footer Modal -->
+                <div class="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
+                    <button wire:click="closeReclamationModal" class="flex-1 py-3.5 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl transition">
+                        Annuler
+                    </button>
+                    <button wire:click="createReclamation" class="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition shadow-lg transform hover:-translate-y-0.5">
+                        Envoyer la réclamation
+                    </button>
+                </div>
+
+            </div>
+        </div>
+        @endif
+
     </div>
-    @endif
-
 </div>
-
-<style>
-    @keyframes slide-in {
-        from { transform: translateY(-50px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    .animate-slide-in { animation: slide-in 0.3s ease-out; }
-</style>
-
-</div>
-

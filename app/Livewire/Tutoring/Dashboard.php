@@ -14,7 +14,7 @@ class Dashboard extends Component
     public $photo;
     public $note = 0;
     
-    // NOUVEAU : Variable pour bloquer l'affichage
+    // Variable pour bloquer l'affichage
     public $isPending = false; 
 
     // KPI & Listes
@@ -22,9 +22,7 @@ class Dashboard extends Component
     public $totalGagne = 0;
     public $enAttente = 0;
     public $demandesRecentes = [];
-    public $disponibilites = [];
-public $coursAVenir = [];       // Pour la liste de droite
-    public $dispoAujourdhui = false; // Pour le badge du header
+    public $coursAVenir = [];
 
     public function mount()
     {
@@ -46,19 +44,22 @@ public $coursAVenir = [];       // Pour la liste de droite
 
         $userId = $user->idUser;
 
+        // Note moyenne
         $moyenne = DB::table('feedbacks')
             ->where('idCible', $userId)
-            ->avg('qualiteTravail'); // On fait la moyenne de la colonne qualité
-
-        // On formate : Si pas de note, on met "N/A", sinon on arrondit à 1 décimale (ex: 4.8)
+            ->avg('qualiteTravail');
         $this->note = $moyenne ? number_format($moyenne, 1) : '-';
 
         // 1. KPI (Statistiques)
         $this->coursActifs = DB::table('demandes_intervention')
-            ->where('idIntervenant', $userId)->where('statut', 'validée')->count();
+            ->where('idIntervenant', $userId)
+            ->where('statut', 'validée')
+            ->count();
 
         $this->enAttente = DB::table('demandes_intervention')
-            ->where('idIntervenant', $userId)->where('statut', 'en_attente')->count();
+            ->where('idIntervenant', $userId)
+            ->where('statut', 'en_attente')
+            ->count();
 
         $this->totalGagne = DB::table('demandes_intervention')
             ->join('demandes_prof', 'demandes_intervention.idDemande', '=', 'demandes_prof.demande_id')
@@ -66,8 +67,7 @@ public $coursAVenir = [];       // Pour la liste de droite
             ->whereIn('demandes_intervention.statut', ['validée', 'terminée'])
             ->sum('demandes_prof.montant_total');
 
-        // 2. LOGIQUE "DERNIÈRES DEMANDES" (Au lieu de "Urgentes")
-        // On prend les 2 plus récentes en attente
+        // 2. Dernières demandes reçues
         $this->demandesRecentes = DB::table('demandes_intervention')
             ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
             ->leftJoin('demandes_prof', 'demandes_intervention.idDemande', '=', 'demandes_prof.demande_id')
@@ -88,16 +88,15 @@ public $coursAVenir = [];       // Pour la liste de droite
             ->take(2)
             ->get();
 
-        // 3. LOGIQUE "COURS À VENIR" (Sidebar Droite)
-        // On prend les cours VALIDÉS dont la date est >= aujourd'hui
+        // 3. Cours à venir
         $this->coursAVenir = DB::table('demandes_intervention')
             ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
             ->leftJoin('demandes_prof', 'demandes_intervention.idDemande', '=', 'demandes_prof.demande_id')
             ->leftJoin('services_prof', 'demandes_prof.service_prof_id', '=', 'services_prof.id_service')
             ->leftJoin('matieres', 'services_prof.matiere_id', '=', 'matieres.id_matiere')
             ->where('demandes_intervention.idIntervenant', $userId)
-            ->where('demandes_intervention.statut', 'validée') // Seuls les cours validés
-            ->whereDate('demandes_intervention.dateSouhaitee', '>=', now()) // Futurs ou Aujourd'hui
+            ->where('demandes_intervention.statut', 'validée')
+            ->whereDate('demandes_intervention.dateSouhaitee', '>=', now())
             ->select(
                 'demandes_intervention.dateSouhaitee',
                 'demandes_intervention.heureDebut',
@@ -107,26 +106,10 @@ public $coursAVenir = [];       // Pour la liste de droite
                 'matieres.nom_matiere',
                 'demandes_prof.montant_total'
             )
-            ->orderBy('demandes_intervention.dateSouhaitee', 'asc') // Le plus proche d'abord
+            ->orderBy('demandes_intervention.dateSouhaitee', 'asc')
             ->orderBy('demandes_intervention.heureDebut', 'asc')
             ->take(3)
             ->get();
-
-        // 4. LOGIQUE "DISPONIBLE AUJOURD'HUI" (Header)
-        // On regarde quel jour on est (Lundi, Mardi...)
-        // Note: Carbon renvoie 'Monday', 'Tuesday'... Il faut que ta BDD stocke 'Lundi', 'Mardi' ou gérer la traduction.
-        // Ici je suppose que ta BDD stocke 'Lundi', 'Mardi'.
-        $joursTraduction = [
-            'Monday' => 'Lundi', 'Tuesday' => 'Mardi', 'Wednesday' => 'Mercredi',
-            'Thursday' => 'Jeudi', 'Friday' => 'Vendredi', 'Saturday' => 'Samedi', 'Sunday' => 'Dimanche'
-        ];
-        $jourActuel = $joursTraduction[now()->format('l')]; // 'l' donne le jour en anglais
-
-        // On vérifie si une ligne existe dans 'disponibilite' pour ce jour et cet intervenant
-        $this->dispoAujourdhui = DB::table('disponibilites')
-            ->where('idIntervenant', $intervenant->id) // ID table intervenant
-            ->where('jourSemaine', $jourActuel)
-            ->exists();
     }
 
     // Fonction pour permettre à l'utilisateur bloqué de sortir
@@ -136,10 +119,6 @@ public $coursAVenir = [];       // Pour la liste de droite
         session()->invalidate();
         session()->regenerateToken();
         return redirect('/');
-    }
-    public function goToHub()
-    {
-        return redirect()->route('intervenant.hub');
     }
 
     public function render()
