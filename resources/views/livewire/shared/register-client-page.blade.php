@@ -271,33 +271,22 @@
 
                             <!-- Champs de localisation -->
                             <div class="grid md:grid-cols-2 gap-4 mt-4">
-                                <div>
-                                    <label class="block text-xs mb-1 text-gray-600 font-medium">Pays</label>
-                                    <select wire:model="pays" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] text-sm">
-                                        <option value="">Sélectionnez</option>
-                                        <option value="Maroc">Maroc</option>
-                                        <option value="France">France</option>
-                                        <option value="Belgique">Belgique</option>
-                                    </select>
-                                    @error('pays') 
-                                        <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                                    @enderror
-                                </div>
+    <div>
+        <label class="block text-xs mb-1 text-gray-600 font-medium">Pays</label>
+        <input type="text" wire:model="pays" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] text-sm" placeholder="Ex: Maroc" />
+        @error('pays') 
+            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+        @enderror
+    </div>
 
-                                <div>
-                                    <label class="block text-xs mb-1 text-gray-600 font-medium">Ville</label>
-                                    <select wire:model="ville" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] text-sm">
-                                        <option value="">Sélectionnez</option>
-                                        <option value="Tétouan">Tétouan</option>
-                                        <option value="Casablanca">Casablanca</option>
-                                        <option value="Rabat">Rabat</option>
-                                        <option value="Tanger">Tanger</option>
-                                    </select>
-                                    @error('ville') 
-                                        <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
+    <div>
+        <label class="block text-xs mb-1 text-gray-600 font-medium">Ville</label>
+        <input type="text" wire:model="ville" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] text-sm" placeholder="Ex: Tétouan" />
+        @error('ville') 
+            <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+        @enderror
+    </div>
+</div>
 
                             <div class="mt-4">
                                 <label class="block text-xs mb-1 text-gray-600 font-medium">Adresse complète</label>
