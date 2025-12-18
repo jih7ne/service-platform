@@ -13,7 +13,7 @@ class LoginPage extends Component
     public $email = '';
     public $password = '';
     public $showPassword = false;
-    public $suspendedMessage = ''; // 👈 AJOUTER CETTE LIGNE
+    public $suspendedMessage = '';
 
     protected $rules = [
         'email' => 'required|email',
@@ -36,13 +36,10 @@ class LoginPage extends Component
     {
         $this->validate();
 
-        // ========================================
-        // 1. VÉRIFIER SI C'EST UN ADMIN D'ABORD
-        // ========================================
+        // Vérifier si c'est un admin d'abord
         $admin = Admin::where('emailAdmin', $this->email)->first();
         
         if ($admin && Hash::check($this->password, $admin->passwordAdmin)) {
-            // Connexion admin réussie
             session()->regenerate();
             session()->put('admin_id', $admin->idAdmin);
             session()->put('admin_email', $admin->emailAdmin);
@@ -52,52 +49,59 @@ class LoginPage extends Component
             return redirect()->route('admin.dashboard');
         }
 
-        // ========================================
-        // 2. VÉRIFIER L'UTILISATEUR NORMAL
-        // ========================================
+        // Vérifier l'utilisateur normal
         $user = Utilisateur::where('email', $this->email)->first();
 
-        // DEBUG - À SUPPRIMER APRÈS
-        \Log::info('User trouvé:', ['user' => $user ? $user->toArray() : 'null']);
-
-        // Si l'utilisateur n'existe pas
         if (!$user) {
             $this->addError('email', 'Email ou mot de passe incorrect.');
             return;
         }
 
-        // DEBUG - À SUPPRIMER APRÈS
-        \Log::info('Vérification mot de passe:', [
-            'hash_check' => Hash::check($this->password, $user->password),
-            'password_input' => $this->password,
-            'password_hash' => $user->password
-        ]);
-
-        // Vérifier le mot de passe
         if (!Hash::check($this->password, $user->password)) {
             $this->addError('email', 'Email ou mot de passe incorrect.');
             return;
         }
 
-        // DEBUG - À SUPPRIMER APRÈS
-        \Log::info('Statut utilisateur:', ['statut' => $user->statut]);
-
-        // Vérifier le statut
         if ($user->statut !== 'actif') {
-            \Log::info('Compte suspendu détecté!');
             $this->suspendedMessage = 'Votre compte est suspendu. Veuillez consulter votre email pour connaître la raison de la désactivation.';
             return;
         }
 
-        // ========================================
-        // 3. TOUT EST OK - CONNECTER L'UTILISATEUR
-        // ========================================
+        // Connecter l'utilisateur
         Auth::login($user);
         session()->regenerate();
 
-        // --- LOGIQUE DE REDIRECTION UTILISATEUR ---
+        // Logique de redirection utilisateur
         if ($user->role === 'intervenant') {
             session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
+
+            $intervenant = \App\Models\Shared\Intervenant::where('IdIntervenant', $user->idUser)->first();
+
+            if ($intervenant) {
+                $services = $intervenant->services; 
+                $count = $services->count();
+
+                if ($count > 1 || $count === 0) {
+                    return redirect()->route('intervenant.hub');
+                }
+                
+                if ($count === 1) {
+                    $serviceName = strtolower($services->first()->nomService);
+
+                    if (str_contains($serviceName, 'soutien') || str_contains($serviceName, 'scolaire')) {
+                        return redirect()->route('tutoring.dashboard');
+                    }
+                    
+                    if (str_contains($serviceName, 'baby')) {
+                        return redirect()->route('intervenant.hub');
+                    }
+
+                    if (str_contains($serviceName, 'pet')) {
+                        return redirect()->route('intervenant.hub');
+                    }
+                }
+            }
+            
             return redirect()->route('intervenant.hub');
         }
 

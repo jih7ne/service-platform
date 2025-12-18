@@ -12,10 +12,8 @@ class BabysitterDashboard extends Component
 {
     public $babysitter;
     public $statistics;
-    public $upcomingSittings;
     public $monthlyEarnings;
     public $ratingDistribution;
-    public $recentActivities;
 
     public function mount()
     {
@@ -33,12 +31,10 @@ class BabysitterDashboard extends Component
                 'pendingRequests' => 0,
                 'totalEarnings' => 0,
                 'responseRate' => 0,
-                'onTimeRate' => 0,
+
             ];
-            $this->upcomingSittings = collect([]);
             $this->monthlyEarnings = [];
             $this->ratingDistribution = [];
-            $this->recentActivities = [];
             return;
         }
 
@@ -51,29 +47,21 @@ class BabysitterDashboard extends Component
                 'pendingRequests' => 0,
                 'totalEarnings' => 0,
                 'responseRate' => 0,
-                'onTimeRate' => 0,
+
             ];
-            $this->upcomingSittings = collect([]);
             $this->monthlyEarnings = [];
             $this->ratingDistribution = [];
-            $this->recentActivities = [];
             return;
         }
 
         // Calculate statistics
         $this->statistics = $this->calculateStatisticsForUser($userId);
 
-        // Get upcoming sittings
-        $this->upcomingSittings = $this->getUpcomingSittings();
-
         // Get monthly earnings data for chart
         $this->monthlyEarnings = $this->getMonthlyEarnings();
 
         // Get rating distribution
         $this->ratingDistribution = $this->getRatingDistribution();
-
-        // Get recent activities
-        $this->recentActivities = $this->getRecentActivities();
     }
 
     private function calculateStatisticsForUser($userId)
@@ -118,9 +106,8 @@ class BabysitterDashboard extends Component
             'averageRating' => round($averageRating, 1),
             'completedSittings' => $completedSittings,
             'pendingRequests' => $pendingRequests,
-            'totalEarnings' => $totalEarnings,
+            'totalEarnings' => max(0, $totalEarnings), // Ensure no negative earnings
             'responseRate' => $this->calculateResponseRateForUser($userId),
-            'onTimeRate' => 95.5,
         ];
     }
 
@@ -145,12 +132,10 @@ class BabysitterDashboard extends Component
                 'pendingRequests' => 0,
                 'totalEarnings' => 0,
                 'responseRate' => 0,
-                'onTimeRate' => 0,
+
             ];
-            $this->upcomingSittings = [];
             $this->monthlyEarnings = [];
             $this->ratingDistribution = [];
-            $this->recentActivities = [];
             return;
         }
 
@@ -164,29 +149,21 @@ class BabysitterDashboard extends Component
                 'pendingRequests' => 0,
                 'totalEarnings' => 0,
                 'responseRate' => 0,
-                'onTimeRate' => 0,
+
             ];
-            $this->upcomingSittings = [];
             $this->monthlyEarnings = [];
             $this->ratingDistribution = [];
-            $this->recentActivities = [];
             return;
         }
 
         // Calculate statistics
         $this->statistics = $this->calculateStatistics();
 
-        // Get upcoming sittings
-        $this->upcomingSittings = $this->getUpcomingSittings();
-
         // Get monthly earnings data for chart
         $this->monthlyEarnings = $this->getMonthlyEarnings();
 
         // Get rating distribution
         $this->ratingDistribution = $this->getRatingDistribution();
-
-        // Get recent activities
-        $this->recentActivities = $this->getRecentActivities();
     }
 
     private function calculateStatistics()
@@ -209,7 +186,7 @@ class BabysitterDashboard extends Component
 
         // Completed sittings
         $completedSittings = DemandeIntervention::where('idIntervenant', $babysitterId)
-            ->whereIn('statut', ['validée', 'terminée'])
+            ->whereIn('statut', ['validée', 'terminée', 'payée'])
             ->count();
 
         // Pending requests
@@ -223,8 +200,16 @@ class BabysitterDashboard extends Component
             ->get()
             ->sum(function ($intervention) {
                 if ($intervention->heureDebut && $intervention->heureFin) {
-                    $hours = Carbon::parse($intervention->heureFin)->diffInHours(Carbon::parse($intervention->heureDebut));
-                    return ($this->babysitter->prixHeure ?? 0) * $hours;
+                    $start = Carbon::parse($intervention->heureDebut);
+                    $end = Carbon::parse($intervention->heureFin);
+
+                    // Handle overnight shifts (if end is before start)
+                    if ($end->lt($start)) {
+                        $end->addDay();
+                    }
+
+                    $hours = $start->diffInHours($end); // Returns absolute difference
+                    return ($this->babysitter->prixHeure ?? 0) * abs($hours);
                 }
                 return 0;
             });
@@ -235,7 +220,6 @@ class BabysitterDashboard extends Component
             'pendingRequests' => $pendingRequests,
             'totalEarnings' => $totalEarnings,
             'responseRate' => $this->calculateResponseRate(),
-            'onTimeRate' => $this->calculateOnTimeRate(),
         ];
     }
 
@@ -249,44 +233,9 @@ class BabysitterDashboard extends Component
         return $totalRequests > 0 ? round(($respondedRequests / $totalRequests) * 100, 1) : 0;
     }
 
-    private function calculateOnTimeRate()
-    {
-        // This would need actual attendance data - for now, return a placeholder
-        return 95.5;
-    }
 
-    private function getUpcomingSittings()
-    {
-        $userId = auth()->id();
-        if (!$this->babysitter) {
-            return collect([]);
-        }
 
-        return DemandeIntervention::where('idIntervenant', $userId)
-            ->whereIn('statut', ['validée', 'en_attente'])
-            ->where('dateSouhaitee', '>=', Carbon::today())
-            ->with(['client', 'enfants'])
-            ->orderBy('dateSouhaitee')
-            ->orderBy('heureDebut')
-            ->take(5)
-            ->get()
-            ->map(function ($sitting) {
-                return [
-                    'id' => $sitting->idDemande,
-                    'clientName' => $sitting->client?->prenom . ' ' . $sitting->client?->nom ?? 'Client',
-                    'children' => $sitting->enfants->map(function ($enfant) {
-                        return $enfant->prenom . ' (' . $enfant->age . ' ans)';
-                    })->implode(', '),
-                    'date' => Carbon::parse($sitting->dateSouhaitee)->format('d/m/Y'),
-                    'time' => Carbon::parse($sitting->heureDebut)->format('H:i') . ' - ' .
-                        Carbon::parse($sitting->heureFin)->format('H:i'),
-                    'location' => $sitting->lieu,
-                    'status' => $sitting->statut,
-                    'price' => $this->babysitter->prixHeure *
-                        Carbon::parse($sitting->heureFin)->diffInHours(Carbon::parse($sitting->heureDebut)),
-                ];
-            });
-    }
+
 
     private function getMonthlyEarnings()
     {
@@ -298,13 +247,20 @@ class BabysitterDashboard extends Component
             $monthEnd = $monthStart->copy()->endOfMonth();
 
             $monthlyTotal = DemandeIntervention::where('idIntervenant', auth()->id())
-                ->whereIn('statut', ['validée', 'terminée'])
+                ->whereIn('statut', ['validée', 'terminée', 'payée']) // Added 'payée' just in case
                 ->whereBetween('dateSouhaitee', [$monthStart, $monthEnd])
                 ->get()
                 ->sum(function ($sitting) {
                     if ($sitting->heureDebut && $sitting->heureFin) {
-                        $hours = Carbon::parse($sitting->heureFin)->diffInHours(Carbon::parse($sitting->heureDebut));
-                        return ($this->babysitter->prixHeure ?? 0) * $hours;
+                        $start = Carbon::parse($sitting->heureDebut);
+                        $end = Carbon::parse($sitting->heureFin);
+
+                        if ($end->lt($start)) {
+                            $end->addDay();
+                        }
+
+                        $hours = $start->diffInHours($end);
+                        return ($this->babysitter->prixHeure ?? 0) * abs($hours);
                     }
                     return 0;
                 });
@@ -321,9 +277,9 @@ class BabysitterDashboard extends Component
     private function getRatingDistribution()
     {
         $distribution = [];
+        $babysitterId = auth()->id();
 
-        $feedbacks = Feedback::where('idCible', auth()->id())
-            ->get();
+        $feedbacks = Feedback::where('idCible', $babysitterId)->get();
 
         for ($rating = 5; $rating >= 1; $rating--) {
             $count = $feedbacks->filter(function ($feedback) use ($rating) {
@@ -334,66 +290,33 @@ class BabysitterDashboard extends Component
                     $feedback->proprete,
                     $feedback->qualiteTravail
                 ]);
-                $avg = count($ratings) > 0 ? array_sum($ratings) / count($ratings) : 0;
-                return $avg >= ($rating - 0.5) && $avg < ($rating + 0.5);
+
+                if (count($ratings) === 0)
+                    return false;
+
+                $avg = array_sum($ratings) / count($ratings);
+                return round($avg) == $rating;
             })->count();
 
             $distribution[] = [
                 'rating' => $rating,
                 'count' => $count,
+                'label' => $rating . ' étoiles'
             ];
         }
 
         return $distribution;
     }
 
-    private function getRecentActivities()
-    {
-        return DemandeIntervention::where('idIntervenant', auth()->id())
-            ->with(['client'])
-            ->orderBy('dateDemande', 'desc')
-            ->take(10)
-            ->get()
-            ->map(function ($activity) {
-                return [
-                    'type' => $this->getActivityType($activity->statut),
-                    'description' => $this->getActivityDescription($activity),
-                    'date' => Carbon::parse($activity->dateDemande)->format('d/m/Y H:i'),
-                    'status' => $activity->statut,
-                ];
-            });
-    }
 
-    private function getActivityType($statut)
-    {
-        return match ($statut) {
-            'en_attente' => 'Nouvelle demande',
-            'validée' => 'Garde acceptée',
-            'refusée' => 'Garde refusée',
-            'terminée' => 'Garde terminée',
-            'annulée' => 'Garde annulée',
-            default => 'Activité'
-        };
-    }
-
-    private function getActivityDescription($activity)
-    {
-        $clientName = $activity->client?->prenom . ' ' . $activity->client?->nom ?? 'Client';
-        $date = Carbon::parse($activity->dateSouhaitee)->format('d/m/Y');
-
-        return match ($activity->statut) {
-            'en_attente' => "Nouvelle demande de {$clientName} pour le {$date}",
-            'validée' => "Garde acceptée pour {$clientName} le {$date}",
-            'refusée' => "Garde refusée pour {$clientName} le {$date}",
-            'terminée' => "Garde terminée pour {$clientName} le {$date}",
-            'annulée' => "Garde annulée pour {$clientName} le {$date}",
-            default => "Activité avec {$clientName}"
-        };
-    }
 
     public function refreshData()
     {
         $this->loadDashboardData();
+        $this->dispatch('updateCharts', [
+            'monthlyEarnings' => $this->monthlyEarnings,
+            'ratingDistribution' => $this->ratingDistribution
+        ]);
     }
 
     public function render()

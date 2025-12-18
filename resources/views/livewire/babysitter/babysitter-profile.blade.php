@@ -31,7 +31,7 @@
                                 <span class="text-gray-600 font-bold text-2xl">{{ substr($prenom ?? '', 0, 1) }}</span>
                             </div>
                         @endif
-                        <div class="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 cursor-pointer hover:bg-purple-700">
+                        <div class="absolute bottom-0 right-0 bg-[#B82E6E] rounded-full p-2 cursor-pointer hover:bg-[#9A1F5A]">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 6H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -60,11 +60,11 @@
                     <!-- Quick Stats -->
                     <div class="flex space-x-6">
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-purple-600">{{ $prixHeure }} MAD</div>
+                            <div class="text-2xl font-bold text-[#B82E6E]">{{ $prixHeure }} MAD</div>
                             <div class="text-sm text-gray-600">/ heure</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-purple-600">{{ $expAnnee }}</div>
+                            <div class="text-2xl font-bold text-[#B82E6E]">{{ $expAnnee }}</div>
                             <div class="text-sm text-gray-600">ans d'exp</div>
                         </div>
                     </div>
@@ -77,8 +77,8 @@
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-800">Informations personnelles</h3>
                         @if(!$editPersonalInfo)
-                            <button wire:click="editPersonalInfo = true" 
-                                    class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <button wire:click="enableEdit('personal')" 
+                                    class="bg-[#B82E6E] text-white px-4 py-2 rounded-lg hover:bg-[#9A1F5A] transition-colors">
                                 Modifier
                             </button>
                         @endif
@@ -90,7 +90,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
                                 <input type="text" wire:model="nom" 
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B82E6E] focus:border-transparent">
                                 @error('nom') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                             <div>
@@ -163,8 +163,8 @@
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-800">Informations professionnelles</h3>
                         @if(!$editProfessionalInfo)
-                            <button wire:click="editProfessionalInfo = true" 
-                                    class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <button wire:click="enableEdit('professional')" 
+                                    class="bg-[#B82E6E] text-white px-4 py-2 rounded-lg hover:bg-[#9A1F5A] transition-colors">
                                 Modifier
                             </button>
                         @endif
@@ -350,8 +350,8 @@
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-800">Compétences & Activités</h3>
                         @if(!$editSkills)
-                            <button wire:click="editSkills = true" 
-                                    class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <button wire:click="enableEdit('skills')" 
+                                    class="bg-[#B82E6E] text-white px-4 py-2 rounded-lg hover:bg-[#9A1F5A] transition-colors">
                                 Modifier
                             </button>
                         @endif
@@ -486,8 +486,8 @@
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold text-gray-800">Localisation</h3>
                         @if(!$editLocation)
-                            <button wire:click="editLocation = true" 
-                                    class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <button wire:click="enableEdit('location')" 
+                                    class="bg-[#B82E6E] text-white px-4 py-2 rounded-lg hover:bg-[#9A1F5A] transition-colors">
                                 Modifier
                             </button>
                         @endif
@@ -495,19 +495,53 @@
                 </div>
                 <div class="p-6">
                     @if($editLocation)
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
-                                <input type="text" wire:model="adresse" 
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                                @error('adresse') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <div class="space-y-6">
+                            <!-- Géolocalisation automatique -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" wire:model.live="auto_localisation"
+                                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <div class="ml-3">
+                                        <span class="text-sm font-medium text-gray-900">🌍 Activer la géolocalisation automatique</span>
+                                        <p class="text-xs text-gray-600 mt-1">Nous utiliserons votre position pour remplir automatiquement votre ville</p>
+                                    </div>
+                                </label>
+                                @if($auto_localisation && $ville)
+                                    <div class="mt-2 text-xs text-green-600 flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Position détectée : {{ $ville }}
+                                    </div>
+                                @endif
                             </div>
+
+                            <!-- Manual Address Entry -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Ville</label>
-                                <input type="text" wire:model="ville" 
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                                @error('ville') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Adresse complète 
+                                    @if(!$auto_localisation) <span class="text-red-500">*</span> @endif
+                                </label>
+                                <input type="text" wire:model="adresse"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent {{ $auto_localisation ? 'bg-gray-100 cursor-not-allowed' : '' }}"
+                                    placeholder="Rue, Ville"
+                                    @if($auto_localisation) disabled @endif>
+                                @if(!$auto_localisation)
+                                    @error('adresse') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @else
+                                    <p class="text-xs text-gray-500 mt-1">Adresse non requise avec la géolocalisation automatique</p>
+                                @endif
                             </div>
+
+                            @if($latitude && $longitude)
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                                    <div class="text-sm text-blue-800">
+                                        <strong>Coordonnées GPS:</strong><br>
+                                        Latitude: {{ $latitude }}<br>
+                                        Longitude: {{ $longitude }}
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                         <div class="flex space-x-4 mt-6">
                             <button wire:click="saveLocation" 
@@ -555,8 +589,79 @@
         Livewire.on('showMessage', (event) => {
             // Show success message
             const message = event.message;
-            // You can implement a toast notification here
             console.log(message);
+        });
+
+        // Écouter l'événement de géolocalisation (Identique à l'inscription)
+        Livewire.on('getLocation', () => {
+            console.log('Événement getLocation reçu');
+            
+            if (navigator.geolocation) {
+                console.log('Géolocalisation supportée, demande de position...');
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        console.log('Position obtenue:', position);
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        console.log('Coordonnées:', lat, lng);
+                        
+                        // Utiliser l'API de géocodage inversé (Nominatim OpenStreetMap)
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('Données de géocodage:', data);
+                                const ville = data.address?.city || data.address?.town || data.address?.village || '';
+                                // Récupérer le quartier, le faubourg ou la route pour l'adresse
+                                const quartier = data.address?.neighbourhood || data.address?.suburb || data.address?.road || '';
+                                
+                                console.log('Ville détectée:', ville);
+                                console.log('Adresse/Quartier détecté:', quartier);
+                                
+                                // Appeler la méthode PHP pour mettre à jour les coordonnées
+                                @this.call('setLocation', lat, lng, ville, quartier);
+                                
+                                console.log('Coordonnées envoyées à Livewire');
+                            })
+                            .catch(error => {
+                                console.error('Erreur de géocodage:', error);
+                                @this.call('setLocation', lat, lng, '', '');
+                            });
+                    },
+                    (error) => {
+                        console.error('Erreur de géolocalisation:', error);
+                        let message = 'Impossible d\'obtenir votre position. ';
+                        
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                message += 'Veuillez autoriser l\'accès à votre localisation.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                message += 'Les informations de localisation ne sont pas disponibles.';
+                                break;
+                            case error.TIMEOUT:
+                                message += 'La demande de localisation a expiré.';
+                                break;
+                            default:
+                                message += 'Veuillez vérifier vos paramètres de localisation.';
+                                break;
+                        }
+                        
+                        alert(message);
+                        // Reset checkbox if failed
+                        @this.set('auto_localisation', false);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            } else {
+                alert('La géolocalisation n\'est pas supportée par votre navigateur.');
+                @this.set('auto_localisation', false);
+            }
         });
     });
 </script>

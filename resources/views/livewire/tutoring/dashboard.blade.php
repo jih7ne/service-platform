@@ -31,6 +31,17 @@
             <nav class="px-4 space-y-1">
                 <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">Menu Principal</p>
                 
+                <!-- ⭐ NOUVEAU : BOUTON HUB ⭐ -->
+                <button 
+                    wire:click="goToHub"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 rounded-xl font-medium transition-all group"
+                >
+                    <svg class="w-5 h-5 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                    Hub Services
+                </button>
+                
                 <a href="{{ route('tutoring.dashboard') }}" class="flex items-center gap-3 px-4 py-3 bg-[#EFF6FF] text-blue-700 rounded-xl font-bold transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                     Tableau de bord
@@ -126,7 +137,7 @@
                         
                     </div>
                     <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Note Moyenne</p>
-                    <h3 class="text-3xl font-extrabold text-gray-800">{{ $note }}
+                    <h3 class="text-3xl font-extrabold text-gray-800">{{ $note }}</h3>
                 </div>
 
                 <!-- Carte 3 -->
@@ -205,6 +216,7 @@
                         @endforelse
                     </div>
                 </div>
+                
                 <!-- Widget Droit : Prochains Cours (Réel) -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-6">
@@ -239,9 +251,8 @@
                             </div>
                         @endforelse
                     </div>
-
-                    
                 </div>
+            </div>
         @endif
     </main>
 </div>

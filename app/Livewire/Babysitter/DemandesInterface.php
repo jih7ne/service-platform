@@ -36,6 +36,9 @@ class DemandesInterface extends Component
     public $clientMinRating = null;
     public $hasSpecialNotes = false;
     public $showAdvancedFilters = false;
+    public $selectedSpecificNeeds = [];
+    public $availableSpecificNeeds = [];
+    public $availableCities = [];
     
     // Refusal Logic
     public $showRefusalModal = false;
@@ -47,6 +50,9 @@ class DemandesInterface extends Component
         if ($user && $user->role === 'intervenant') {
             $this->babysitter = $user->intervenant->babysitter ?? null;
         }
+
+        $this->availableSpecificNeeds = \App\Models\Babysitting\ExperienceBesoinSpeciaux::all();
+        $this->availableCities = \App\Models\Shared\Localisation::distinct()->pluck('ville')->filter()->values();
     }
 
     public function viewDemande($id)
@@ -68,17 +74,29 @@ class DemandesInterface extends Component
         if ($demande && $demande->idIntervenant == Auth::id()) {
             $demande->update(['statut' => 'validée']);
             
-            // Send Emails
-            if ($demande->client && $demande->client->email) {
-                Mail::to($demande->client->email)->send(new DemandeAcceptedForClient($demande));
-            }
+            $emailsSent = true;
             
-            if ($demande->intervenant && $demande->intervenant->user && $demande->intervenant->user->email) {
-                Mail::to($demande->intervenant->user->email)->send(new DemandeAcceptedForBabysitter($demande));
+            // Send Emails with error handling
+            try {
+                if ($demande->client && $demande->client->email) {
+                    Mail::to($demande->client->email)->send(new DemandeAcceptedForClient($demande));
+                }
+                
+                if ($demande->intervenant && $demande->intervenant->user && $demande->intervenant->user->email) {
+                    Mail::to($demande->intervenant->user->email)->send(new DemandeAcceptedForBabysitter($demande));
+                }
+            } catch (\Exception $e) {
+                $emailsSent = false;
+                \Log::error('Erreur lors de l\'envoi des emails: ' . $e->getMessage());
             }
 
             $this->closeModal();
-            session()->flash('message', 'Demande acceptée avec succès. Les emails de confirmation ont été envoyés.');
+            
+            if ($emailsSent) {
+                session()->flash('message', 'Demande acceptée avec succès. Les emails de confirmation ont été envoyés.');
+            } else {
+                session()->flash('message', 'Demande acceptée avec succès. (Les emails n\'ont pas pu être envoyés - vérifiez la configuration SMTP)');
+            }
         }
     }
 
@@ -97,18 +115,30 @@ class DemandesInterface extends Component
 
             $this->selectedDemande->update([
                 'statut' => 'refusée',
-                // 'motif_refus' => $this->refusalReason // Assuming there is a column for this, or just log it
+                'raisonAnnulation' => $this->refusalReason
             ]);
             
-            // Send Email
-            if ($this->selectedDemande->client && $this->selectedDemande->client->email) {
-                Mail::to($this->selectedDemande->client->email)->send(new DemandeRefusedForClient($this->selectedDemande, $this->refusalReason));
+            $emailSent = true;
+            
+            // Send Email with error handling
+            try {
+                if ($this->selectedDemande->client && $this->selectedDemande->client->email) {
+                    Mail::to($this->selectedDemande->client->email)->send(new DemandeRefusedForClient($this->selectedDemande, $this->refusalReason));
+                }
+            } catch (\Exception $e) {
+                $emailSent = false;
+                \Log::error('Erreur lors de l\'envoi de l\'email de refus: ' . $e->getMessage());
             }
 
             $this->showRefusalModal = false;
             $this->refusalReason = '';
             $this->closeModal();
-            session()->flash('message', 'Demande refusée. Le client a été notifié.');
+            
+            if ($emailSent) {
+                session()->flash('message', 'Demande refusée. Le client a été notifié.');
+            } else {
+                session()->flash('message', 'Demande refusée. (L\'email n\'a pas pu être envoyé - vérifiez la configuration SMTP)');
+            }
         }
     }
 
@@ -120,13 +150,21 @@ class DemandesInterface extends Component
 
     public function giveFeedback($id)
     {
-        // Rediriger vers la page de feedback pour la demande spécifiée
         return redirect()->route('babysitter.feedback', ['id' => $id]);
     }
 
     public function setTab($tab)
     {
         $this->selectedTab = $tab;
+        // Réinitialiser le filtre archive quand on change d'onglet
+        if ($tab !== 'archive') {
+            $this->archiveFilter = 'all';
+        }
+    }
+
+    public function setArchiveFilter($filter)
+    {
+        $this->archiveFilter = $filter;
     }
 
     public function setChildrenFilter($count)
@@ -152,8 +190,10 @@ class DemandesInterface extends Component
                 'bgColor' => '#D1FAE5'
             ],
             [
-                'label' => 'Refusées/Annulées',
-                'value' => DemandeIntervention::where('idIntervenant', $userId)->where('idService', 2)->whereIn('statut', ['refusée', 'annulée'])->count(),
+                'label' => 'Historique',
+                'value' => DemandeIntervention::where('idIntervenant', $userId)
+                    ->where('idService', 2)
+                    ->count(),
                 'color' => '#EF4444',
                 'bgColor' => '#FEE2E2'
             ]
@@ -163,7 +203,7 @@ class DemandesInterface extends Component
     public function getDemandesProperty()
     {
         $userId = Auth::id();
-        $query = DemandeIntervention::with(['client', 'service', 'enfants'])
+        $query = DemandeIntervention::with(['client.localisations', 'service', 'enfants.categorie'])
             ->where('idIntervenant', $userId)
             ->where('idService', 2) // Filtrer uniquement les services de babysitting
             ->orderBy('dateDemande', 'desc');
@@ -173,24 +213,15 @@ class DemandesInterface extends Component
         } elseif ($this->selectedTab === 'validee') {
             $query->where('statut', 'validée');
         } elseif ($this->selectedTab === 'archive') {
-            // Afficher uniquement les demandes passées confirmées et les demandes annulées/refusées
-            $query->where(function($q) {
-                $q->where(function($subQ) {
-                    // Demandes confirmées dont la date est passée
-                    $subQ->where('statut', 'validée')
-                         ->where('dateSouhaitee', '<', now()->format('Y-m-d'));
-                })->orWhere(function($subQ) {
-                    // Demandes annulées ou refusées (peu importe la date)
-                    $subQ->whereIn('statut', ['annulée', 'refusée']);
-                });
-            });
+            // Historique : Affiche TOUTES les demandes (aucune restriction de statut)
             
-            // Appliquer le filtre supplémentaire si spécifié
+            // Appliquer le filtre supplémentaire si spécifié (optionnel, si vous voulez garder le sous-filtre)
             if ($this->archiveFilter === 'confirmed') {
-                $query->where('statut', 'validée')
-                      ->where('dateSouhaitee', '<', now()->format('Y-m-d'));
+                $query->where('statut', 'validée');
             } elseif ($this->archiveFilter === 'cancelled') {
-                $query->whereIn('statut', ['annulée', 'refusée']);
+                $query->where('statut', 'annulée');
+            } elseif ($this->archiveFilter === 'refused') {
+                $query->where('statut', 'refusée');
             }
         }
 
@@ -294,9 +325,20 @@ class DemandesInterface extends Component
             });
         }
 
+        // Filtre Besoins Spécifiques (depuis la table experience_besoins_speciaux)
+        if (!empty($this->selectedSpecificNeeds)) {
+            $query->whereHas('enfants', function($q) {
+                $q->where(function($sq) {
+                    foreach ($this->selectedSpecificNeeds as $need) {
+                        $sq->orWhere('besoinsSpecifiques', 'like', "%{$need}%");
+                    }
+                });
+            });
+        }
+
         $demandes = $query->get();
 
-        // Post-query filtering for Price (since it depends on duration and babysitter rate)
+        // Post-query filtering for Price (babysitter price * number of children * duration)
         if ($this->minPriceFilter || $this->maxPriceFilter) {
             $demandes = $demandes->filter(function ($demande) {
                 $hourlyRate = $this->babysitter->prixHeure ?? 50;
@@ -315,11 +357,6 @@ class DemandesInterface extends Component
         }
 
         return $demandes;
-    }
-
-    public function setArchiveFilter($filter)
-    {
-        $this->archiveFilter = $filter;
     }
 
     public function toggleAgeCategory($category)
@@ -342,6 +379,15 @@ class DemandesInterface extends Component
             $this->selectedServices = array_diff($this->selectedServices, [$service]);
         } else {
             $this->selectedServices[] = $service;
+        }
+    }
+
+    public function toggleSpecificNeed($need)
+    {
+        if (in_array($need, $this->selectedSpecificNeeds)) {
+            $this->selectedSpecificNeeds = array_diff($this->selectedSpecificNeeds, [$need]);
+        } else {
+            $this->selectedSpecificNeeds[] = $need;
         }
     }
 

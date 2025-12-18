@@ -137,6 +137,10 @@ public $coursAVenir = [];       // Pour la liste de droite
         session()->regenerateToken();
         return redirect('/');
     }
+    public function goToHub()
+    {
+        return redirect()->route('intervenant.hub');
+    }
 
     public function render()
     {
