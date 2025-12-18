@@ -47,12 +47,17 @@ class BabysitterProfile extends Component
 
     // Location
     public $adresse, $ville;
+    public $latitude, $longitude;
+    public $auto_localisation = false;
 
     // Edit modes
     public $editPersonalInfo = false;
     public $editProfessionalInfo = false;
     public $editSkills = false;
     public $editLocation = false;
+
+    // Statistics
+    public $statistics = [];
 
     protected $rules = [
         'nom' => 'required|string|max:255',
@@ -67,6 +72,8 @@ class BabysitterProfile extends Component
         'maladies' => 'nullable|string|max:500',
         'adresse' => 'nullable|string|max:255',
         'ville' => 'nullable|string|max:100',
+        'latitude' => 'nullable|numeric|between:-90,90',
+        'longitude' => 'nullable|numeric|between:-180,180',
         'newPhoto' => 'nullable|image|max:2048',
     ];
 
@@ -74,6 +81,7 @@ class BabysitterProfile extends Component
     {
         $this->loadProfileData();
         $this->loadAvailableOptions();
+        $this->calculateStatistics();
     }
 
     private function loadProfileData()
@@ -105,15 +113,15 @@ class BabysitterProfile extends Component
         $this->langues = $this->babysitter->langues ?? [];
         $this->description = $this->babysitter->description;
         $this->niveauEtudes = $this->babysitter->niveauEtudes;
-        $this->procedeJuridique = $this->babysitter->procedeJuridique;
-        $this->coprocultureSelles = $this->babysitter->coprocultureSelles;
-        $this->certifAptitudeMentale = $this->babysitter->certifAptitudeMentale;
-        $this->radiographieThorax = $this->babysitter->radiographieThorax;
+        $this->procedeJuridique = (bool) $this->babysitter->procedeJuridique;
+        $this->coprocultureSelles = (bool) $this->babysitter->coprocultureSelles;
+        $this->certifAptitudeMentale = (bool) $this->babysitter->certifAptitudeMentale;
+        $this->radiographieThorax = (bool) $this->babysitter->radiographieThorax;
         $this->maladies = $this->babysitter->maladies;
-        $this->estFumeur = $this->babysitter->estFumeur;
-        $this->mobilite = $this->babysitter->mobilite;
-        $this->possedeEnfant = $this->babysitter->possedeEnfant;
-        $this->permisConduite = $this->babysitter->permisConduite;
+        $this->estFumeur = (bool) $this->babysitter->estFumeur;
+        $this->mobilite = (bool) $this->babysitter->mobilite;
+        $this->possedeEnfant = (bool) $this->babysitter->possedeEnfant;
+        $this->permisConduite = (bool) $this->babysitter->permisConduite;
         $this->preference_domicil = $this->babysitter->preference_domicil;
 
         // Load skills
@@ -132,7 +140,25 @@ class BabysitterProfile extends Component
         if ($location) {
             $this->adresse = $location->adresse;
             $this->ville = $location->ville;
+            $this->latitude = $location->latitude;
+            $this->longitude = $location->longitude;
         }
+    }
+
+    public function updatedAutoLocalisation($value)
+    {
+        // Quand l'utilisateur active la géolocalisation, on déclenche le JS
+        if ($value) {
+            $this->dispatch('getLocation');
+        }
+    }
+
+    public function setLocation($latitude, $longitude, $ville, $adresse = '')
+    {
+        $this->latitude = $latitude;
+        $this->longitude = $longitude;
+        $this->ville = $ville;
+        $this->adresse = $adresse;
     }
 
     private function loadAvailableOptions()
@@ -141,6 +167,47 @@ class BabysitterProfile extends Component
         $this->allFormations = Formation::all();
         $this->allCategories = CategorieEnfant::all();
         $this->allExperiences = ExperienceBesoinSpeciaux::all();
+    }
+
+    private function calculateStatistics()
+    {
+        if (!$this->babysitter) {
+            $this->statistics = [
+                'completedSittings' => 0,
+                'averageRating' => 0,
+                'pendingRequests' => 0,
+                'totalEarnings' => 0,
+                'responseRate' => 0,
+                'onTimeRate' => 0,
+            ];
+            return;
+        }
+
+        $completedSittings = $this->babysitter->demandes()
+            ->whereIn('statut', ['validée', 'terminée'])
+            ->count();
+
+        $averageRating = $this->utilisateur->note ?? 0;
+
+        $pendingRequests = $this->babysitter->demandes()
+            ->where('statut', 'en_attente')
+            ->count();
+
+        $totalEarnings = $this->babysitter->demandes()
+            ->whereIn('statut', ['validée', 'terminée'])
+            ->get()
+            ->sum(function ($demande) {
+                return $demande->prix; // Utilise l'accesseur getPrixAttribute()
+            });
+
+        $this->statistics = [
+            'completedSittings' => $completedSittings,
+            'averageRating' => $averageRating,
+            'pendingRequests' => $pendingRequests,
+            'totalEarnings' => $totalEarnings,
+            'responseRate' => 85, // Placeholder - calculate based on actual response data
+            'onTimeRate' => 90, // Placeholder - calculate based on actual punctuality data
+        ];
     }
 
     public function savePersonalInfo()
@@ -168,6 +235,7 @@ class BabysitterProfile extends Component
         ]);
 
         $this->editPersonalInfo = false;
+        $this->calculateStatistics();
         $this->dispatch('showMessage', 'Informations personnelles mises à jour avec succès');
     }
 
@@ -181,25 +249,27 @@ class BabysitterProfile extends Component
             'maladies' => 'nullable|string|max:500',
         ]);
 
+        // Ensure boolean values are properly cast
         $this->babysitter->update([
             'prixHeure' => $this->prixHeure,
             'expAnnee' => $this->expAnnee,
             'langues' => $this->langues,
             'description' => $this->description,
             'niveauEtudes' => $this->niveauEtudes,
-            'procedeJuridique' => $this->procedeJuridique,
-            'coprocultureSelles' => $this->coprocultureSelles,
-            'certifAptitudeMentale' => $this->certifAptitudeMentale,
-            'radiographieThorax' => $this->radiographieThorax,
+            'procedeJuridique' => (bool) $this->procedeJuridique,
+            'coprocultureSelles' => (bool) $this->coprocultureSelles,
+            'certifAptitudeMentale' => (bool) $this->certifAptitudeMentale,
+            'radiographieThorax' => (bool) $this->radiographieThorax,
             'maladies' => $this->maladies,
-            'estFumeur' => $this->estFumeur,
-            'mobilite' => $this->mobilite,
-            'possedeEnfant' => $this->possedeEnfant,
-            'permisConduite' => $this->permisConduite,
+            'estFumeur' => (bool) $this->estFumeur,
+            'mobilite' => (bool) $this->mobilite,
+            'possedeEnfant' => (bool) $this->possedeEnfant,
+            'permisConduite' => (bool) $this->permisConduite,
             'preference_domicil' => $this->preference_domicil,
         ]);
 
         $this->editProfessionalInfo = false;
+        $this->calculateStatistics();
         $this->dispatch('showMessage', 'Informations professionnelles mises à jour avec succès');
     }
 
@@ -212,30 +282,49 @@ class BabysitterProfile extends Component
         $this->babysitter->experiencesBesoinsSpeciaux()->sync($this->selectedExperiences);
 
         $this->editSkills = false;
+        $this->calculateStatistics();
         $this->dispatch('showMessage', 'Compétences mises à jour avec succès');
     }
 
     public function saveLocation()
     {
-        $this->validate([
-            'adresse' => 'nullable|string|max:255',
+        $rules = [
             'ville' => 'nullable|string|max:100',
-        ]);
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+        ];
+
+        if (!$this->auto_localisation) {
+            $rules['adresse'] = 'required|string|max:255';
+        } else {
+            $rules['adresse'] = 'nullable|string|max:255';
+        }
+
+        $this->validate($rules);
 
         // Delete existing location
         $this->utilisateur->localisations()->delete();
 
         // Create new location if any field is filled
         if ($this->adresse || $this->ville) {
+            // Use provided coordinates or defaults
+            $latitude = $this->latitude ?: 31.791702; // Default: center of Morocco
+            $longitude = $this->longitude ?: -7.092600;
+
             $this->utilisateur->localisations()->create([
                 'adresse' => $this->adresse,
                 'ville' => $this->ville,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
             ]);
         }
 
         $this->editLocation = false;
+        $this->calculateStatistics();
         $this->dispatch('showMessage', 'Localisation mise à jour avec succès');
     }
+
+
 
     public function cancelEdit($section)
     {
@@ -255,6 +344,24 @@ class BabysitterProfile extends Component
             case 'location':
                 $this->editLocation = false;
                 $this->loadProfileData();
+                break;
+        }
+    }
+
+    public function enableEdit($section)
+    {
+        switch ($section) {
+            case 'personal':
+                $this->editPersonalInfo = true;
+                break;
+            case 'professional':
+                $this->editProfessionalInfo = true;
+                break;
+            case 'skills':
+                $this->editSkills = true;
+                break;
+            case 'location':
+                $this->editLocation = true;
                 break;
         }
     }

@@ -84,8 +84,8 @@
                     <!-- Pending Requests Card -->
                     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                         <div class="flex items-center justify-between mb-4">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor"
+                            <div class="w-12 h-12 bg-[#E0B2CD] rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-[#4A132F]" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -99,11 +99,11 @@
                         <p class="text-sm text-gray-600 mt-2">À traiter</p>
                     </div>
 
-                    <!-- Total Earnings Card -->
+                    <!-- Total Earnings Card #E0B2CD-->
                     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                         <div class="flex items-center justify-between mb-4">
-                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor"
+                            <div class="w-12 h-12 bg-[#D5E2EE] rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-[#132F4A]" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -148,7 +148,7 @@
                             <div class="relative w-32 h-32">
                                 <svg class="w-32 h-32 transform -rotate-90">
                                     <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="12" fill="none" />
-                                    <circle cx="64" cy="64" r="56" stroke="#8b5cf6" stroke-width="12" fill="none"
+                                    <circle cx="64" cy="64" r="56" stroke="#F5D0E3" stroke-width="12" fill="none"
                                         stroke-dasharray="{{ 351.86 * $statistics['responseRate'] / 100 }} 351.86"
                                         stroke-linecap="round" />
                                 </svg>
@@ -168,7 +168,7 @@
                             <div class="relative w-32 h-32">
                                 <svg class="w-32 h-32 transform -rotate-90">
                                     <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="12" fill="none" />
-                                    <circle cx="64" cy="64" r="56" stroke="#10b981" stroke-width="12" fill="none"
+                                    <circle cx="64" cy="64" r="56" stroke="#E89BC4" stroke-width="12" fill="none"
                                         stroke-dasharray="{{ 351.86 * $statistics['onTimeRate'] / 100 }} 351.86"
                                         stroke-linecap="round" />
                                 </svg>
@@ -187,7 +187,7 @@
                     <div class="p-6 border-b border-gray-100">
                         <div class="flex items-center justify-between">
                             <h3 class="text-lg font-semibold text-gray-800">Prochaines gardes</h3>
-                            <button class="text-purple-600 hover:text-purple-700 text-sm font-medium">Voir tout</button>
+                            <button class="text-[#B82E6E] hover:text-[#B82E6E] text-sm font-medium">Voir tout</button>
                         </div>
                     </div>
                     <div class="p-6">
@@ -284,6 +284,12 @@
         document.addEventListener('livewire:init', () => {
             // Monthly Earnings Chart
             const earningsCtx = document.getElementById('earningsChart').getContext('2d');
+
+            // Création d'un dégradé pour le fond
+            const gradient = earningsCtx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(143, 36, 88, 0.3)'); // #8F2458 à 30%
+            gradient.addColorStop(1, 'rgba(245, 208, 227, 0.1)'); // #F5D0E3 à 10%
+
             new Chart(earningsCtx, {
                 type: 'line',
                 data: {
@@ -291,8 +297,14 @@
                     datasets: [{
                         label: 'Revenus (MAD)',
                         data: @json(is_array($monthlyEarnings) ? array_column($monthlyEarnings, 'earnings') : []),
-                        borderColor: 'rgb(139, 92, 246)',
-                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderColor: '#8F2458',
+                        backgroundColor: gradient, // Utilisation du dégradé
+                        borderWidth: 3,
+                        fill: true,
+                        pointBackgroundColor: '#8F2458',
+                        pointBorderColor: '#FFFFFF',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
                         tension: 0.4
                     }]
                 },
@@ -306,7 +318,15 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#8F2458' // Chiffres en rose foncé
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#8F2458' // Mois en rose foncé
+                            }
                         }
                     }
                 }
