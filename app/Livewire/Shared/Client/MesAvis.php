@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Livewire\Shared\Client;
+namespace App\Livewire\Shared;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Shared\Reclamation;
@@ -122,7 +121,7 @@ class MesAvis extends Component
             $this->closeReclamationModal();
 
         } catch (\Exception $e) {
-            Log::error('Erreur création réclamation: ' . $e->getMessage());
+            \Log::error('Erreur création réclamation: ' . $e->getMessage());
             session()->flash('error', 'Une erreur est survenue lors de la création de la réclamation.');
         }
     }
@@ -194,7 +193,7 @@ class MesAvis extends Component
             'avis_negatifs' => $avis->where('note_moyenne', '<', 3)->count(),
         ];
 
-        return view('livewire.shared.client.mes-avis', [
+        return view('livewire.shared.mes-avis', [
             'avis' => $avis,
             'stats' => $stats,
             'services' => $services
