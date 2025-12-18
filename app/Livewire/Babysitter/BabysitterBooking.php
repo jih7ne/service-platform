@@ -27,6 +27,7 @@ class BabysitterBooking extends Component
     public $babysitterLieuxPreference = [];
     public $babysitterAddress = '';
     public $adresseChoice = ''; // 'babysitter' ou 'client'
+    public $clientAddresses = []; // Pour stocker toutes les adresses du client
     public $children = [];
     public $currentChild = ['age' => '', 'sexe' => '', 'besoinsSpeciaux' => [], 'autresBesoins' => ''];
     public $agreedToTerms = false;
@@ -292,13 +293,22 @@ class BabysitterBooking extends Component
 
     public function nextStep()
     {
-        if ($this->currentStep < 5) {
+        \Log::info('nextStep() appelée', [
+            'currentStep' => $this->currentStep,
+            'canProceed' => $this->canProceed()
+        ]);
+        
+        if ($this->currentStep < 5 && $this->canProceed()) {
             $this->currentStep++;
+            \Log::info('Étape incrémentée', ['newStep' => $this->currentStep]);
             
             // Initialisation automatique au Step 3
             if ($this->currentStep === 3) {
+                \Log::info('Initialisation étape 3');
                 $babysitter = $this->getBabysitter();
                 $preferencesDomicile = $babysitter['preference_domicil'] ?? '';
+                
+                \Log::info('Préférence domicile détectée', ['preferencesDomicile' => $preferencesDomicile]);
                 
                 // Si domicil_babysitter, pré-remplir automatiquement
                 if ($preferencesDomicile === 'domicil_babysitter') {
@@ -307,15 +317,80 @@ class BabysitterBooking extends Component
                         $this->address = $localisation ? $localisation->adresse . ', ' . $localisation->ville : '';
                     }
                     $this->adresseChoice = 'babysitter';
+                    \Log::info('Cas domicil_babysitter traité', ['address' => $this->address]);
                 }
                 
-                // Si domicil_client, pré-définir le choix
+                // Si domicil_client, récupérer toutes les adresses du client authentifié
                 if ($preferencesDomicile === 'domicil_client') {
                     $this->adresseChoice = 'client';
-                    $this->address = ''; // Réinitialiser pour forcer la saisie
+                    $this->clientAddresses = []; // Réinitialiser la liste d'adresses
+                    
+                    // Récupérer toutes les adresses du client authentifié
+                    $clientId = auth()->id();
+                    if ($clientId) {
+                        $client = \App\Models\Shared\Utilisateur::find($clientId);
+                        if ($client && $client->localisations && $client->localisations->count() > 0) {
+                            $this->clientAddresses = $client->localisations->map(function($localisation) {
+                                return [
+                                    'id' => $localisation->idLocalisation,
+                                    'adresse' => $localisation->adresse,
+                                    'ville' => $localisation->ville,
+                                    'adresse_complete' => $localisation->adresse . ', ' . $localisation->ville
+                                ];
+                            })->toArray();
+                            
+                            // Pré-remplir avec la première adresse
+                            if (!empty($this->clientAddresses)) {
+                                $firstAddress = $this->clientAddresses[0];
+                                $this->address = $firstAddress['adresse_complete'];
+                                \Log::info('Adresses client récupérées et première adresse pré-remplie', [
+                                    'clientId' => $clientId,
+                                    'totalAddresses' => count($this->clientAddresses),
+                                    'selectedAddress' => $this->address
+                                ]);
+                            }
+                        } else {
+                            // Aucune adresse trouvée - permettre la saisie manuelle
+                            $this->address = '';
+                            \Log::info('Aucune adresse trouvée pour le client, saisie manuelle requise', [
+                                'clientId' => $clientId,
+                                'hasLocalisations' => $client ? ($client->localisations ? $client->localisations->count() : 0) : 0
+                            ]);
+                        }
+                    } else {
+                        $this->address = ''; // Réinitialiser si pas de client authentifié
+                        \Log::warning('Aucun client authentifié trouvé pour récupérer les adresses');
+                    }
+                    \Log::info('Cas domicil_client traité', ['address' => $this->address, 'clientAddresses_count' => count($this->clientAddresses)]);
                 }
             }
+        } else {
+            \Log::warning('nextStep() bloquée', [
+                'currentStep' => $this->currentStep,
+                'canProceed' => $this->canProceed(),
+                'reason' => $this->currentStep >= 5 ? 'step >= 5' : 'canProceed() false'
+            ]);
         }
+    }
+
+    public function selectClientAddress($addressIndex)
+    {
+        if (isset($this->clientAddresses[$addressIndex])) {
+            $selectedAddress = $this->clientAddresses[$addressIndex];
+            $this->address = $selectedAddress['adresse_complete'];
+            \Log::info('Adresse client sélectionnée', [
+                'addressIndex' => $addressIndex,
+                'selectedAddress' => $this->address
+            ]);
+        }
+    }
+
+    public function updatedAddress()
+    {
+        // Permettre la modification manuelle de l'adresse
+        \Log::info('Adresse modifiée manuellement', [
+            'newAddress' => $this->address
+        ]);
     }
 
     public function prevStep()
@@ -337,8 +412,16 @@ class BabysitterBooking extends Component
             // Calculer le prix total
             $this->calculateTotalPrice();
             
-            // Pour les tests, on utilise directement l'ID 1
-            $clientId = auth()->id() ?? 1;
+            // Récupérer l'ID du client depuis la session authentifiée
+            $clientId = auth()->id();
+            
+            // Si aucun client n'est connecté, utiliser l'ID 1 pour les tests
+            if (!$clientId) {
+                $clientId = 1;
+                \Log::warning('Aucun client authentifié trouvé, utilisation de l\'ID 1 pour les tests');
+            } else {
+                \Log::info('Client authentifié trouvé: ID ' . $clientId);
+            }
             
             DB::beginTransaction();
             
@@ -373,13 +456,31 @@ class BabysitterBooking extends Component
                         // Créer un nom fictif basé sur le sexe et l'âge
                         $nomComplet = ($child['sexe'] === 'Garçon' ? 'Garçon' : 'Fille') . ' de ' . $child['age'] . ' ans';
                         
+                        // Normaliser le sexe pour la base de données
+                        $sexeOriginal = $child['sexe'] ?? '';
+                        $sexeNormalise = strtolower($sexeOriginal) === 'garçon' ? 'garcon' : 'fille';
+                        
+                        \Log::info('Traitement enfant - avant création', [
+                            'sexe_original' => $sexeOriginal,
+                            'sexe_normalise' => $sexeNormalise,
+                            'id_client' => $clientId,
+                            'child_data' => $child
+                        ]);
+                        
                         Enfant::create([
                             'nomComplet' => $nomComplet,
                             'dateNaissance' => $this->calculateBirthDate($child['age']),
                             'besoinsSpecifiques' => $besoinsSpecifiques,
                             'idDemande' => $demande->idDemande,
-                            'id_client' => $clientId, // Ajout du client
-                            'sexe' => strtolower($child['sexe']) === 'garçon' ? 'garcon' : 'fille' // Ajout du sexe
+                            'id_client' => $clientId, // Stocker l'ID du client
+                            'sexe' => $sexeNormalise // Stocker le sexe normalisé
+                        ]);
+                        
+                        \Log::info('Enfant créé avec succès', [
+                            'nomComplet' => $nomComplet,
+                            'sexe' => $sexeNormalise,
+                            'id_client' => $clientId,
+                            'idDemande' => $demande->idDemande
                         ]);
                     }
                 }
@@ -450,36 +551,54 @@ class BabysitterBooking extends Component
                 return count($this->selectedDays) > 0 && $this->hasSelectedSlots();
                 
             case 3:
+                // Log de débogage pour l'étape 3
+                \Log::info('Validation étape 3 - canProceed()', [
+                    'currentStep' => $this->currentStep,
+                    'adresseChoice' => $this->adresseChoice,
+                    'address' => $this->address,
+                    'clientAddresses_count' => count($this->clientAddresses)
+                ]);
+                
                 // Récupérer la préférence de domicile du babysitter
                 $babysitter = $this->getBabysitter();
                 $preferencesDomicile = $babysitter['preference_domicil'] ?? '';
                 
+                \Log::info('Préférence domicile babysitter', ['preferencesDomicile' => $preferencesDomicile]);
+                
                 // Cas 1: Si babysitter uniquement chez elle → toujours valide
                 if ($preferencesDomicile === 'domicil_babysitter') {
+                    \Log::info('Cas 1: babysitter uniquement chez elle - OK');
                     return true;
                 }
                 
                 // Cas 2: Si babysitter uniquement chez client → vérifier que l'adresse est remplie
                 if ($preferencesDomicile === 'domicil_client') {
-                    return !empty($this->address);
+                    $hasAddress = !empty($this->address);
+                    \Log::info('Cas 2: babysitter uniquement chez client', ['hasAddress' => $hasAddress, 'address' => $this->address]);
+                    return $hasAddress;
                 }
                 
                 // Cas 3: Les deux options → vérifier selon le choix
                 if ($preferencesDomicile === 'les_deux') {
                     // Si choix = babysitter → OK
                     if ($this->adresseChoice === 'babysitter') {
+                        \Log::info('Cas 3a: les_deux + choix babysitter - OK');
                         return true;
                     }
                     // Si choix = client → vérifier adresse
                     if ($this->adresseChoice === 'client' && !empty($this->address)) {
+                        \Log::info('Cas 3b: les_deux + choix client + adresse - OK');
                         return true;
                     }
                     // Si pas de choix fait encore
+                    \Log::info('Cas 3c: les_deux + pas de choix/adresse - BLOQUÉ');
                     return false;
                 }
                 
                 // Cas 4: Préférence vide/null → vérifier l'adresse ou le choix
-                return $this->useRegisteredAddress || !empty($this->address) || $this->adresseChoice === 'babysitter';
+                $canProceed = !empty($this->address) || $this->adresseChoice === 'babysitter';
+                \Log::info('Cas 4: préférence vide/null', ['canProceed' => $canProceed]);
+                return $canProceed;
                 
             case 4:
                 return count($this->children) > 0;

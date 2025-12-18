@@ -350,7 +350,7 @@
                                 <svg class="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                                 {{ number_format($utilisateur->note, 1) }}
                             </div>
-                            @if($babysitter->estDispo)
+                            @if($babysitter->estDisponible)
                             <div class="absolute top-3 left-3 bg-green-500/90 backdrop-blur-sm px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow-sm">
                                 Disponible
                             </div>
