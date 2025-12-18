@@ -46,11 +46,11 @@
                                     <h1 class="text-3xl font-bold text-gray-900">{{ $user->prenom }} {{ $user->nom }}</h1>
                                     <p class="text-gray-500 mt-1.5 text-base">{{ $user->email }}</p>
                                 </div>
-                                @if($intervenant->statut === 'EN_ATTENTE')
+                                @if($offre->statut === 'EN_ATTENTE')
                                     <span class="px-4 py-2 inline-flex text-sm font-semibold rounded-full bg-yellow-100 text-yellow-700">
                                         En attente
                                     </span>
-                                @elseif($intervenant->statut === 'VALIDE')
+                                @elseif($offre->statut === 'ACTIVE')
                                     <span class="px-4 py-2 inline-flex text-sm font-semibold rounded-full bg-green-100 text-green-700">
                                         Acceptée
                                     </span>
@@ -71,7 +71,7 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                     </svg>
-                                    Demande le {{ \Carbon\Carbon::parse($intervenant->created_at)->format('d M Y') }}
+                                    Demande le {{ $intervenant->created_at ? \Carbon\Carbon::parse($intervenant->created_at)->format('d M Y') : 'N/A' }}
                                 </span>
                             </div>
                         </div>
@@ -145,7 +145,7 @@
                                             </div>
                                         @endif
                                         
-                                        @if($professeurData->cin_document)
+                                        @if($professeurData->CIN)
                                             <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
                                                 <div class="flex items-center gap-3">
                                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +153,7 @@
                                                     </svg>
                                                     <span class="text-sm font-medium text-gray-700">Document CIN</span>
                                                 </div>
-                                                <a href="{{ asset('storage/' . $professeurData->cin_document) }}" 
+                                                <a href="{{ asset('storage/' . $professeurData->CIN) }}" 
                                                    target="_blank" 
                                                    class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
                                                     Voir
@@ -327,7 +327,7 @@
                 </div>
 
                 {{-- Boutons d'action en bas de la page --}}
-                @if($intervenant->statut === 'EN_ATTENTE')
+                @if($offre && $offre->statut === 'EN_ATTENTE')
                     <div class="mt-6 pt-6 border-t border-gray-100 flex justify-end gap-3 px-8 pb-8">
                         <button 
                             wire:click="openRefusalModal"
@@ -349,7 +349,7 @@
 
     {{-- Modal de refus --}}
     @if($showRefusalModal)
-        <div class="fixed inset-0 flex items-center justify-center z-50 p-4" wire:click.self="closeRefusalModal">
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" wire:click.self="closeRefusalModal">
             <div class="bg-white rounded-2xl max-w-md w-full shadow-xl">
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-900 mb-4">Motif du refus</h3>

@@ -1,5 +1,12 @@
 @php
-    $babysitterName = $babysitter?->utilisateur?->prenom . ' ' . $babysitter?->utilisateur?->nom ?? 'Babysitter';
+    // Ensure $babysitter is always defined to avoid undefined variable errors in views
+    $babysitter = $babysitter ?? null;
+
+    // Build a safe display name
+    $given = $babysitter?->utilisateur?->prenom ?? '';
+    $family = $babysitter?->utilisateur?->nom ?? '';
+    $babysitterName = trim(sprintf('%s %s', $given, $family)) ?: 'Babysitter';
+
     $babysitterRating = $babysitter?->utilisateur?->note ?? 0;
     $babysitterPhoto = $babysitter?->utilisateur?->photo ?? null;
     $pendingRequestsCount = \App\Models\Babysitting\DemandeIntervention::where('idIntervenant', auth()->id())
@@ -49,6 +56,17 @@
 
     <!-- Navigation -->
     <nav class="p-4">
+        <!-- Return Button -->
+        <div class="mb-4">
+            <a href="{{ route('intervenant.hub') }}" 
+               class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Retour à l'espace intervenant</span>
+            </a>
+        </div>
+        
         <ul class="space-y-2">
             <li>
                 <a href="{{ route('babysitter.dashboard') }}" wire:navigate
@@ -63,9 +81,9 @@
             </li>
 
             <li>
-                <a href="#"
+                <a href="{{ route('demandes-sidebar') }}"
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
-                          {{ request()->routeIs('babysitter.requests') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                          {{ request()->routeIs('demandes-sidebar') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -119,19 +137,7 @@
             </li>
 
             <li>
-                <a href="#"
-                    class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
-                          {{ request()->routeIs('babysitter.feedback') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                    </svg>
-                    <span>Feedback</span>
-                </a>
-            </li>
-
-            <li>
-                <a href="{{ route('babysitter.profile') }}" wire:navigate
+                <a href="{{ route('babysitter.profile') }}"
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
                           {{ request()->routeIs('babysitter.profile') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

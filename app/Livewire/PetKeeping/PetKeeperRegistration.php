@@ -2,13 +2,13 @@
 
 namespace App\Livewire\PetKeeping;
 
+use App\Mail\PetKeeping\AdminAccountAlerte;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Shared\Utilisateur;
 use App\Models\Shared\Intervenant;
 use App\Models\PetKeeping\PetKeeper;
 use App\Models\PetKeeping\PetKeeperCertification;
-use App\Models\PetKeeping\PaymentCriteria;
 use App\Models\Shared\Localisation;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -16,8 +16,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PetKeeping\PetKeeperEmailVerification;
+use App\Mail\PetKeeping\WelcomePetKeeper;
 use App\Models\PetKeeping\PetKeeping;
+use App\Models\Shared\Admin;
 use App\Models\Shared\Disponibilite;
+use App\Models\Shared\OffreService;
 use App\Models\Shared\Service;
 
 class PetKeeperRegistration extends Component
@@ -45,16 +48,16 @@ class PetKeeperRegistration extends Component
     public ?string $generated_verification_code = null;
     public ?\Carbon\Carbon $verification_code_expires_at = null;
     
-    // Étape 2: Contact
+    // Étape 3: Contact (Note: Step 2 is verification)
     public $adresse;
     public $ville;
     public $code_postal;
     public $pays = '';
     public $profile_photo;
     
-    // Étape 3: Professionnel
+    // Étape 5: Professionnel (Note: Step 4 is Services)
     public $specialite;
-    public $years_experience = 0;
+    public $years_experience = '';
     public $certificationList = [
         'Certificat de capacité animaux domestiques',
         'Formation première secours animaliers',
@@ -64,31 +67,31 @@ class PetKeeperRegistration extends Component
         'ACACED (Attestation de connaissances)'
     ];
 
+    // Liste des intervalles d'expérience avec valeurs numériques
+    public $experienceIntervals = [
+        '0' => 'Moins de 6 mois',
+        '1' => '6 mois à 1 an',
+        '3' => '1 à 3 ans',
+        '5' => '3 à 5 ans',
+        '8' => '5 à 10 ans',
+        '15' => 'Plus de 10 ans'
+    ];
 
-    // Etape 4: Creation du service
-
+    // Étape 4: Création du service
     public $number_of_services = 0;
     public $max_services = 2;
     public $services = [];
-   
     
-    // Étape 5: Compétences
+    // Étape 6: Disponibilités
     public $certifications = [];
     public $special_skills = [];
     public $availabilities = [];
     
-    // Étape 6: Documents
+    // Étape 7: Documents
     public $criminal_record;
     public $proof_of_address;
     public $animal_certificates = [];
 
-
-    
-
-    
-    
-    
-    
     public $days = [
         'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 
         'Vendredi', 'Samedi', 'Dimanche'
@@ -176,8 +179,6 @@ class PetKeeperRegistration extends Component
     {
         $this->validateCurrentStep();
 
-        
-
         if ($this->currentStep === 2 && !$this->verifyEmailCode()) {
             return;
         }
@@ -227,17 +228,18 @@ class PetKeeperRegistration extends Component
                 'dateNaissance' => 'required|date|before:-18 years',
                 'telephone' => 'required|string|max:20',
             ],
-            // 2 => [
-            //     'verification_code' => 'required|numeric|max:10',
-            // ],
+            2 => [
+                'verification_code_full' => 'required|numeric|digits:10',
+            ],
             3 => [
                 'adresse' => 'required|string|max:255',
                 'ville' => 'required|string|max:100',
                 'code_postal' => 'required|string|max:10',
                 'pays' => 'required|string|max:50',
+                'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:10240',
             ],
             4 => [
-                'services' => 'required|array|min:1', 
+                'services' => 'required|array|min:1',
                 'services.*.service_name' => 'required|string|max:255',
                 'services.*.service_description' => 'nullable|string|max:1000',
                 'services.*.service_status' => 'nullable|string|in:ACTIVE,INACTIVE,ARCHIVED',
@@ -251,7 +253,7 @@ class PetKeeperRegistration extends Component
             ],
             5 => [
                 'specialite' => 'required|string|max:255',
-                'years_experience' => 'required|integer|min:0|max:50',
+                'years_experience' => 'required|string',
                 'certifications' => 'array',
             ],
             6 => [
@@ -268,7 +270,7 @@ class PetKeeperRegistration extends Component
     public function updated($propertyName)
     {
         if (in_array($propertyName, ['criminal_record', 'proof_of_address'])) {
-            $this->validateOnly($propertyName, $this->getValidationRules()[5]);
+            $this->validateOnly($propertyName, $this->getValidationRules()[7]);
             
             $file = $this->{$propertyName};
             if ($file && $file->getSize() > 15 * 1024 * 1024) {
@@ -285,17 +287,24 @@ class PetKeeperRegistration extends Component
                 }
             }
         }
+        
+        if ($propertyName === 'profile_photo') {
+            $this->validateOnly($propertyName, $this->getValidationRules()[3]);
+            
+            if ($this->profile_photo && $this->profile_photo->getSize() > 10 * 1024 * 1024) {
+                $this->addError($propertyName, 'La photo de profil est trop volumineuse (max 10MB)');
+                $this->{$propertyName} = null;
+            }
+        }
     }
     
     public function submit()
     {
-        
         $this->validateAll();
 
-      
-        // if (!$this->validateFileUploads()) {
-        //     return;
-        // }
+        if (!$this->validateFileUploads()) {
+            return;
+        }
 
         try {
             DB::beginTransaction();
@@ -314,14 +323,12 @@ class PetKeeperRegistration extends Component
                 'idAdmin'     => null,
             ]);
 
-            
             $intervenant = Intervenant::create([
-                'idIntervenant' => $utilisateur->idUser,
+                'IdIntervenant' => $utilisateur->idUser,
                 'statut'        => 'EN_ATTENTE',
                 'idAdmin'       => null,
             ]);
 
-            
             Localisation::create([
                 'idUser'   => $utilisateur->idUser,
                 'ville'    => $this->ville,
@@ -330,7 +337,6 @@ class PetKeeperRegistration extends Component
                 'longitude'=> 0,
             ]);
 
-            
             $petKeeper = PetKeeper::create([
                 'idPetKeeper'              => $utilisateur->idUser,
                 'nombres_services_demandes'=> 0,
@@ -338,12 +344,10 @@ class PetKeeperRegistration extends Component
                 'years_of_experience'      => $this->years_experience
             ]);
 
-            
             if (!$this->handleFileUploads($utilisateur, $petKeeper)) {
                 throw new \Exception("Erreur lors de l'upload des fichiers");
             }
 
-            
             foreach ($this->certifications as $cert) {
                 if (!empty($cert)) {
                     PetKeeperCertification::create([
@@ -354,9 +358,7 @@ class PetKeeperRegistration extends Component
                 }
             }
 
-
-
-            //Create Services
+            // Create Services
             foreach ($this->services as $service) {
                 if (!$service) continue;
 
@@ -376,25 +378,26 @@ class PetKeeperRegistration extends Component
                     'payment_criteria' => $service['service_payment_criteria'],
                     'base_price' => $service['service_base_price'],
                 ]);
+
+
+                OffreService::create([
+                    'idIntervenant' => $petKeeper->idPetKeeper,
+                    'idService' => $g_service->idService,
+                    'statut' => 'ACTIVE'
+                ]);
             }
 
-
-
-            //Storing availabilities
-
+            // Storing availabilities
             foreach ($this->availabilities as $day => $slots) {
                 foreach ($slots as $slot) {
-                    if (
-                        empty($slot['start']) ||
-                        empty($slot['end'])
-                    ) {
+                    if (empty($slot['start']) || empty($slot['end'])) {
                         continue;
                     }
                     
                     Disponibilite::create([
                         'heureDebut'     => $slot['start'],
                         'heureFin'       => $slot['end'],
-                        'jourSemaine'    => $day,              
+                        'jourSemaine'    => $day,
                         'est_reccurent'  => true,
                         'date_specifique' => null,
                         'idIntervenant'  => $petKeeper->idPetKeeper,
@@ -402,8 +405,42 @@ class PetKeeperRegistration extends Component
                 }
             }
 
+            // Send notification to admins
+            $admins = Admin::all();
+            foreach ($admins as $admin) {
+                Mail::to($admin->emailAdmin)->send(new AdminAccountAlerte(
+                    $this->email,
+                    $this->prenom,
+                    $this->nom,
+                    [$admin->emailAdmin],
+                    [
+                        'telephone' => $this->telephone,
+                        'years_of_experience' => $this->years_experience,
+                        'number_of_services' => count($this->services),
+                        'specialite' => $this->specialite,
+                        'idPetKeeper' => $petKeeper->idPetKeeper,
+                    ]
+                ));
+            }
+
+            // Welcome email to petkeeper
+            Mail::to($this->email)->send(
+                new WelcomePetKeeper(
+                    $this->email,
+                    $this->prenom,
+                    $this->nom,
+                )
+            );
+
+
+            
+
             DB::commit();
-            $this->showSuccessMessage($utilisateur, $petKeeper);
+            
+            // Show success message
+            //$this->showSuccessMessage($utilisateur, $petKeeper);
+            
+            return redirect()->route('login.store');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -425,7 +462,7 @@ class PetKeeperRegistration extends Component
     
     private function validateFileUploads()
     {
-        $rules = $this->getValidationRules()[5];
+        $rules = $this->getValidationRules()[7];
         
         try {
             if ($this->criminal_record) {
@@ -538,7 +575,6 @@ class PetKeeperRegistration extends Component
     
     private function showSuccessMessage($utilisateur, $petKeeper)
     {
-        
         $documents = PetKeeperCertification::where('idPetKeeper', $petKeeper->idPetKeeper)->get();
 
         $documentList = [];
@@ -551,13 +587,10 @@ class PetKeeperRegistration extends Component
             ];
         }
 
-        
         $message  = "<strong>Inscription PetKeeper effectuée avec succès.</strong><br><br>";
         $message .= "<strong>Résumé :</strong><br>";
         $message .= "• Email : <strong>{$utilisateur->email}</strong><br>";
-
-        
-
+        $message .= "• Nombre de services créés : <strong>" . count($this->services) . "</strong><br>";
         $message .= "• Nombre de documents enregistrés : <strong>" . count($documentList) . "</strong><br><br>";
 
         $message .= "<strong>Documents :</strong><br>";
@@ -569,18 +602,16 @@ class PetKeeperRegistration extends Component
             $message .= "<br>";
         }
 
-        
         session()->flash('registration_success', $message);
 
-        
         $this->registrationComplete = true;
 
-        
         Log::info('REGISTRATION COMPLETED', [
             'user_id'        => $utilisateur->idUser,
             'email'          => $utilisateur->email,
             'petkeeper_id'   => $petKeeper->idPetKeeper,
-            'documents_count'=> count($documentList)
+            'documents_count'=> count($documentList),
+            'services_count' => count($this->services)
         ]);
     }
 
@@ -634,7 +665,6 @@ class PetKeeperRegistration extends Component
 
     public function addService()
     {
-        
         if (count($this->services) < $this->max_services) {
             $this->dispatch('service-added');
             $this->services[] = [
@@ -656,9 +686,9 @@ class PetKeeperRegistration extends Component
 
     public function removeService($index)
     {
-        if ($index > 0 && isset($this->services[$index])) {
+        if ($index > 0 && isset($this->services[$index]) && count($this->services) > 1) {
             unset($this->services[$index]);
-            $this->services = array_values($this->services); // Reindex array
+            $this->services = array_values($this->services);
             $this->number_of_services = count($this->services);
         }
     }

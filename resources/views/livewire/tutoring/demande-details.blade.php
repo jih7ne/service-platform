@@ -3,7 +3,7 @@
     {{-- SIDEBAR --}}
     <aside class="w-72 bg-white border-r border-gray-100 flex flex-col justify-between shadow-sm z-20">
         <div>
-            <div class="px-8 py-6 flex items-center gap-2">
+            <div class="px-14 py-6 flex items-center gap-2">
                 <span class="text-2xl font-bold text-gray-800">Helpora</span>
             </div>
             
@@ -22,6 +22,7 @@
             </div>
 
             <nav class="px-4 space-y-1">
+                <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">Menu Principal</p>
                 <a href="{{ route('tutoring.dashboard') }}" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 rounded-xl font-medium transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                     Tableau de bord
@@ -29,6 +30,9 @@
                 <a href="{{ route('tutoring.requests') }}" class="flex items-center gap-3 px-4 py-3 bg-[#EFF6FF] text-blue-700 rounded-xl font-bold transition-all">
                     <svg class="w-5 h-5 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                     Mes demandes
+                    @if(($enAttente ?? 0) > 0)
+                        <span class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{{ $enAttente }}</span>
+                    @endif
                 </a>
                 <a href="#" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 rounded-xl font-medium transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Disponibilité</a>
                 <a href="{{ route('tutoring.clients') }}" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 rounded-xl font-medium transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg> Mes clients</a>
@@ -126,91 +130,168 @@
                     @endif
                 </div>
 
-                {{-- BLOC LOCALISATION --}}
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        @if($demande->type_service === 'enligne')
-                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                            Mode de cours
-                        @else
-                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            Adresse du cours
-                        @endif
-                    </h3>
+                {{-- BLOC LOCALISATION (MASQUÉ SI ACCEPTÉE) --}}
+                @if($demande->statut === 'en_attente')
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            @if($demande->type_service === 'enligne')
+                                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                Mode de cours
+                            @else
+                                <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                Adresse du cours
+                            @endif
+                        </h3>
 
-                    @if($demande->type_service === 'enligne')
-                        <div class="bg-purple-50 text-purple-800 p-6 rounded-xl border border-purple-100 flex items-center gap-4">
-                            <div class="bg-white p-3 rounded-full text-purple-600 shadow-sm">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        @if($demande->type_service === 'enligne')
+                            <div class="bg-purple-50 text-purple-800 p-6 rounded-xl border border-purple-100 flex items-center gap-4">
+                                <div class="bg-white p-3 rounded-full text-purple-600 shadow-sm">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                </div>
+                                <p class="font-bold text-lg">Cours en ligne</p>
                             </div>
-                            <p class="font-bold text-lg">Cours en ligne</p>
-                        </div>
-                    @else
-                        <div class="flex items-start gap-4">
-                            <div class="bg-orange-100 p-3 rounded-full text-orange-600">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        @else
+                            <div class="flex items-start gap-4">
+                                <div class="bg-orange-100 p-3 rounded-full text-orange-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-900 text-lg">{{ $demande->client_adresse }}</p>
+                                    <p class="text-gray-500 font-medium">{{ $demande->client_ville }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="font-bold text-gray-900 text-lg">{{ $demande->client_adresse }}</p>
-                                <p class="text-gray-500 font-medium">{{ $demande->client_ville }}</p>
+                            <div class="mt-4 w-full h-40 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200">
+                                <div class="text-center">
+                                    <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 7m0 13V7"></path></svg>
+                                    <span>Aperçu de la carte</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="mt-4 w-full h-40 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200">
-                            <div class="text-center">
-                                <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 7m0 13V7"></path></svg>
-                                <span>Aperçu de la carte</span>
-                            </div>
-                        </div>
-                    @endif
-                </div>
+                        @endif
+                    </div>
+                @endif
 
             </div>
 
             <!-- Colonne Droite (Actions) -->
             <div class="lg:col-span-1 space-y-6">
                 
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-6">
-                    <h3 class="font-bold text-gray-900 mb-4">Action requise</h3>
-                    <p class="text-sm text-gray-500 mb-6">En acceptant, vous vous engagez à assurer ce cours. Un email de confirmation sera envoyé.</p>
-                    
-                    <div class="space-y-3">
-                        <button 
-                            wire:click="accepter" 
-                            wire:confirm="Confirmer l'acceptation ?"
-                            wire:loading.attr="disabled"
-                            class="w-full py-3 bg-[#1E40AF] hover:bg-blue-800 text-white font-bold rounded-xl shadow-lg shadow-blue-100 transition-all flex justify-center items-center gap-2">
-                            
-                            <span wire:loading.remove wire:target="accepter">
-                                <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                Accepter la demande
-                            </span>
-                            <span wire:loading wire:target="accepter">
-                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            </span>
-                        </button>
+                <!-- ACTIONS SELON STATUT -->
+                @if($demande->statut === 'en_attente')
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-6">
+                        <h3 class="font-bold text-gray-900 mb-4">Action requise</h3>
+                        <p class="text-sm text-gray-500 mb-6">En acceptant, vous vous engagez à assurer ce cours. Un email de confirmation sera envoyé.</p>
                         
-                        <button 
-                            wire:click="refuser" 
-                            wire:confirm="Refuser définitivement cette demande ?"
-                            wire:loading.attr="disabled"
-                            class="w-full py-3 bg-white border-2 border-gray-200 text-gray-600 hover:border-red-200 hover:text-red-600 font-bold rounded-xl transition-all flex justify-center items-center gap-2">
-                            <span wire:loading.remove wire:target="refuser">Refuser</span>
-                            <span wire:loading wire:target="refuser" class="text-red-600">
-                                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            </span>
-                        </button>
-                    </div>
+                        <div class="space-y-3">
+                            <button 
+                                wire:click="accepter" 
+                                wire:confirm="Confirmer l'acceptation ?"
+                                wire:loading.attr="disabled"
+                                class="w-full py-3 bg-[#1E40AF] hover:bg-blue-800 text-white font-bold rounded-xl shadow-lg shadow-blue-100 transition-all flex justify-center items-center gap-2">
+                                
+                                <span wire:loading.remove wire:target="accepter">
+                                    <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    Accepter la demande
+                                </span>
+                                <span wire:loading wire:target="accepter">
+                                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                </span>
+                            </button>
+                            
+                            <button 
+                                wire:click="refuser" 
+                                wire:confirm="Refuser définitivement cette demande ?"
+                                wire:loading.attr="disabled"
+                                class="w-full py-3 bg-white border-2 border-gray-200 text-gray-600 hover:border-red-200 hover:text-red-600 font-bold rounded-xl transition-all flex justify-center items-center gap-2">
+                                <span wire:loading.remove wire:target="refuser">Refuser</span>
+                                <span wire:loading wire:target="refuser" class="text-red-600">
+                                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                </span>
+                            </button>
+                        </div>
 
-                    @if($demande->client_tel)
-                    <div class="mt-6 pt-6 border-t border-gray-100">
-                        <p class="text-xs font-bold text-gray-400 uppercase mb-2">Contact</p>
-                        <p class="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                            {{ $demande->client_tel }}
-                        </p>
+                        @if($demande->client_tel)
+                        <div class="mt-6 pt-6 border-t border-gray-100">
+                            <p class="text-xs font-bold text-gray-400 uppercase mb-2">Contact</p>
+                            <p class="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                {{ $demande->client_tel }}
+                            </p>
+                        </div>
+                        @endif
                     </div>
-                    @endif
-                </div>
+                @else
+                    <!-- STATUT ACCEPTÉ/TERMINE/REFUSÉ -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-6">
+                        <h3 class="font-bold text-gray-900 mb-4">Statut de la demande</h3>
+                        
+                        <!-- Badge Statut -->
+                        <div class="mb-6">
+                            @if($demande->statut === 'validée')
+                                <span class="inline-flex items-center bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-bold border border-green-100">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Acceptée
+                                </span>
+                            @elseif($demande->statut === 'terminée' || $demande->statut === 'completed')
+                                <span class="inline-flex items-center bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-bold border border-blue-100">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Terminée
+                                </span>
+                            @else
+                                <span class="inline-flex items-center bg-gray-50 text-gray-700 px-4 py-2 rounded-full text-sm font-bold border border-gray-100">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    {{ $demande->statut === 'refusée' ? 'Refusée' : 'Annulée' }}
+                                </span>
+                            @endif
+                        </div>
+
+                        <!-- Actions selon statut -->
+                        <div class="space-y-3">
+                            <!-- Bouton Feedback pour demandes terminées OU acceptées avec date passée -->
+                            @if($demande->statut === 'terminée' || $demande->statut === 'completed' || 
+                               ($demande->statut === 'validée' && \Carbon\Carbon::parse($demande->dateSouhaitee)->isPast()))
+                                @php
+                                    $feedbackUrl = route('feedback.tutoring', [
+                                        'idService' => 1,
+                                        'demandeId' => $demande->idDemande,
+                                        'auteurId' => auth()->id(),
+                                        'cibleId' => $demande->idClient,
+                                        'typeAuteur' => 'intervenant'
+                                    ]);
+                                @endphp
+                                
+                                <a href="{{ $feedbackUrl }}" 
+                                   class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-100 transition-all flex justify-center items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                                    Donner un avis
+                                </a>
+                            @endif
+                            
+                            <!-- Bouton Voir profil (toujours disponible) -->
+                            <a href="{{ route('tutoring.student.profile', ['id' => $demande->idClient, 'source' => 'details', 'demande_id' => $demande->idDemande]) }}" 
+                               class="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-all flex justify-center items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                Voir profil complet
+                            </a>
+                        </div>
+
+                        <!-- Message d'information -->
+                        <div class="mt-6 pt-6 border-t border-gray-100">
+                            <p class="text-xs text-gray-500 text-center">
+                                @if($demande->statut === 'validée')
+                                    @if(\Carbon\Carbon::parse($demande->dateSouhaitee)->isPast())
+                                        L'intervention est passée. N'hésitez pas à laisser un avis !
+                                    @else
+                                        Les informations de contact sont disponibles une fois la demande acceptée.
+                                    @endif
+                                @elseif($demande->statut === 'terminée' || $demande->statut === 'completed')
+                                    L'intervention est terminée. N'hésitez pas à laisser un avis !
+                                @else
+                                    Cette demande a été {{ $demande->statut === 'refusée' ? 'refusée' : 'annulée' }}.
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                @endif
 
             </div>
 

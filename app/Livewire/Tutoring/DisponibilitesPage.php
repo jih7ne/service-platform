@@ -8,16 +8,26 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Shared\Intervenant;
 use Carbon\Carbon;
 
-// On hérite de la classe partagée pour respecter les règles du groupe
 class DisponibilitesPage extends GestionDisponibilites
 {
+    public $enAttente = 0;
     public $prenom;
     public $photo;
 
-    // Variables Stats (Spécifiques à ton affichage)
     public $disponibilitesCount = 0;
     public $totalHeures = 0;
     public $joursDisponibles = 0;
+
+    public function refreshPendingRequests(): void
+    {
+        $user = Auth::user();
+        if (!$user) { $this->enAttente = 0; return; }
+
+        $this->enAttente = (int) DB::table('demandes_intervention')
+            ->where('idIntervenant', $user->idUser)
+            ->where('statut', 'en_attente')
+            ->count();
+    }
 
     public function mount($intervenantId = null)
     {
@@ -25,26 +35,30 @@ class DisponibilitesPage extends GestionDisponibilites
         $this->prenom = $user->prenom;
         $this->photo = $user->photo;
 
-        // 1. Récupération de l'ID Intervenant (Ta logique spécifique)
+        // Sidebar badge count
+        $this->refreshPendingRequests();
+
         if (!$intervenantId) {
             $intervenantData = Intervenant::where('IdIntervenant', $user->idUser)->first();
             if ($intervenantData) {
-                $intervenantId = $intervenantData->id; // ID table intervenants
+                // UTILISE user->idUser au lieu de intervenantData->id
+                $intervenantId = $user->idUser;
             }
         }
 
-        // 2. Appel du parent (Charge les disponibilités, initialise la semaine...)
         parent::mount($intervenantId);
-
-        // 3. Calculer tes stats après le chargement
         $this->calculateStats();
     }
 
-    // --- SURCHARGE : On ajoute le calcul des stats après chaque sauvegarde ---
+    public function hydrate(): void
+    {
+        $this->refreshPendingRequests();
+    }
+
     public function saveDisponibilite()
     {
-        parent::saveDisponibilite(); // Fait le travail standard
-        $this->calculateStats();     // Met à jour tes compteurs
+        parent::saveDisponibilite();
+        $this->calculateStats();
     }
 
     public function deleteDisponibilite($id)
@@ -53,10 +67,8 @@ class DisponibilitesPage extends GestionDisponibilites
         $this->calculateStats();
     }
 
-    // --- TA FONCTION DE STATS (Récupérée du code Babysitter) ---
     public function calculateStats()
     {
-        // 1. Récupérer tous les créneaux affichés cette semaine
         $weekDispos = $this->disponibilitesForWeek; 
         $flatDispos = collect();
 
@@ -70,24 +82,17 @@ class DisponibilitesPage extends GestionDisponibilites
             }
         }
 
-        // 2. Compter le nombre de créneaux
         $this->disponibilitesCount = $flatDispos->count();
 
-        // 3. Calculer le cumul des heures (MÉTHODE MATHÉMATIQUE SÛRE)
         $totalMinutes = $flatDispos->sum(function ($dispo) {
-            
-            // On s'assure que c'est bien des objets Carbon ou on parse
             $debut = \Carbon\Carbon::parse($dispo->heureDebut);
             $fin = \Carbon\Carbon::parse($dispo->heureFin);
 
-            // On convertit tout en minutes depuis minuit (ex: 14:00 = 840 min)
             $minutesDebut = ($debut->hour * 60) + $debut->minute;
             $minutesFin = ($fin->hour * 60) + $fin->minute;
 
             $duree = $minutesFin - $minutesDebut;
 
-            // Gestion du cas "Nuit" (ex: 22h00 -> 01h00 du matin)
-            // Si la durée est négative, ça veut dire qu'on a passé minuit, donc on ajoute 24h (1440 min)
             if ($duree < 0) {
                 $duree += 1440;
             }
@@ -95,12 +100,9 @@ class DisponibilitesPage extends GestionDisponibilites
             return $duree;
         });
 
-        // Conversion en heures avec 1 décimale (ex: 22.5) et VALEUR ABSOLUE par sécurité (abs)
         $this->totalHeures = abs(round($totalMinutes / 60, 1));
 
-        // 4. Compter les jours actifs
         $joursUniques = $flatDispos->map(function ($dispo) {
-            // Si c'est récurrent on prend le jour, sinon la date
             return $dispo->est_reccurent ? $dispo->jourSemaine : \Carbon\Carbon::parse($dispo->date_specifique)->format('l');
         })->unique();
 
@@ -113,7 +115,10 @@ class DisponibilitesPage extends GestionDisponibilites
         session()->regenerateToken();
         return redirect('/');
     }
-
+   public function goToHub()
+    {
+        return redirect()->route('intervenant.hub');
+    }
     public function render()
     {
         return view('livewire.tutoring.disponibilites-page');

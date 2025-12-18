@@ -7,8 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     @livewireStyles
 </head>
-<body class="bg-gray-50">
-    @yield('content')
+<body class="bg-gray-50 font-sans leading-normal tracking-normal flex flex-col min-h-screen">
+    <!-- Header -->
+    @livewire('shared.header')
+    
+    <!-- Main Content -->
+    <main class="flex-grow">
+        @yield('content')
+    </main>
     
     @livewireScripts
     @stack('scripts')

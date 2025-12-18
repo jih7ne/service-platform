@@ -1,4 +1,5 @@
 <div class="min-h-screen bg-[#F7F7F7]">
+    @php $babysitter = $babysitter ?? null; @endphp
     @if(isset($error))
         {{-- Message d'erreur --}}
         <div class="min-h-screen bg-[#F7F7F7] flex items-center justify-center p-4">
@@ -48,10 +49,12 @@
 
                     <div class="bg-[#F9E0ED] rounded-2xl p-6 mb-8">
                         <p class="text-[#B82E6E] font-bold">
-                            @foreach($daysOfWeek as $day)
-                                @if($day['id'] === $selectedDay)
-                                    {{ $day['label'] }}
-                                @endif
+                            @foreach($selectedDays as $selectedDay)
+                                @foreach($daysOfWeek as $day)
+                                    @if($day['id'] === $selectedDay)
+                                        {{ $day['label'] }} 
+                                    @endif
+                                @endforeach
                             @endforeach
                             • {{ $startTime }} - {{ $endTime }}
                         </p>
@@ -93,7 +96,7 @@
                         <a href="/liste-babysitter" wire:navigate class="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold text-center">
                             Retour à la recherche
                         </a>
-                        <a href="/" wire:navigate class="flex-1 px-6 py-4 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center" style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
+                        <a href="/" wire:navigate class="flex-1 px-6 py-4 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center" style="box-shadow: 0 4px 20px rgba(184, 46,110, 0.3)">
                             Retour à l'accueil
                         </a>
                     </div>
@@ -209,67 +212,124 @@
                         {{-- Sélection du jour --}}
                         <div class="mb-6">
                             <label class="block text-sm mb-3 text-[#0a0a0a] font-bold">
-                                Choisissez un jour
+                                Choisissez un ou plusieurs jours
                             </label>
                             <div class="grid grid-cols-7 gap-2">
                                 @foreach($daysOfWeek as $day)
                                     @php
                                         $hasSlots = isset($babysitter['availability'][$day['id']]) && count($babysitter['availability'][$day['id']]) > 0;
+                                        $isSelected = in_array($day['id'], $selectedDays);
                                     @endphp
-                                    <button wire:click="$set('selectedDay', '{{ $day['id'] }}')" type="button"
+                                    <button wire:click="toggleDay('{{ $day['id'] }}')" type="button"
                                         @if(!$hasSlots) disabled @endif
                                         class="p-4 rounded-xl transition-all
-                                        {{ $selectedDay === $day['id'] ? 'bg-[#B82E6E] text-white' : '' }}
-                                        {{ $hasSlots && $selectedDay !== $day['id'] ? 'bg-white border-2 border-gray-200 hover:border-[#B82E6E] text-gray-700' : '' }}
+                                        {{ $isSelected ? 'bg-[#B82E6E] text-white' : '' }}
+                                        {{ $hasSlots && !$isSelected ? 'bg-white border-2 border-gray-200 hover:border-[#B82E6E] text-gray-700' : '' }}
                                         {{ !$hasSlots ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '' }}">
                                         <div class="text-xs mb-1 font-semibold">
                                             {{ substr($day['label'], 0, 3) }}
                                         </div>
                                         <div class="text-xs font-medium">
-                                            {{ $hasSlots ? '✓' : '✕' }}
+                                            {{ $hasSlots ? ($isSelected ? '✓' : '○') : '✕' }}
                                         </div>
                                     </button>
                                 @endforeach
                             </div>
+                            @if(!empty($selectedDays))
+                                <div class="mt-3 p-3 bg-blue-50 rounded-lg">
+                                    <p class="text-sm text-blue-800">
+                                        <strong>Jours sélectionnés :</strong> 
+                                        @foreach($selectedDays as $index => $day)
+                                            @foreach($daysOfWeek as $dayItem)
+                                                @if($dayItem['id'] === $day){{ $dayItem['label'] }}@endif
+                                            @endforeach
+                                            {{ $index < count($selectedDays) - 1 ? ', ' : '' }}
+                                        @endforeach
+                                    </p>
+                                </div>
+                            @endif
                         </div>
 
                         {{-- Créneaux horaires disponibles --}}
-                        @if($selectedDay)
+                        @if(!empty($selectedDays))
                             <div class="bg-[#F7F7F7] rounded-2xl p-6">
                                 <h3 class="text-lg mb-4 text-black font-bold">
-                                    Créneaux disponibles pour 
-                                    @foreach($daysOfWeek as $day)
-                                        @if($day['id'] === $selectedDay){{ $day['label'] }}@endif
-                                    @endforeach
+                                    Créneaux disponibles pour les jours sélectionnés
                                 </h3>
                                 
-                                {{-- Affichage des créneaux disponibles --}}
+                                {{-- Affichage des créneaux disponibles pour chaque jour --}}
                                 <div class="mb-6">
                                     <p class="text-sm mb-3 text-gray-500 font-semibold">
                                         Cette babysitter est disponible durant les plages suivantes :
                                     </p>
-                                    <div class="flex flex-wrap gap-2">
-                                        @foreach($babysitter['availability'][$selectedDay] as $slot)
-                                            <div class="flex items-center gap-2 px-4 py-2 bg-white rounded-xl border-2 border-[#B82E6E]">
-                                                <svg class="w-4 h-4 text-[#B82E6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                                <span class="text-sm text-[#B82E6E] font-bold">{{ $slot }}</span>
+                                    @foreach($selectedDays as $day)
+                                        @if(isset($babysitter['availability'][$day]) && count($babysitter['availability'][$day]) > 0)
+                                            <div class="mb-3">
+                                                <h4 class="text-sm font-semibold text-gray-700 mb-2">
+                                                    @foreach($daysOfWeek as $dayItem)
+                                                        @if($dayItem['id'] === $day){{ $dayItem['label'] }}@endif
+                                                    @endforeach
+                                                </h4>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach($babysitter['availability'][$day] as $slot)
+                                                        <div class="flex items-center gap-2 px-3 py-1 bg-white rounded-lg border border-[#B82E6E]">
+                                                            <svg class="w-3 h-3 text-[#B82E6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                            </svg>
+                                                            <span class="text-xs text-[#B82E6E] font-bold">{{ $slot }}</span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
                                             </div>
-                                        @endforeach
-                                    </div>
+                                        @endif
+                                    @endforeach
                                 </div>
 
-                                {{-- Sélection des heures personnalisées --}}
+                                {{-- Saisie manuelle des créneaux --}}
                                 <div class="bg-white rounded-xl p-6 border-2 border-gray-200">
                                     <h4 class="text-lg mb-4 text-black font-bold">
-                                        Choisissez vos horaires
+                                        Ajouter des créneaux horaires
                                     </h4>
                                     <p class="text-sm mb-4 text-gray-500 font-semibold">
-                                        Sélectionnez une heure de début et de fin dans les créneaux disponibles ci-dessus
+                                        Remplissez les heures de début et de fin, puis cliquez sur "+" pour ajouter le créneau à tous les jours sélectionnés.
                                     </p>
                                     
-                                    <div class="grid grid-cols-2 gap-4">
+                                    {{-- Message d'erreur en rose --}}
+                                    @if(session()->has('error'))
+                                        <div class="mb-4 p-3 bg-pink-50 rounded-lg border-2 border-pink-200">
+                                            <div class="flex items-start gap-2">
+                                                <svg class="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                <div>
+                                                    <p class="text-sm text-pink-800 font-semibold">
+                                                        {{ session('error') }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
+                                    <div class="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                                        <div class="flex items-start gap-2">
+                                            <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <div>
+                                                <p class="text-sm text-yellow-800 font-semibold">
+                                                    <strong>Important :</strong> Les créneaux doivent être dans les plages horaires disponibles du babysitter affichées ci-dessus.
+                                                </p>
+                                                <p class="text-xs text-yellow-700 mt-1">
+                                                    Exemple : Si le babysitter est disponible "08:00-12:00", vous pouvez choisir "08:00-10:00" mais pas "07:00-09:00"
+                                                </p>
+                                                <p class="text-xs text-yellow-700 mt-1">
+                                                    <strong>Attention :</strong> Les créneaux ne peuvent pas se chevaucher. Chaque créneau doit être distinct.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4 mb-4">
                                         <div>
                                             <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
                                                 Heure de début
@@ -278,7 +338,7 @@
                                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                <input type="time" wire:model.live="startTime"
+                                                <input type="time" wire:model.live="currentStartTime"
                                                     class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                             </div>
                                         </div>
@@ -290,44 +350,55 @@
                                                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                <input type="time" wire:model.live="endTime"
+                                                <input type="time" wire:model.live="currentEndTime"
                                                     class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    <div class="flex justify-center">
+                                        <button wire:click="addTimeSlot" type="button"
+                                            class="px-6 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#9c2360] transition-colors font-bold flex items-center gap-2">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                            </svg>
+                                            Ajouter le créneau
+                                        </button>
+                                    </div>
+                                </div>
 
-                                    @if($startTime && $endTime)
-                                        <div class="mt-4 p-4 bg-[#F9E0ED] rounded-xl">
-                                            <div class="flex items-center gap-3 mb-2">
-                                                <svg class="w-5 h-5 text-[#B82E6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                </svg>
-                                                <p class="text-[#B82E6E] font-bold">
-                                                    Horaires sélectionnés : {{ $startTime }} - {{ $endTime }}
-                                                </p>
-                                            </div>
-                                            <p class="text-sm text-gray-500 font-semibold">
-                                                Durée : 
-                                                @php
-                                                    $start = explode(':', $startTime);
-                                                    $end = explode(':', $endTime);
-                                                    $duration = ((int)$end[0] * 60 + (int)($end[1] ?? 0) - (int)$start[0] * 60 - (int)($start[1] ?? 0)) / 60;
-                                                    echo $duration > 0 ? number_format($duration, 1) . ' heure' . ($duration > 1 ? 's' : '') : 'Invalide';
-                                                @endphp
-                                            </p>
-                                            @if(!$this->isTimeSlotValid())
-                                                <div class="mt-3 p-3 bg-red-50 rounded-lg flex items-start gap-2">
-                                                    <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                                    </svg>
-                                                    <p class="text-sm text-[#dc2626] font-semibold">
-                                                        Les horaires sélectionnés ne correspondent pas aux créneaux disponibles
-                                                    </p>
+                                {{-- Résumé des créneaux sélectionnés --}}
+                                @if(!empty($selectedSlots))
+                                    <div class="mt-6 p-4 bg-green-50 rounded-xl border-2 border-green-200">
+                                        <h4 class="text-lg mb-3 text-green-800 font-bold">
+                                            Créneaux sélectionnés
+                                        </h4>
+                                        @foreach($selectedSlots as $day => $slots)
+                                            @if(!empty($slots))
+                                                <div class="mb-3 p-3 bg-white rounded-lg border border-green-200">
+                                                    <h5 class="text-sm font-semibold text-green-700 mb-2">
+                                                        @foreach($daysOfWeek as $dayItem)
+                                                            @if($dayItem['id'] === $day){{ $dayItem['label'] }}@endif
+                                                        @endforeach
+                                                    </h5>
+                                                    <div class="space-y-2">
+                                                        @foreach($slots as $slot)
+                                                            <div class="flex items-center justify-between p-2 bg-green-50 rounded">
+                                                                <span class="text-green-600 font-medium">{{ $slot }}</span>
+                                                                <button wire:click="removeSlot('{{ $day }}', '{{ $slot }}')" type="button"
+                                                                    class="text-red-500 hover:text-red-700 transition-colors">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 </div>
                                             @endif
-                                        </div>
-                                    @endif
-                                </div>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -651,8 +722,10 @@
                                             Date et horaires
                                         </p>
                                         <p class="text-black font-bold">
-                                            @foreach($daysOfWeek as $day)
-                                                @if($day['id'] === $selectedDay){{ $day['label'] }}@endif
+                                            @foreach($selectedDays as $selectedDay)
+                                                @foreach($daysOfWeek as $day)
+                                                    @if($day['id'] === $selectedDay){{ $day['label'] }}@endif
+                                                @endforeach
                                             @endforeach
                                             @if($startTime && $endTime)
                                                 • {{ $startTime }} - {{ $endTime }}
@@ -776,6 +849,7 @@
                         Retour
                     </button>
                 @endif
+                @auth
                 <button 
                     @if($currentStep === 5)
                         wire:click="confirmBooking"
@@ -797,6 +871,19 @@
                         </svg>
                     @endif
                 </button>
+                @else
+                <div class="flex-1 px-6 py-4 bg-gray-300 text-gray-600 rounded-xl font-bold text-center cursor-not-allowed">
+                    <div class="flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        <span>Connectez-vous pour demander un service</span>
+                    </div>
+                </div>
+                <a href="/connexion" class="flex-1 px-6 py-4 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center">
+                    Se connecter
+                </a>
+                @endauth
             </div>
         </div>
     @endif

@@ -9,18 +9,41 @@ use Livewire\Attributes\Computed;
 
 class MesClients extends Component
 {
+    public $enAttente = 0;
     public $prenom;
     public $photo;
     
     // Filtres
     public $search = '';
     public $filterStatus = 'all'; // 'all', 'en_cours', 'terminé'
-
+   public function goToHub()
+    {
+        return redirect()->route('intervenant.hub');
+    }
     public function mount()
     {
         $user = Auth::user();
         $this->prenom = $user->prenom;
         $this->photo = $user->photo;
+
+        // Sidebar badge count
+        $this->refreshPendingRequests();
+    }
+
+    public function refreshPendingRequests(): void
+    {
+        $user = Auth::user();
+        if (!$user) { $this->enAttente = 0; return; }
+
+        $this->enAttente = (int) DB::table('demandes_intervention')
+            ->where('idIntervenant', $user->idUser)
+            ->where('statut', 'en_attente')
+            ->count();
+    }
+
+    public function hydrate(): void
+    {
+        $this->refreshPendingRequests();
     }
 
     // --- CALCUL DES STATS GLOBALES ---

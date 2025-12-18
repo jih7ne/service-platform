@@ -11,7 +11,11 @@ use Carbon\Carbon;
 class AvisPage extends Component
 {
     use WithFileUploads;
-    public $babysitter;
+    // The intervenant id (generic) for which we load feedbacks
+    public $intervenantId;
+    // Theme to control accent colors (e.g., 'pink' or 'blue')
+    public $theme = 'pink';
+    public $serviceName = null; // Filter by service name (e.g., 'Soutien Scolaire', 'Babysitting')
     public $feedbacks = [];
     public $filterRating = 'all';
     public $filterDate = 'all';
@@ -27,71 +31,85 @@ class AvisPage extends Component
 
     public function mount()
     {
-        // Charger les données du babysitter pour la sidebar
-        $user = Auth::user();
-        $this->babysitter = $user->intervenant->babysitter ?? null;
-        
+        // The shared component expects an intervenantId to be provided by the caller.
+        // If not provided, try to fallback to the authenticated user id so existing usages keep working.
+        if (empty($this->intervenantId)) {
+            $this->intervenantId = Auth::id();
+        }
+
         $this->loadFeedbacks();
     }
 
     public function loadFeedbacks()
     {
-        $query = DB::table('feedbacks')
-            ->join('utilisateurs', 'feedbacks.idAuteur', '=', 'utilisateurs.idUser')
-            ->leftJoin('demandes_intervention', 'feedbacks.idDemande', '=', 'demandes_intervention.idDemande')
-            ->where('feedbacks.idCible', Auth::id())
-            ->where('feedbacks.typeAuteur', 'client')
-            ->where('feedbacks.estVisible', true)
-            ->select(
-                'feedbacks.*',
-                'utilisateurs.nom as client_nom',
-                'utilisateurs.prenom as client_prenom',
-                'utilisateurs.photo as client_photo',
-                'demandes_intervention.dateSouhaitee',
-                'demandes_intervention.statut as demande_statut'
-            );
+        try {
+            $query = DB::table('feedbacks')
+                ->join('utilisateurs', 'feedbacks.idAuteur', '=', 'utilisateurs.idUser')
+                ->leftJoin('demandes_intervention', 'feedbacks.idDemande', '=', 'demandes_intervention.idDemande')
+                ->leftJoin('services', 'demandes_intervention.idService', '=', 'services.idService')
+                ->where('feedbacks.idCible', $this->intervenantId)
+                ->where('feedbacks.typeAuteur', 'client')
+                ->where('feedbacks.estVisible', true)
+                ->when($this->serviceName, function ($q) {
+                    $q->where('services.nomService', $this->serviceName);
+                })
+                ->select(
+                    'feedbacks.*',
+                    'utilisateurs.nom as client_nom',
+                    'utilisateurs.prenom as client_prenom',
+                    'utilisateurs.photo as client_photo',
+                    'demandes_intervention.dateSouhaitee',
+                    'demandes_intervention.statut as demande_statut',
+                    'services.nomService'
+                );
 
-        // Filtre par note (moyenne des critères)
-        if ($this->filterRating !== 'all') {
-            $query->havingRaw('(credibilite + sympathie + ponctualite + proprete + qualiteTravail) / 5 = ?', [$this->filterRating]);
-        }
+            // Filtre par note (moyenne des critères)
+            if ($this->filterRating !== 'all') {
+                $query->havingRaw('(credibilite + sympathie + ponctualite + proprete + qualiteTravail) / 5 = ?', [$this->filterRating]);
+            }
 
-        // Filtre par date
-        if ($this->filterDate === 'recent') {
-            $query->orderBy('feedbacks.dateCreation', 'desc');
-        } elseif ($this->filterDate === 'old') {
-            $query->orderBy('feedbacks.dateCreation', 'asc');
-        } else {
-            $query->orderBy('feedbacks.dateCreation', 'desc');
-        }
+            // Filtre par date
+            if ($this->filterDate === 'recent') {
+                $query->orderBy('feedbacks.dateCreation', 'desc');
+            } elseif ($this->filterDate === 'old') {
+                $query->orderBy('feedbacks.dateCreation', 'asc');
+            } else {
+                $query->orderBy('feedbacks.dateCreation', 'desc');
+            }
 
-        // Filtre par statut (réclamé ou non)
-        if ($this->filterStatus === 'claimed') {
-            $query->whereExists(function($subquery) {
-                $subquery->select(DB::raw(1))
-                    ->from('reclamantions')
-                    ->whereColumn('reclamantions.idFeedback', 'feedbacks.idFeedBack');
+            // Filtre par statut (réclamé ou non)
+            if ($this->filterStatus === 'claimed') {
+                $query->whereExists(function ($subquery) {
+                    $subquery->select(DB::raw(1))
+                        ->from('reclamantions')
+                        ->whereColumn('reclamantions.idFeedback', 'feedbacks.idFeedBack');
+                });
+            } elseif ($this->filterStatus === 'not_claimed') {
+                $query->whereNotExists(function ($subquery) {
+                    $subquery->select(DB::raw(1))
+                        ->from('reclamantions')
+                        ->whereColumn('reclamantions.idFeedback', 'feedbacks.idFeedBack');
+                });
+            }
+
+            // Recherche
+            if (!empty($this->searchTerm)) {
+                $query->where(function ($q) {
+                    $q->where('feedbacks.commentaire', 'like', '%' . $this->searchTerm . '%')
+                        ->orWhere('utilisateurs.nom', 'like', '%' . $this->searchTerm . '%')
+                        ->orWhere('utilisateurs.prenom', 'like', '%' . $this->searchTerm . '%');
+                });
+            }
+
+            $this->feedbacks = $query->get()->filter(function ($feedback) {
+                return $this->canDisplayFeedback($feedback);
             });
-        } elseif ($this->filterStatus === 'not_claimed') {
-            $query->whereNotExists(function($subquery) {
-                $subquery->select(DB::raw(1))
-                    ->from('reclamantions')
-                    ->whereColumn('reclamantions.idFeedback', 'feedbacks.idFeedBack');
-            });
+        } catch (\Throwable $e) {
+            // Avoid fatal errors if the DB is down; show an empty state and a helpful message
+            \Log::error('Unable to load feedbacks', ['error' => $e->getMessage()]);
+            $this->feedbacks = collect();
+            session()->flash('error', "Impossible de charger les avis (problème de connexion à la base de données).");
         }
-
-        // Recherche
-        if (!empty($this->searchTerm)) {
-            $query->where(function($q) {
-                $q->where('feedbacks.commentaire', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('utilisateurs.nom', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('utilisateurs.prenom', 'like', '%' . $this->searchTerm . '%');
-            });
-        }
-
-        $this->feedbacks = $query->get()->filter(function($feedback) {
-            return $this->canDisplayFeedback($feedback);
-        });
     }
 
     private function canDisplayFeedback($feedback)
@@ -117,7 +135,7 @@ class AvisPage extends Component
         if ($feedback->dateSouhaitee) {
             $oneWeekLater = \Carbon\Carbon::parse($feedback->dateSouhaitee)->addWeek();
             $now = \Carbon\Carbon::now();
-            
+
             return $now->greaterThanOrEqualTo($oneWeekLater);
         }
 
@@ -149,11 +167,11 @@ class AvisPage extends Component
     {
         // Debug: vérifier que la méthode est appelée
         \Log::info('claimFeedback appelée', ['feedbackId' => $feedbackId]);
-        
-        // Vérifier que le feedback appartient bien à l'intervenant connecté
+
+        // Vérifier que le feedback appartient bien à l'intervenant demandé
         $feedback = DB::table('feedbacks')
             ->where('idFeedBack', $feedbackId)
-            ->where('idCible', Auth::id())
+            ->where('idCible', $this->intervenantId)
             ->first();
 
         if ($feedback) {
@@ -170,7 +188,7 @@ class AvisPage extends Component
             $this->selectedFeedbackId = $feedbackId;
             $this->showClaimModal = true;
             $this->reset(['claimSubject', 'claimDescription', 'claimProof']);
-            
+
             // Debug
             \Log::info('Modal devrait s\'ouvrir', ['showClaimModal' => $this->showClaimModal]);
         } else {
@@ -195,7 +213,7 @@ class AvisPage extends Component
         if ($this->selectedFeedbackId) {
             $feedback = DB::table('feedbacks')
                 ->where('idFeedBack', $this->selectedFeedbackId)
-                ->where('idCible', Auth::id())
+                ->where('idCible', $this->intervenantId)
                 ->first();
 
             if ($feedback) {
@@ -222,7 +240,7 @@ class AvisPage extends Component
                     $this->showClaimModal = false;
                     $this->reset(['selectedFeedbackId', 'claimSubject', 'claimDescription', 'claimProof']);
                     $this->loadFeedbacks();
-                    
+
                     session()->flash('success', 'Réclamation soumise avec succès');
                 } catch (\Exception $e) {
                     \Log::error('Erreur lors de la soumission de la réclamation', ['error' => $e->getMessage()]);
@@ -241,6 +259,6 @@ class AvisPage extends Component
 
     public function render()
     {
-        return view('livewire.babysitter.avis-page'); // Correction du chemin de la vue
+        return view('livewire.shared.avis-page');
     }
 }

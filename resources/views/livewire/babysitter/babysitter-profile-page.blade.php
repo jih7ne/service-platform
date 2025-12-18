@@ -25,6 +25,7 @@
 @endphp
 
 <div class="min-h-screen bg-[#F7F7F7]">
+    <livewire:shared.header-babysitting />
     <div class="bg-white border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <a href="/liste-babysitter" wire:navigate
@@ -82,11 +83,25 @@
                                 <span class="text-gray-500 font-semibold">({{ $reviewCount }} avis)</span>
                             </div>
                         </div>
+                        @auth
                         <a href="/babysitter-booking/{{ $babysitter->idBabysitter }}" wire:navigate
                             class="px-8 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold"
                             style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
                             Demander un service
                         </a>
+                        @else
+                        <div class="px-8 py-3 bg-gray-300 text-gray-600 rounded-xl font-bold text-center cursor-not-allowed">
+                            <div class="flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <span>Connectez-vous pour demander un service</span>
+                            </div>
+                        </div>
+                        <a href="/connexion" class="px-8 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center block mt-2">
+                            Se connecter
+                        </a>
+                        @endauth
                     </div>
 
                     <div class="grid grid-cols-3 gap-4">

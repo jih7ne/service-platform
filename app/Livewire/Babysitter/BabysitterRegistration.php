@@ -19,19 +19,25 @@ use App\Models\Babysitting\ExperienceBesoinSpeciaux;
 use App\Models\Babysitting\Formation;
 use App\Models\Babysitting\Superpouvoir;
 use App\Models\shared\Localisation;
+use Illuminate\Support\Facades\Cache;
 
 class BabysitterRegistration extends Component
 {
     use WithFileUploads;
 
     public $currentStep = 1;
-    public $totalSteps = 5;
+    public $totalSteps = 6; // Ajout d'une étape pour la vérification email
 
     // Étape 1
     public $prenom, $nom, $email, $date_naissance;
     public $mot_de_passe, $mot_de_passe_confirmation;
     public $je_fume = false, $jai_enfants = false;
     public $permis_conduire = false, $jai_voiture = false;
+
+    // Vérification email
+    public $verification_code = '';
+    public $email_verified = false;
+    public $verification_sent = false;
 
     // Étape 2
     public $telephone, $adresse, $photo_profil;
@@ -137,16 +143,9 @@ class BabysitterRegistration extends Component
                     'email',
                     'unique:utilisateurs,email',
                     function ($attribute, $value, $fail) {
-                        // Vérifier si l'email est valide avec un service externe
+                        // Vérifier si l'email est valide
                         if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
                             $fail('L\'adresse email n\'est pas valide.');
-                            return;
-                        }
-                        
-                        // Vérifier si le domaine a des enregistrements MX
-                        $domain = substr(strrchr($value, "@"), 1);
-                        if (!checkdnsrr($domain, "MX") && !checkdnsrr($domain, "A")) {
-                            $fail('Le domaine de cet email n\'existe pas ou n\'accepte pas les emails.');
                             return;
                         }
                     }
@@ -170,11 +169,24 @@ class BabysitterRegistration extends Component
 
         if ($this->currentStep == 3) {
             $rules = [
+                'telephone' => 'required|string|max:20',
+                'adresse' => 'required|string|max:500',
+                'photo_profil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            ];
+            
+            // Si géolocalisation automatique, l'adresse n'est pas obligatoire
+            if ($this->auto_localisation) {
+                unset($rules['adresse']);
+            }
+        }
+
+        if ($this->currentStep == 4) {
+            $rules = [
                 'prix_horaire' => 'required|numeric|min:0',
                 'annees_experience' => 'required|string',
                 'niveau_etudes' => 'required|string|max:500',
                 'description' => 'required|string|max:1000',
-                'experience_detaillee' => 'required|string|max:2000',
+                'experience_detaillee' => 'nullable|string|max:2000',
                 'langues' => 'required|array|min:1',
                 'preferences_domicile' => 'required|string|in:domicile_babysitter,domicile_client,les_deux',
                 'a_maladies' => 'required|string|in:oui,non',
@@ -187,11 +199,27 @@ class BabysitterRegistration extends Component
             
             // Si "Oui" pour maladies, au moins une maladie doit être sélectionnée
             if ($this->a_maladies === 'oui') {
-                $rules['maladies_selectionnees'] = 'required|array|min:1';
+                $rules['maladies_selectionnees'] = 'nullable|array';
             }
         }
 
         if ($this->currentStep == 5) {
+            // Étape 5 - Compétences et disponibilités (créneaux)
+            // Valider que les créneaux non récurrents ont une date spécifique
+            if (!empty($this->disponibilites)) {
+                foreach ($this->disponibilites as $jour => $creneaux) {
+                    if (!empty($creneaux)) {
+                        foreach ($creneaux as $index => $creneau) {
+                            if (!($creneau['est_reccurent'] ?? false)) {
+                                $rules["disponibilites.{$jour}.{$index}.date_specifique"] = 'required|date|after_or_equal:today';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($this->currentStep == 6) {
             $rules = [
                 'casier_judiciaire' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
                 'radiographie_thorax' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
@@ -222,7 +250,7 @@ class BabysitterRegistration extends Component
             'annees_experience.required' => "Les années d'expérience sont obligatoires",
             'niveau_etudes.required' => "Le niveau d'études est obligatoire",
             'description.required' => 'La description est obligatoire',
-            'experience_detaillee.required' => "L'expérience détaillée est obligatoire",
+            // 'experience_detaillee.required' => "L'expérience détaillée est obligatoire",
             'langues.required' => 'Sélectionnez au moins une langue',
             'preferences_domicile.required' => 'Sélectionnez au moins une préférence de domicile',
             'casier_judiciaire.required' => 'Le casier judiciaire est obligatoire',
@@ -231,21 +259,130 @@ class BabysitterRegistration extends Component
 
     public function suivant()
     {
+        \Log::info('BabysitterRegistration - Method suivant() called');
+        \Log::info('Current step: ' . $this->currentStep . ' / Total steps: ' . $this->totalSteps);
+        
+        // Si on est à l'étape 1, envoyer le code et passer à l'étape 2
+        if ($this->currentStep == 1) {
+            \Log::info('Step 1 - validating and sending verification code');
+            $rules = $this->rules();
+            \Log::info('Rules retrieved: ' . (empty($rules) ? 'no rules' : 'has rules'));
+            
+            if (!empty($rules)) {
+                \Log::info('Validating form data...');
+                try {
+                    $this->validate();
+                    \Log::info('Validation passed');
+                } catch (\Exception $e) {
+                    \Log::error('Validation failed: ' . $e->getMessage());
+                    throw $e;
+                }
+            }
+            
+            $this->sendVerificationCode();
+            return;
+        }
+        
+        // Si on est à l'étape 2, vérifier le code
+        if ($this->currentStep == 2) {
+            \Log::info('Step 2 - verifying email code');
+            $this->verifyEmailCode();
+            return;
+        }
+        
+        // Pour les autres étapes, validation normale
         $rules = $this->rules();
+        \Log::info('Rules retrieved: ' . (empty($rules) ? 'no rules' : 'has rules'));
+        
         if (!empty($rules)) {
-            $this->validate();
+            \Log::info('Validating form data...');
+            try {
+                $this->validate();
+                \Log::info('Validation passed');
+            } catch (\Exception $e) {
+                \Log::error('Validation failed: ' . $e->getMessage());
+                throw $e;
+            }
         }
         
         if ($this->currentStep < $this->totalSteps) {
+            $oldStep = $this->currentStep;
             $this->currentStep++;
+            \Log::info('Step changed from ' . $oldStep . ' to ' . $this->currentStep);
+        } else {
+            \Log::info('Cannot advance - already at maximum step');
         }
+        
+        \Log::info('suivant() method completed');
     }
 
-    public function precedent()
+    public function sendVerificationCode()
     {
-        if ($this->currentStep > 1) {
-            $this->currentStep--;
+        try {
+            \Log::info('Sending verification code to email: ' . $this->email);
+            
+            // Générer un code à 5 chiffres
+            $code = str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT);
+            \Log::info('Generated code: ' . $code);
+            
+            // Stocker dans le cache pendant 30 minutes
+            Cache::put("email_verification_{$this->email}", $code, now()->addMinutes(30));
+            \Log::info('Code stored in cache for 30 minutes');
+            
+            // Envoyer l'email avec le code
+            \Log::info('Attempting to send email...');
+            \Mail::raw("Votre code de vérification est : {$code}", function($message) {
+                $message->to($this->email)
+                    ->subject('Code de vérification - Inscription Babysitter');
+            });
+            \Log::info('Email sent successfully');
+            
+            $this->verification_sent = true;
+            $this->currentStep = 2; // Passer à l'étape de vérification
+            
+            session()->flash('success', 'Un code de vérification à 5 chiffres a été envoyé à votre email.');
+            \Log::info('Verification code process completed successfully');
+            
+        } catch (\Exception $e) {
+            \Log::error('Error sending verification code: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            session()->flash('error', 'Erreur lors de l\'envoi du code de vérification.');
         }
+    }
+    
+    public function verifyEmailCode()
+    {
+        \Log::info('Verifying email code: ' . $this->verification_code . ' for email: ' . $this->email);
+        
+        $this->validate([
+            'verification_code' => 'required|digits:5'
+        ], [
+            'verification_code.required' => 'Le code de vérification est obligatoire',
+            'verification_code.digits' => 'Le code doit contenir exactement 5 chiffres'
+        ]);
+        
+        // Vérifier le code dans le cache
+        $storedCode = Cache::get("email_verification_{$this->email}");
+        \Log::info('Stored code in cache: ' . ($storedCode ?? 'null'));
+        
+        if ($storedCode && $storedCode === $this->verification_code) {
+            \Log::info('Code verification successful');
+            // Supprimer le code du cache après vérification
+            Cache::forget("email_verification_{$this->email}");
+            
+            $this->email_verified = true;
+            $this->currentStep = 3; // Passer à l'étape suivante
+            session()->flash('success', 'Email vérifié avec succès !');
+        } else {
+            \Log::info('Code verification failed - codes do not match');
+            session()->flash('error', 'Code invalide ou expiré. Veuillez réessayer.');
+        }
+    }
+    
+    public function resendCode()
+    {
+        $this->verification_sent = false;
+        $this->sendVerificationCode();
     }
 
     public function ajouterDisponibilite($jour)
@@ -270,18 +407,32 @@ class BabysitterRegistration extends Component
 
     public function finaliser()
     {
+        \Log::info('Babysitter registration started');
+        \Log::info('Current step: ' . $this->currentStep);
+        
+        // Vérifier que l'email est bien vérifié
+        if (!$this->email_verified) {
+            session()->flash('error', 'Veuillez vérifier votre email avant de finaliser l\'inscription.');
+            return;
+        }
+        
         $this->validate();
+        \Log::info('Validation passed');
 
         DB::beginTransaction();
+        \Log::info('Database transaction started');
 
         try {
             // 1. Upload photo profil
             $photoPath = null;
             if ($this->photo_profil) {
+                \Log::info('Uploading profile photo');
                 $photoPath = $this->photo_profil->store('images', 'public');
+                \Log::info('Photo uploaded: ' . $photoPath);
             }
 
             // 2. Créer l'utilisateur
+            \Log::info('Creating user with email: ' . $this->email);
             $utilisateur = Utilisateur::create([
                 'nom' => $this->nom,
                 'prenom' => $this->prenom,
@@ -293,8 +444,10 @@ class BabysitterRegistration extends Component
                 'statut' => 'actif',
                 'photo' => $photoPath,
             ]);
+            \Log::info('User created with ID: ' . $utilisateur->idUser);
 
             // 3. Créer la localisation
+            \Log::info('Creating location for user ID: ' . $utilisateur->idUser);
             Localisation::create([
                 'idUser' => $utilisateur->idUser,
                 'latitude' => $this->latitude ?? 0,
@@ -302,12 +455,15 @@ class BabysitterRegistration extends Component
                 'ville' => $this->ville ?? '',
                 'adresse' => $this->adresse ?? ($this->ville ?? 'Adresse non spécifiée'),
             ]);
+            \Log::info('Location created');
 
             // 4. Créer l'intervenant
+            \Log::info('Creating intervenant for user ID: ' . $utilisateur->idUser);
             $intervenant = new Intervenant();
             $intervenant->IdIntervenant = $utilisateur->idUser;
             $intervenant->statut = 'EN_ATTENTE';
             $intervenant->save();
+            \Log::info('Intervenant created');
 
             // 5. Upload des documents
             $procedeJuridique = $this->casier_judiciaire ? 
@@ -341,6 +497,7 @@ class BabysitterRegistration extends Component
             }
 
             // 8. Créer le profil babysitter
+            \Log::info('Creating babysitter profile for intervenant ID: ' . $intervenant->IdIntervenant);
             $babysitter = new Babysitter();
             $babysitter->idBabysitter = $intervenant->IdIntervenant;
             $babysitter->prixHeure = $this->prix_horaire;
@@ -358,7 +515,14 @@ class BabysitterRegistration extends Component
             $babysitter->permisConduite = $this->permis_conduire;
             $babysitter->maladies = $this->experience_detaillee;
             $babysitter->preference_domicil = $preferenceDomicil;
+            \Log::info('Saving babysitter with data: ' . json_encode([
+                'idBabysitter' => $babysitter->idBabysitter,
+                'prixHeure' => $babysitter->prixHeure,
+                'expAnnee' => $babysitter->expAnnee,
+                'preference_domicil' => $babysitter->preference_domicil
+            ]));
             $babysitter->save();
+            \Log::info('Babysitter profile saved successfully');
 
             $idBabysitter = $intervenant->IdIntervenant;
 
@@ -444,6 +608,7 @@ class BabysitterRegistration extends Component
             }
 
             DB::commit();
+            \Log::info('Database transaction committed successfully');
 
             // Envoyer l'email de confirmation
             try {
@@ -458,10 +623,13 @@ class BabysitterRegistration extends Component
                 \Log::error('Erreur envoi email babysitter: ' . $e->getMessage());
             }
 
+            \Log::info('Redirecting to success page');
             return redirect()->route('babysitter-registration-success');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error in babysitter registration: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             
             session()->flash('error', 'Une erreur est survenue lors de l\'inscription: ' . $e->getMessage());
             

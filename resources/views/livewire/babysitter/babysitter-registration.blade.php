@@ -166,8 +166,61 @@
                 </div>
             @endif
 
-            <!-- ÉTAPE 2 - CONTACT -->
+            <!-- ÉTAPE 2 - VÉRIFICATION EMAIL -->
             @if ($currentStep == 2)
+                <div class="space-y-4">
+                    <div class="bg-blue-50 rounded-lg p-3 flex items-center">
+                        <div class="bg-blue-600 rounded-full p-2 mr-3">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">Vérification email</h3>
+                            <p class="text-xs text-gray-600">Entrez le code à 5 chiffres envoyé à {{ $email }}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                            <div class="text-sm text-yellow-800">
+                                <p class="font-medium">Code envoyé à {{ $email }}</p>
+                                <p class="mt-1">Vérifiez votre boîte de réception (y compris les spams) et entrez le code à 5 chiffres ci-dessous.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Code de vérification <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" wire:model="verification_code"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-center text-lg font-mono"
+                            placeholder="00000"
+                            pattern="[0-9]{5}"
+                            maxlength="5"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        @error('verification_code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button wire:click="verifyEmailCode" type="button"
+                            class="flex-1 bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition-colors font-medium text-sm">
+                            Vérifier le code
+                        </button>
+                        <button wire:click="resendCode" type="button"
+                            class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm">
+                            Renvoyer le code
+                        </button>
+                    </div>
+                </div>
+            @endif
+
+            <!-- ÉTAPE 3 - CONTACT -->
+            @if ($currentStep == 3)
                 <div class="space-y-4">
                     <div class="bg-pink-50 rounded-lg p-3 flex items-center">
                         <div class="bg-pink-600 rounded-full p-2 mr-3">
@@ -254,8 +307,8 @@
                 </div>
             @endif
 
-            <!-- ÉTAPE 3 - PROFESSIONNEL -->
-            @if ($currentStep == 3)
+            <!-- ÉTAPE 4 - PROFESSIONNEL -->
+            @if ($currentStep == 4)
                 <div class="space-y-4">
                     <div class="bg-teal-50 rounded-lg p-3 flex items-center">
                         <div class="bg-teal-600 rounded-full p-2 mr-3">
@@ -482,8 +535,8 @@
                 </div>
             @endif
 
-            <!-- ÉTAPE 4 - COMPÉTENCES -->
-            @if ($currentStep == 4)
+            <!-- ÉTAPE 5 - EXPÉRIENCE -->
+            @if ($currentStep == 5)
                 <div class="space-y-4">
                     <div class="bg-purple-50 rounded-lg p-3 flex items-center">
                         <div class="bg-purple-600 rounded-full p-2 mr-3">
@@ -558,8 +611,8 @@
                                             </div>
                                             
                                             <div class="flex items-center gap-2">
-                                                <label class="flex items-center gap-2 px-3 py-1.5 text-xs rounded-full border cursor-pointer transition-all
-                                                    {{ ($disponibilites[$jour][$index]['est_reccurent'] ?? false) 
+                                                <label class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer
+                                                    {{ $disponibilites[$jour][$index]['est_reccurent'] ?? false
                                                         ? 'bg-green-100 border-green-500 text-green-700' 
                                                         : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200' }}">
                                                     <input type="checkbox" 
@@ -567,6 +620,13 @@
                                                         class="w-3 h-3 text-green-600 border-gray-300 rounded focus:ring-green-500">
                                                     <span class="font-medium">Récurrent</span>
                                                 </label>
+                                                
+                                                @if(!($disponibilites[$jour][$index]['est_reccurent'] ?? false))
+                                                    <input type="date" 
+                                                        wire:model="disponibilites.{{ $jour }}.{{ $index }}.date_specifique"
+                                                        class="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                                        placeholder="Date spécifique">
+                                                @endif
                                                 
                                                 <button type="button" wire:click="supprimerDisponibilite('{{ $jour }}', {{ $index }})"
                                                     class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors">
@@ -586,8 +646,8 @@
                 </div>
             @endif
 
-            <!-- ÉTAPE 5 - DOCUMENTS -->
-            @if ($currentStep == 5)
+            <!-- ÉTAPE 6 - DOCUMENTS -->
+            @if ($currentStep == 6)
                 <div class="space-y-4">
                     <div class="bg-blue-50 rounded-lg p-3 flex items-center">
                         <div class="bg-blue-600 rounded-full p-2 mr-3">

@@ -36,17 +36,17 @@ class DemandeIntervention extends Model
     // Relations
     public function intervenant()
     {
-        return $this->belongsTo(\App\Models\Shared\Intervenant::class, 'idIntervenant');
+        return $this->belongsTo(\App\Models\Shared\Intervenant::class, 'idIntervenant', 'IdIntervenant');
     }
 
     public function client()
     {
-        return $this->belongsTo(User::class, 'idClient');
+        return $this->belongsTo(\App\Models\Shared\Utilisateur::class, 'idClient');
     }
 
     public function service()
     {
-        return $this->belongsTo(\App\Models\Service::class, 'idService');
+        return $this->belongsTo(\App\Models\Shared\Service::class, 'idService');
     }
 
     public function enfants()
