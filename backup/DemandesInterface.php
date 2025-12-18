@@ -219,9 +219,7 @@ class DemandesInterface extends Component
             if ($this->archiveFilter === 'confirmed') {
                 $query->where('statut', 'validée');
             } elseif ($this->archiveFilter === 'cancelled') {
-                $query->where('statut', 'annulée');
-            } elseif ($this->archiveFilter === 'refused') {
-                $query->where('statut', 'refusée');
+                $query->whereIn('statut', ['annulée', 'refusée']);
             }
         }
 

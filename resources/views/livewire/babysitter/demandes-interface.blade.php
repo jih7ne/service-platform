@@ -39,14 +39,17 @@
             </div>
 
             <!-- Filtres -->
+
             <div class="bg-white rounded-2xl p-6 mb-8 border border-gray-100" style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg" style="font-weight: 800; color: #0a0a0a;">
                         Filtres
                     </h2>
+                    @if($selectedTab !== 'archive')
                     <button wire:click="toggleAdvancedFilters" class="text-sm font-semibold text-[#B82E6E] hover:underline">
                         {{ $showAdvancedFilters ? 'Masquer filtres avancés' : 'Afficher filtres avancés' }}
                     </button>
+                    @endif
                 </div>
 
                 <div class="grid md:grid-cols-3 gap-6">
@@ -88,7 +91,7 @@
                     </div>
                 </div>
 
-                @if($showAdvancedFilters)
+                @if($showAdvancedFilters && $selectedTab !== 'archive')
                 <div class="mt-6 pt-6 border-t border-gray-100 grid md:grid-cols-2 gap-6">
                     <!-- Catégories d'âge -->
                     <div>
@@ -164,6 +167,35 @@
                 </div>
                 @endif
             </div>
+
+
+            <!-- Filtre Archive (uniquement visible dans l'onglet archive) -->
+            @if($selectedTab === 'archive')
+                <div class="bg-white rounded-2xl p-4 mb-6 border border-gray-100" style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);">
+                    <div class="flex gap-2">
+                        <button wire:click="setArchiveFilter('all')"
+                            class="px-4 py-2 rounded-lg text-sm transition-all {{ $archiveFilter === 'all' ? 'bg-[#B82E6E] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
+                            style="font-weight: 600;">
+                            Tout
+                        </button>
+                        <button wire:click="setArchiveFilter('confirmed')"
+                            class="px-4 py-2 rounded-lg text-sm transition-all {{ $archiveFilter === 'confirmed' ? 'bg-[#B82E6E] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
+                            style="font-weight: 600;">
+                            Confirmés
+                        </button>
+                        <button wire:click="setArchiveFilter('cancelled')"
+                            class="px-4 py-2 rounded-lg text-sm transition-all {{ $archiveFilter === 'cancelled' ? 'bg-[#B82E6E] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
+                            style="font-weight: 600;">
+                            Annulés
+                        </button>
+                        <button wire:click="setArchiveFilter('refused')"
+                            class="px-4 py-2 rounded-lg text-sm transition-all {{ $archiveFilter === 'refused' ? 'bg-[#B82E6E] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
+                            style="font-weight: 600;">
+                            Refusés
+                        </button>
+                    </div>
+                </div>
+            @endif
 
             <!-- Liste des demandes -->
             <div class="space-y-4">

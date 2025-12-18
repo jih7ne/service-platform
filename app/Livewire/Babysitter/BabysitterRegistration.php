@@ -143,16 +143,9 @@ class BabysitterRegistration extends Component
                     'email',
                     'unique:utilisateurs,email',
                     function ($attribute, $value, $fail) {
-                        // Vérifier si l'email est valide avec un service externe
+                        // Vérifier si l'email est valide
                         if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
                             $fail('L\'adresse email n\'est pas valide.');
-                            return;
-                        }
-                        
-                        // Vérifier si le domaine a des enregistrements MX
-                        $domain = substr(strrchr($value, "@"), 1);
-                        if (!checkdnsrr($domain, "MX") && !checkdnsrr($domain, "A")) {
-                            $fail('Le domaine de cet email n\'existe pas ou n\'accepte pas les emails.');
                             return;
                         }
                     }

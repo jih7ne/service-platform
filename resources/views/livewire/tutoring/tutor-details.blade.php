@@ -252,7 +252,7 @@
                                                 
                                                 <div class="flex items-center gap-1 mb-3">
                                                     @php
-                                                        $noteMoyenne = ($feedback->credibilite + $feedback->sympathie + $feedback->ponctualite + $feedback->proprete + $feedback->qualiteTravail) / 5;
+                                                        $noteMoyenne = $feedback->moyenne;
                                                     @endphp
                                                     @for($i = 1; $i <= 5; $i++)
                                                         @if($i <= floor($noteMoyenne))

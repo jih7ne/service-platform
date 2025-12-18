@@ -170,7 +170,11 @@ class ListeBabysitter extends Component
             'formations',
             'categoriesEnfants',
             'experiencesBesoinsSpeciaux'
-        ])->valide();
+        ])->valide()
+        ->whereHas('intervenant.services', function ($q) {
+            $q->where('offres_services.statut', 'ACTIVE')
+              ->where('services.nomService', 'Babysitting');
+        });
       
     
 
@@ -275,8 +279,12 @@ class ListeBabysitter extends Component
         $locationData = DB::table('babysitters')
             ->join('intervenants', 'babysitters.idBabysitter', '=', 'intervenants.IdIntervenant')
             ->join('utilisateurs', 'intervenants.IdIntervenant', '=', 'utilisateurs.idUser')
+            ->join('offres_services', 'intervenants.IdIntervenant', '=', 'offres_services.idIntervenant')
+            ->join('services', 'offres_services.idService', '=', 'services.idService')
             ->leftJoin('localisations', 'utilisateurs.idUser', '=', 'localisations.idUser')
             ->where('intervenants.statut', 'VALIDE')
+            ->where('offres_services.statut', 'ACTIVE')
+            ->where('services.nomService', 'Babysitting')
             ->select('babysitters.idBabysitter', 'utilisateurs.prenom', 'utilisateurs.nom', 
                      'localisations.latitude', 'localisations.longitude', 'localisations.ville', 
                      'babysitters.prixHeure', 'utilisateurs.photo', 'utilisateurs.note')
@@ -296,8 +304,15 @@ class ListeBabysitter extends Component
         $allCategories = CategorieEnfant::all();
         $allExperiences = ExperienceBesoinSpeciaux::all();
 
-        // Villes disponibles
-        $villes = ['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fes', 'Agadir'];
+        // Villes disponibles depuis la base de données
+        $villes = DB::table('localisations')
+            ->select('ville')
+            ->whereNotNull('ville')
+            ->where('ville', '!=', '')
+            ->distinct()
+            ->orderBy('ville')
+            ->pluck('ville')
+            ->toArray();
 
         // Préparer les données pour la carte avec coordonnées par défaut
 $defaultCoords = [
@@ -332,7 +347,12 @@ $babysittersMap = $limitedLocationData->map(function($babysitter) use ($defaultC
 
 
 // Compter le nombre total de babysitters disponibles
-$totalBabysitters = Babysitter::valide()->count();
+$totalBabysitters = Babysitter::valide()
+    ->whereHas('intervenant.services', function ($q) {
+        $q->where('offres_services.statut', 'ACTIVE')
+          ->where('services.nomService', 'Babysitting');
+    })
+    ->count();
 
 return view('livewire.babysitter.liste-babysitter', [
     'babysitters' => $babysitters,

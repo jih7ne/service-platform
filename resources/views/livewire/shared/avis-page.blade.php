@@ -130,7 +130,7 @@
                                 <h3>{{ $feedback->client_prenom }} {{ $feedback->client_nom }}</h3>
                                 <div class="meta-row">
                                     <div class="rating">
-                                        @php $averageNote = round(($feedback->credibilite + $feedback->sympathie + $feedback->ponctualite + $feedback->proprete + $feedback->qualiteTravail) / 5); @endphp
+                                        @php $averageNote = $feedback->moyenne; @endphp
                                         @for($i = 1; $i <= 5; $i++)
                                             @if($i <= $averageNote)
                                                 <span style="color:#f59e0b;">★</span>

@@ -115,7 +115,10 @@ class DisponibilitesPage extends GestionDisponibilites
         session()->regenerateToken();
         return redirect('/');
     }
-
+   public function goToHub()
+    {
+        return redirect()->route('intervenant.hub');
+    }
     public function render()
     {
         return view('livewire.tutoring.disponibilites-page');

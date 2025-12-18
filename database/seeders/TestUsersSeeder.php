@@ -117,7 +117,7 @@ class TestUsersSeeder extends Seeder
             'password' => Hash::make('password'),
             'telephone' => '0699999999',
             'role' => 'client',
-            'statut' => 'inactif',
+            'statut' => 'suspendue',
             'dateNaissance' => '1988-12-25',
         ]);
 

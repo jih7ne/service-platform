@@ -225,7 +225,17 @@ class FeedbackComponent extends Component
                            $this->proprete) / 5;
 
             // Créer le feedback
-            $feedback = FeedbackModel::create([
+            \Log::info('Creating feedback with data:', [
+                'idAuteur' => $this->auteurId,
+                'idCible' => $this->cibleId,
+                'typeAuteur' => $this->typeAuteur,
+                'noteMoyenne' => $noteMoyenne,
+                'noteMoyenneType' => gettype($noteMoyenne),
+                'idDemande' => $idDemandeToUse,
+                'idService' => $this->serviceId
+            ]);
+            
+            $feedbackData = [
                 'idAuteur' => $this->auteurId,
                 'idCible' => $this->cibleId,
                 'typeAuteur' => $this->typeAuteur,
@@ -235,11 +245,44 @@ class FeedbackComponent extends Component
                 'ponctualite' => $this->ponctualite,
                 'proprete' => $this->proprete,
                 'qualiteTravail' => $this->communication,
-                'moyenne' => $noteMoyenne, // Ajout de la moyenne calculée
+                'moyenne' => $noteMoyenne,
                 'estVisible' => true,
                 'dateCreation' => now(),
                 'idDemande' => $idDemandeToUse,
                 'idService' => $this->serviceId,
+            ];
+            
+            \Log::info('Feedback data before create:', [
+                'data' => $feedbackData,
+                'moyenneValue' => $feedbackData['moyenne'],
+                'moyenneType' => gettype($feedbackData['moyenne'])
+            ]);
+            
+            $feedback = FeedbackModel::create($feedbackData);
+            
+            \Log::info('Feedback created successfully:', [
+                'idFeedBack' => $feedback->idFeedBack,
+                'storedMoyenne' => $feedback->moyenne,
+                'storedMoyenneType' => gettype($feedback->moyenne),
+                'allData' => $feedback->toArray()
+            ]);
+            
+            // FORCER LA MISE À JOUR DE LA MOYENNE avec SQL direct
+            $updateResult = DB::table('feedbacks')
+                ->where('idFeedBack', $feedback->idFeedBack)
+                ->update(['moyenne' => $noteMoyenne]);
+            
+            \Log::info('Forced moyenne update:', [
+                'feedbackId' => $feedback->idFeedBack,
+                'noteMoyenne' => $noteMoyenne,
+                'updateResult' => $updateResult
+            ]);
+            
+            // Vérification immédiate dans la base
+            $checkFeedback = FeedbackModel::find($feedback->idFeedBack);
+            \Log::info('Verification from database after forced update:', [
+                'dbMoyenne' => $checkFeedback->moyenne,
+                'dbMoyenneType' => gettype($checkFeedback->moyenne)
             ]);
 
             // Mettre à jour la note de l'utilisateur cible
@@ -262,24 +305,38 @@ class FeedbackComponent extends Component
 
     private function updateUserRating($userId, $newRating)
     {
-        // Récupérer tous les feedbacks pour cet utilisateur
-        $feedbacks = FeedbackModel::where('idCible', $userId)->get();
+        // Récupérer tous les feedbacks existants pour cet utilisateur
+        $existingFeedbacks = FeedbackModel::where('idCible', $userId)->get();
         
-        $totalRatings = $feedbacks->count() + 1; // +1 pour le nouveau feedback
+        // Utiliser directement la colonne moyenne de chaque feedback
+        $totalExistingSum = 0;
+        $existingCount = 0;
         
-        // Calculer la nouvelle note moyenne
-        $currentSum = $feedbacks->sum(function($feedback) {
-            return ($feedback->credibilite + $feedback->sympathie + 
-                    $feedback->ponctualite + $feedback->proprete + 
-                    $feedback->qualiteTravail) / 5;
-        });
+        foreach ($existingFeedbacks as $feedback) {
+            // Utiliser la moyenne déjà stockée dans la base
+            $totalExistingSum += $feedback->moyenne;
+            $existingCount++;
+        }
         
-        $newAverage = ($currentSum + $newRating) / $totalRatings;
-
-        // Mettre à jour l'utilisateur
-        Utilisateur::where('idUser', $userId)->update([
-            'note' => round($newAverage, 1),
+        // Ajouter le nouveau feedback
+        $totalRatings = $existingCount + 1;
+        $newAverage = ($totalExistingSum + $newRating) / $totalRatings;
+        
+        // Mettre à jour l'utilisateur avec la nouvelle moyenne et le nombre d'avis
+        $updated = Utilisateur::where('idUser', $userId)->update([
+            'note' => round($newAverage, 2), // Arrondir à 2 décimales pour plus de précision
             'nbrAvis' => $totalRatings
+        ]);
+        
+        // Log pour débogage
+        \Log::info('User rating updated using stored moyennes', [
+            'userId' => $userId,
+            'existingCount' => $existingCount,
+            'totalExistingSum' => $totalExistingSum,
+            'newRating' => $newRating,
+            'newAverage' => $newAverage,
+            'totalRatings' => $totalRatings,
+            'updated' => $updated
         ]);
     }
 
@@ -308,7 +365,9 @@ class FeedbackComponent extends Component
             case 'petkeeping':
                 return view('livewire.pet-keeping.feedback-petkeeping');
             case 'babysitter':
-            
+                return view('livewire.babysitter.feedback-babysitter');
+            default:
+                // Cas par défaut si le type n'est pas reconnu
                 return view('livewire.babysitter.feedback-babysitter');
         }
     }

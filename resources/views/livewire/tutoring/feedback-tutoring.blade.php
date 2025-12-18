@@ -104,7 +104,7 @@
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-700 font-medium">Note moyenne:</span>
                                 <span class="text-2xl font-bold text-blue-600">
-                                    {{ round(($ponctualite + $professionnalisme + $relationAvecEnfants + $communication + $proprete) / 5, 1) }}/5
+                                    {{ $moyenne ?? 0 }}/5
                                 </span>
                             </div>
                         </div>

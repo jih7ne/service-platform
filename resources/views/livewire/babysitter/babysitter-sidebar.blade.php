@@ -56,6 +56,17 @@
 
     <!-- Navigation -->
     <nav class="p-4">
+        <!-- Return Button -->
+        <div class="mb-4">
+            <a href="{{ route('intervenant.hub') }}" 
+               class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Retour à l'espace intervenant</span>
+            </a>
+        </div>
+        
         <ul class="space-y-2">
             <li>
                 <a href="{{ route('babysitter.dashboard') }}" wire:navigate
