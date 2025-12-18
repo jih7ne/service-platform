@@ -346,8 +346,7 @@ class DemandesInterface extends Component
                 if($demande->heureDebut && $demande->heureFin) {
                     $duration = $demande->heureDebut->diffInHours($demande->heureFin);
                 }
-                $childrenCount = $demande->enfants->count();
-                $totalPrice = $duration * $hourlyRate * ($childrenCount > 0 ? $childrenCount : 1);
+                $totalPrice = $duration * $hourlyRate;
 
                 if ($this->minPriceFilter && $totalPrice < $this->minPriceFilter) return false;
                 if ($this->maxPriceFilter && $totalPrice > $this->maxPriceFilter) return false;

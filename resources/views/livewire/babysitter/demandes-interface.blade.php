@@ -202,8 +202,11 @@
                 @forelse($this->demandes as $demande)
                     @php
                         $babysitterPrice = $babysitter->prixHeure ?? 50;
-                        $childrenCount = $demande->enfants->count();
-                        $totalPrice = $babysitterPrice * ($childrenCount > 0 ? $childrenCount : 1);
+                        $duration = 0;
+                        if($demande->heureDebut && $demande->heureFin) {
+                            $duration = $demande->heureDebut->diffInHours($demande->heureFin);
+                        }
+                        $totalPrice = $babysitterPrice * $duration;
                     @endphp
 
                     @if($selectedTab === 'archive')
@@ -407,8 +410,11 @@
     @if($showModal && $selectedDemande)
     @php
         $babysitterPrice = $babysitter->prixHeure ?? 50;
-        $childrenCount = $selectedDemande->enfants->count();
-        $totalPrice = $babysitterPrice * ($childrenCount > 0 ? $childrenCount : 1);
+        $duration = 0;
+        if($selectedDemande->heureDebut && $selectedDemande->heureFin) {
+            $duration = $selectedDemande->heureDebut->diffInHours($selectedDemande->heureFin);
+        }
+        $totalPrice = $babysitterPrice * $duration;
     @endphp
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all">
         <div class="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl transform transition-all animate-in fade-in zoom-in duration-300">
@@ -544,8 +550,8 @@
                             <span class="font-bold">{{ $babysitterPrice }} MAD</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-400">Nombre d'enfants</span>
-                            <span class="font-bold">x {{ $childrenCount }}</span>
+                            <span class="text-gray-400">Nombre d'heures</span>
+                            <span class="font-bold">x {{ $duration }} h</span>
                         </div>
                         <div class="pt-4 mt-4 border-t border-white/10 flex justify-between items-end">
                             <span class="text-lg font-bold">Total estimé</span>
