@@ -4,42 +4,39 @@
     {{-- ========================================== --}}
     {{--            CONTENU PRINCIPAL               --}}
     {{-- ========================================== --}}
-    <main class="flex-1 overflow-y-auto p-8">
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
         
         <!-- Bouton Retour -->
-        <a href="{{ route('tutoring.clients') }}" class="inline-flex items-center text-gray-500 hover:text-blue-600 font-bold mb-6 transition-colors">
+        <a href="{{ route('tutoring.clients') }}" class="inline-flex items-center text-gray-500 hover:text-blue-600 font-bold mb-4 sm:mb-6 transition-colors text-sm">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Retour à la liste
         </a>
 
         <!-- En-tête Client -->
-        <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row items-center gap-8">
+        <div class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8 shadow-sm border border-gray-100 mb-6 sm:mb-8 flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-8">
             <div class="relative">
                 @if($client->photo)
-                    <img src="{{ asset('storage/'.$client->photo) }}" class="w-24 h-24 rounded-full object-cover border-4 border-[#EFF6FF]">
+                    <img src="{{ asset('storage/'.$client->photo) }}" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-[#EFF6FF]">
                 @else
-                    <div class="w-24 h-24 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-3xl border-4 border-[#EFF6FF]">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-2xl sm:text-3xl border-4 border-[#EFF6FF]">
                         {{ substr($client->prenom, 0, 1) }}
                     </div>
                 @endif
-                <div class="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></div>
+                <div class="absolute bottom-1 right-1 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 border-2 sm:border-4 border-white rounded-full"></div>
             </div>
             <div class="text-center md:text-left flex-1">
-                <h1 class="text-3xl font-extrabold text-gray-900">{{ $client->prenom }} {{ $client->nom }}</h1>
-                <p class="text-gray-500 flex items-center justify-center md:justify-start gap-2 mt-1">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">{{ $client->prenom }} {{ $client->nom }}</h1>
+                <p class="text-sm sm:text-base text-gray-500 flex items-center justify-center md:justify-start gap-2 mt-1">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     {{ $client->ville ?? 'Ville non renseignée' }}
                 </p>
-                <div class="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
-                    {{-- 1. J'ai supprimé le badge "Client Vérifié" car il n'existe pas --}}
-                    
-                    {{-- 2. Le compteur affiche maintenant la vraie variable calculée --}}
+                <div class="flex flex-wrap justify-center md:justify-start gap-2 sm:gap-3 mt-3 sm:mt-4">
                     @if($coursTerminesCount > 0)
-                        <span class="px-3 py-1 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-lg border border-yellow-100">
+                        <span class="px-2.5 sm:px-3 py-1 bg-yellow-50 text-yellow-700 text-[10px] sm:text-xs font-bold rounded-lg border border-yellow-100">
                             {{ $coursTerminesCount }} Cours terminés
                         </span>
                     @else
-                        <span class="px-3 py-1 bg-gray-50 text-gray-500 text-xs font-bold rounded-lg border border-gray-200">
+                        <span class="px-2.5 sm:px-3 py-1 bg-gray-50 text-gray-500 text-[10px] sm:text-xs font-bold rounded-lg border border-gray-200">
                             Nouveau client
                         </span>
                     @endif
@@ -48,42 +45,42 @@
             
             <!-- Actions Rapides -->
             <div class="flex gap-3">
-                <a href="mailto:{{ $client->email }}" class="p-3 bg-gray-100 rounded-xl text-gray-600 hover:bg-blue-100 hover:text-blue-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                <a href="mailto:{{ $client->email }}" class="p-2.5 sm:p-3 bg-gray-100 rounded-xl text-gray-600 hover:bg-blue-100 hover:text-blue-600 transition-colors">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                 </a>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             
             <!-- Colonne Gauche : Coordonnées -->
-            <div class="lg:col-span-1 space-y-6">
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-900 mb-4">Coordonnées</h3>
+            <div class="lg:col-span-1 space-y-4 sm:space-y-6">
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-900 mb-4 text-base sm:text-lg">Coordonnées</h3>
                     
-                    <div class="space-y-4">
+                    <div class="space-y-3 sm:space-y-4">
                         <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                            <div class="text-gray-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
-                            <div class="overflow-hidden">
+                            <div class="text-gray-400 flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg></div>
+                            <div class="overflow-hidden min-w-0 flex-1">
                                 <p class="text-xs text-gray-400 font-bold uppercase">Email</p>
-                                <p class="text-sm font-semibold text-gray-800 truncate" title="{{ $client->email }}">{{ $client->email }}</p>
+                                <p class="text-xs sm:text-sm font-semibold text-gray-800 truncate" title="{{ $client->email }}">{{ $client->email }}</p>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                            <div class="text-gray-400"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg></div>
+                            <div class="text-gray-400 flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg></div>
                             <div>
                                 <p class="text-xs text-gray-400 font-bold uppercase">Téléphone</p>
-                                <p class="text-sm font-semibold text-gray-800">{{ $client->telephone ?? 'Non renseigné' }}</p>
+                                <p class="text-xs sm:text-sm font-semibold text-gray-800">{{ $client->telephone ?? 'Non renseigné' }}</p>
                             </div>
                         </div>
 
                         @if($client->adresse)
                         <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
-                            <div class="text-gray-400 mt-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
-                            <div>
+                            <div class="text-gray-400 mt-1 flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                            <div class="min-w-0 flex-1">
                                 <p class="text-xs text-gray-400 font-bold uppercase">Adresse</p>
-                                <p class="text-sm font-semibold text-gray-800">{{ $client->adresse }}</p>
+                                <p class="text-xs sm:text-sm font-semibold text-gray-800">{{ $client->adresse }}</p>
                             </div>
                         </div>
                         @endif
@@ -92,62 +89,62 @@
             </div>
 
             <!-- Colonne Droite : Historique & Avis -->
-            <div class="lg:col-span-2 space-y-6">
+            <div class="lg:col-span-2 space-y-4 sm:space-y-6">
                 
                 <!-- Historique -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2 text-base sm:text-lg">
                         <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Historique des cours
                     </h3>
 
                     <div class="overflow-hidden">
                         @forelse($coursHistorique as $cours)
-                            <div class="flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded-lg">
-                                <div class="flex items-center gap-4">
-                                    <div class="bg-blue-100 text-blue-600 font-bold px-3 py-1 rounded text-xs uppercase">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded-lg gap-3">
+                                <div class="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                                    <div class="bg-blue-100 text-blue-600 font-bold px-2 sm:px-3 py-1 rounded text-[10px] sm:text-xs uppercase flex-shrink-0">
                                         {{ $cours->nom_matiere }}
                                     </div>
-                                    <div>
-                                        <p class="text-sm font-bold text-gray-800">
+                                    <div class="min-w-0">
+                                        <p class="text-xs sm:text-sm font-bold text-gray-800">
                                             {{ \Carbon\Carbon::parse($cours->dateSouhaitee)->format('d M Y') }}
                                         </p>
-                                        <p class="text-xs text-gray-500">{{ substr($cours->heureDebut, 0, 5) }} - {{ substr($cours->heureFin, 0, 5) }} • {{ $cours->type_service }}</p>
+                                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">{{ substr($cours->heureDebut, 0, 5) }} - {{ substr($cours->heureFin, 0, 5) }} • {{ $cours->type_service }}</p>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <span class="block font-bold text-gray-900">{{ $cours->montant_total }} DH</span>
+                                <div class="text-right flex-shrink-0 ml-auto sm:ml-0">
+                                    <span class="block font-bold text-gray-900 text-sm sm:text-base">{{ $cours->montant_total }} DH</span>
                                     @if($cours->statut == 'validée')
-                                        <span class="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full">À venir</span>
+                                        <span class="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full inline-block">À venir</span>
                                     @else
-                                        <span class="text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full">Terminé</span>
+                                        <span class="text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full inline-block">Terminé</span>
                                     @endif
                                 </div>
                             </div>
                         @empty
-                            <div class="text-center py-6 text-gray-400 italic">Aucun cours effectué pour le moment.</div>
+                            <div class="text-center py-6 text-sm sm:text-base text-gray-400 italic">Aucun cours effectué pour le moment.</div>
                         @endforelse
                     </div>
                 </div>
 
                 <!-- Feedbacks (Avis d'autres profs) -->
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2 text-base sm:text-lg">
                         <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
                         Avis des intervenants
                     </h3>
 
-                    <div class="space-y-4">
+                    <div class="space-y-3 sm:space-y-4">
                         @forelse($feedbacks as $fb)
-                            <div class="bg-gray-50 p-4 rounded-xl">
-                                <div class="flex justify-between items-start mb-2">
+                            <div class="bg-gray-50 p-3 sm:p-4 rounded-xl">
+                                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 gap-2">
                                     <div class="flex items-center gap-2">
-                                        <div class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-white">
+                                        <div class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                                             {{ substr($fb->auteur_prenom, 0, 1) }}
                                         </div>
-                                        <span class="text-sm font-bold text-gray-800">{{ $fb->auteur_prenom }} {{ $fb->auteur_nom }}</span>
+                                        <span class="text-xs sm:text-sm font-bold text-gray-800 truncate">{{ $fb->auteur_prenom }} {{ $fb->auteur_nom }}</span>
                                     </div>
-                                    <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($fb->dateCreation)->diffForHumans() }}</span>
+                                    <span class="text-[10px] sm:text-xs text-gray-400">{{ \Carbon\Carbon::parse($fb->dateCreation)->diffForHumans() }}</span>
                                 </div>
                                 <!-- Etoiles -->
                                 <div class="flex text-yellow-400 text-xs mb-2">
@@ -155,10 +152,10 @@
                                         <svg class="w-3 h-3 {{ $i < ($fb->sympathie ?? 5) ? 'fill-current' : 'text-gray-200' }}" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                                     @endfor
                                 </div>
-                                <p class="text-sm text-gray-600 italic">"{{ $fb->commentaire }}"</p>
+                                <p class="text-xs sm:text-sm text-gray-600 italic break-words">"{{ $fb->commentaire }}"</p>
                             </div>
                         @empty
-                            <div class="text-center py-6 text-gray-400 italic">Aucun avis pour le moment.</div>
+                            <div class="text-center py-6 text-sm sm:text-base text-gray-400 italic">Aucun avis pour le moment.</div>
                         @endforelse
                     </div>
                 </div>
