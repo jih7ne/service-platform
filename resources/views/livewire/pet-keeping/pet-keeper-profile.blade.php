@@ -423,45 +423,7 @@
                         </h3>
                     </div>
                     
-                    <div class="p-6">
-                        @if(isset($reviews) && $reviews->count() > 0)
-                            <div class="space-y-6">
-                                @foreach($reviews as $review)
-                                    <div class="border border-amber-200 rounded-xl p-5 hover:shadow-md transition">
-                                        <div class="flex justify-between mb-3">
-                                            <div class="flex items-center">
-                                                <div class="w-12 h-12 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
-                                                    {{ substr($review->auteur->prenom ?? 'A', 0, 1) }}
-                                                </div>
-                                                <div>
-                                                    <h4 class="font-semibold text-gray-900">{{ $review->auteur->prenom ?? 'Client' }}</h4>
-                                                    <p class="text-sm text-gray-500">
-                                                        {{ $review->created_at->format('d M Y') }}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div class="flex text-amber-500 text-xl">
-                                                @for($i = 1; $i <= 5; $i++)
-                                                    @if($i <= ($review->note ?? 0))
-                                                        ★
-                                                    @else
-                                                        ☆
-                                                    @endif
-                                                @endfor
-                                            </div>
-                                        </div>
-                                        <p class="text-gray-700 leading-relaxed">{{ $review->commentaire ?? '' }}</p>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-center py-8">
-                                <div class="text-5xl mb-4">💬</div>
-                                <p class="text-gray-500">Aucun avis pour le moment</p>
-                                <p class="text-sm text-gray-400 mt-2">Les avis de vos clients apparaîtront ici</p>
-                            </div>
-                        @endif
-                    </div>
+                    
                 </div>
             </div>
 
