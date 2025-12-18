@@ -1,5 +1,5 @@
 <div class="min-h-screen bg-gray-50 font-sans">
-    <!-- Header Section with Gradient like listing page -->
+    <!-- Header Section with Gradient -->
     <div class="relative bg-white overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-[#B82E6E]/5 to-[#B82E6E]/10 pointer-events-none"></div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
@@ -10,9 +10,7 @@
                     Accueil
                 </a>
                 <span class="text-gray-300">/</span>
-                <a href="/services" wire:navigate class="hover:text-[#B82E6E] transition-colors">
-                    Services
-                </a>
+                <a href="/services" wire:navigate class="hover:text-[#B82E6E] transition-colors">Services</a>
                 <span class="text-gray-300">/</span>
                 <span class="text-[#B82E6E] font-bold">Devenir Babysitter</span>
             </nav>
@@ -30,13 +28,31 @@
         </div>
     </div>
         
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <!-- En-tête -->
-                <div class="mb-6">
-                    <h2 class="text-xl font-bold text-gray-900">Inscription Babysitter</h2>
-                    <p class="text-gray-600 text-sm mt-1">Créez votre compte professionnel en quelques étapes</p>
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <!-- En-tête -->
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Inscription Babysitter</h2>
+                <p class="text-gray-600 text-sm mt-1">Créez votre compte professionnel en quelques étapes</p>
+            </div>
+
+            <!-- Bandeau informatif si utilisateur existant -->
+            @if($isExistingUser)
+                <div class="mb-6 bg-blue-50 border-2 border-blue-500 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <h3 class="font-bold text-blue-900 mb-2">Ajout d'un nouveau service</h3>
+                            <p class="text-sm text-blue-800">
+                                Vous ajoutez un <strong>nouveau service</strong> à votre profil existant.<br>
+                                Services actuels : <strong>{{ $currentServicesCount }}/2</strong>
+                            </p>
+                        </div>
+                    </div>
                 </div>
+            @endif
 
             <!-- Stepper -->
             <div class="mb-6">
@@ -75,10 +91,33 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-base font-semibold text-gray-900">Informations personnelles</h3>
-                            <p class="text-xs text-gray-600">Commençons par créer votre profil</p>
+                            <h3 class="text-base font-semibold text-gray-900">
+                                @if($isExistingUser)
+                                    Vos informations personnelles
+                                @else
+                                    Informations personnelles
+                                @endif
+                            </h3>
+                            <p class="text-xs text-gray-600">
+                                @if($isExistingUser)
+                                    Vos informations sont déjà enregistrées
+                                @else
+                                    Commençons par créer votre profil
+                                @endif
+                            </p>
                         </div>
                     </div>
+
+                    @if($isExistingUser)
+                        <div class="bg-gray-100 border border-gray-300 rounded-lg p-4">
+                            <p class="text-sm text-gray-700 flex items-start gap-2">
+                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Vos informations sont déjà enregistrées. Passez à l'étape suivante.
+                            </p>
+                        </div>
+                    @endif
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -86,7 +125,8 @@
                                 Prénom <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="prenom"
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                @if($isExistingUser) disabled @endif
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @endif">
                             @error('prenom') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
 
@@ -95,7 +135,8 @@
                                 Nom <span class="text-red-500">*</span>
                             </label>
                             <input type="text" wire:model="nom"
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                @if($isExistingUser) disabled @endif
+                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @endif">
                             @error('nom') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -105,7 +146,8 @@
                             Email <span class="text-red-500">*</span>
                         </label>
                         <input type="email" wire:model="email"
-                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                            @if($isExistingUser) disabled @endif
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @endif"
                             placeholder="votre.email@exemple.com">
                         @error('email') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
@@ -115,28 +157,31 @@
                             Date de naissance <span class="text-red-500">*</span>
                         </label>
                         <input type="date" wire:model="date_naissance"
-                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                            @if($isExistingUser) disabled @endif
+                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent @if($isExistingUser) bg-gray-100 cursor-not-allowed text-gray-600 @endif">
                         @error('date_naissance') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Mot de passe <span class="text-red-500">*</span>
-                            </label>
-                            <input type="password" wire:model="mot_de_passe"
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
-                            @error('mot_de_passe') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        </div>
+                    @if(!$isExistingUser)
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Mot de passe <span class="text-red-500">*</span>
+                                </label>
+                                <input type="password" wire:model="mot_de_passe"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                @error('mot_de_passe') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Confirmer le mot de passe <span class="text-red-500">*</span>
-                            </label>
-                            <input type="password" wire:model="mot_de_passe_confirmation"
-                                class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Confirmer le mot de passe <span class="text-red-500">*</span>
+                                </label>
+                                <input type="password" wire:model="mot_de_passe_confirmation"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                            </div>
                         </div>
-                    </div>
+                    @endif
 
                     <div class="bg-gray-50 rounded-lg p-4">
                         <h4 class="text-sm font-medium text-gray-900 mb-3">À propos de vous</h4>
@@ -165,6 +210,72 @@
                     </div>
                 </div>
             @endif
+
+            <!-- ÉTAPE 1.5 - VÉRIFICATION EMAIL -->
+            @if($currentStep == 1.5 && !$isExistingUser)
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Vérifiez votre email</h2>
+                        <p class="text-gray-600">
+                            Nous avons envoyé un code de vérification à<br>
+                            <span class="font-semibold text-pink-600">{{ $email }}</span>
+                        </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2 text-center">
+                            Code de vérification (10 chiffres)
+                        </label>
+                        <input
+                            type="text"
+                            wire:model="verificationCode"
+                            maxlength="10"
+                            class="w-full px-4 py-4 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent text-center text-2xl tracking-widest font-mono"
+                            placeholder="0000000000"
+                        />
+                        @error('verificationCode') 
+                            <span class="text-red-500 text-sm mt-1 block text-center">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <button
+                        type="button"
+                        wire:click="verifyCode"
+                        class="w-full py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all font-bold"
+                    >
+                        Vérifier le code
+                    </button>
+
+                    <div class="text-center">
+                        <p class="text-sm text-gray-600">
+                            Vous n'avez pas reçu le code ?
+                            <button
+                                type="button"
+                                wire:click="resendCode"
+                                class="text-pink-600 font-semibold hover:underline"
+                            >
+                                Renvoyer
+                            </button>
+                        </p>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p class="text-sm text-yellow-800 flex items-start gap-2">
+                            <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                            Le code expire dans 10 minutes. Vérifiez vos spams si vous ne le trouvez pas.
+                        </p>
+                    </div>
+                </div>
+            @endif
+
+            <!-- ÉTAPE 2 - CONTACT (reste identique mais continue dans le prochain artifact) -->
 
             <!-- ÉTAPE 2 - CONTACT -->
             @if ($currentStep == 2)
