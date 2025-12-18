@@ -9,7 +9,6 @@ use App\Livewire\Shared\Register;
 // Shared Livewire Components
 use App\Livewire\Shared\LoginPage;
 use App\Livewire\Tutoring\MesCours;
-use App\Livewire\Shared\ContactPage;
 use App\Livewire\Shared\LandingPage;
 use App\Livewire\Tutoring\Dashboard;
 use App\Livewire\Tutoring\MonProfil;
@@ -92,7 +91,6 @@ use App\Livewire\PetKeeper\PetKeeperAvis;
 // Public Routes
 Route::get('/', LandingPage::class)->name('home');
 Route::get('/services', ServicesPage::class)->name('services');
-Route::get('/contact', ContactPage::class)->name('contact');
 Route::get('/connexion', LoginPage::class)->name('login');
 Route::get('/inscription', Register::class)->name('register');
 Route::get('/inscriptionIntervenant', RegisterIntervenantPage::class)->name('register.intervenant');
