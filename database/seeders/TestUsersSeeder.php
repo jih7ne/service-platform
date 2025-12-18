@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Shared\Utilisateur;
 use App\Models\Shared\Intervenant;
+use App\Models\Shared\Localisation;
 use App\Models\Babysitting\Babysitter;
 use App\Models\SoutienScolaire\Professeur;
 use App\Models\PetKeeping\PetKeeper;
@@ -17,9 +18,9 @@ class TestUsersSeeder extends Seeder
      */
     public function run(): void
     {
-        // Créer des clients de test
+        // Créer des clients de test avec leurs adresses
         for ($i = 1; $i <= 5; $i++) {
-            Utilisateur::create([
+            $user = Utilisateur::create([
                 'nom' => 'Client' . $i,
                 'prenom' => 'Test',
                 'email' => 'client' . $i . '@test.com',
@@ -29,6 +30,24 @@ class TestUsersSeeder extends Seeder
                 'statut' => 'actif',
                 'dateNaissance' => '1990-01-01',
             ]);
+
+            // Ajouter 1-2 adresses par client
+            $addresses = [
+                ['adresse' => 'Rue Mohamed ' . $i, 'ville' => 'Casablanca'],
+                ['adresse' => 'Avenue Hassan ' . $i, 'ville' => 'Rabat']
+            ];
+            
+            $addressCount = ($i <= 2) ? 2 : 1; // Les 2 premiers clients ont 2 adresses
+            
+            for ($j = 0; $j < $addressCount; $j++) {
+                Localisation::create([
+                    'idUser' => $user->idUser,
+                    'adresse' => $addresses[$j]['adresse'],
+                    'ville' => $addresses[$j]['ville'],
+                    'latitude' => 33.5731 + ($i * 0.01) + ($j * 0.005), // Coordonnées fictives pour Casablanca/Rabat
+                    'longitude' => -7.5898 + ($i * 0.01) + ($j * 0.005),
+                ]);
+            }
         }
 
         // Créer des babysitters
@@ -42,6 +61,15 @@ class TestUsersSeeder extends Seeder
                 'role' => 'intervenant',
                 'statut' => 'actif',
                 'dateNaissance' => '1985-05-15',
+            ]);
+
+            // Ajouter une adresse pour chaque babysitter
+            Localisation::create([
+                'idUser' => $user->idUser,
+                'adresse' => 'Boulevard Babysitter ' . $i,
+                'ville' => 'Marrakech',
+                'latitude' => 31.6295 + ($i * 0.01), // Coordonnées fictives pour Marrakech
+                'longitude' => -7.9811 + ($i * 0.01),
             ]);
 
             $intervenant = Intervenant::create([

@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 py-12 px-4 sm:px-6 lg:px-8" wire:poll.8s>
     <div class="max-w-4xl mx-auto">
         <!-- Messages flash -->
         @if(session()->has('success'))

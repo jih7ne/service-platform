@@ -6,7 +6,9 @@ use Livewire\Component;
 use App\Models\Babysitting\DemandeIntervention;
 use App\Models\Shared\Feedback;
 use App\Models\Shared\Utilisateur;
+use App\Models\Shared\FeedbackRappel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 
 class FeedbackBabysitter extends Component
@@ -144,6 +146,13 @@ class FeedbackBabysitter extends Component
             // Mettre à jour la moyenne de l'utilisateur cible
             $this->updateUserRating($this->cible->idUser);
 
+            // Marquer les rappels comme terminés pour cet utilisateur
+            $userType = auth()->user()->role === 'client' ? 'client' : 'intervenant';
+            FeedbackRappel::markAsCompleted($this->demandeId, auth()->id(), $userType);
+
+            // Envoyer l'email de confirmation de feedback
+            $this->sendFeedbackConfirmationEmail($feedback);
+
             DB::commit();
 
             $this->feedbackSubmitted = true;
@@ -166,6 +175,41 @@ class FeedbackBabysitter extends Component
                 'trace' => $e->getTraceAsString()
             ]);
             session()->flash('error', 'Une erreur est survenue: ' . $e->getMessage());
+        }
+    }
+
+    private function sendFeedbackConfirmationEmail($feedback)
+    {
+        try {
+            $auteur = auth()->user();
+            $cible = Utilisateur::find($feedback->idCible);
+            
+            // Envoyer l'email à la personne qui a reçu le feedback
+            Mail::raw(
+                "Bonjour {$cible->nom} {$cible->prenom},\n\n" .
+                "Vous avez reçu un nouveau feedback de la part de {$auteur->nom} {$auteur->prenom}.\n\n" .
+                "Commentaire: " . ($feedback->commentaire ?: 'Aucun commentaire') . "\n" .
+                "Note: " . round(($feedback->credibilite + $feedback->sympathie + $feedback->ponctualite + $feedback->proprete + $feedback->qualiteTravail) / 5, 1) . "/5\n\n" .
+                "Cordialement,\nL'équipe Helpora\n\n" .
+                "© " . date('Y') . " Helpora - Service de garde d'enfants de confiance",
+                function ($message) use ($cible) {
+                    $message->to($cible->email)
+                        ->subject('Nouveau feedback reçu - Helpora')
+                        ->from('noreply@helpora.com', 'Helpora');
+                }
+            );
+            
+            \Log::info('Email de confirmation de feedback envoyé', [
+                'feedback_id' => $feedback->idFeedBack,
+                'cible_email' => $cible->email,
+                'auteur_email' => $auteur->email
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors de l\'envoi de l\'email de confirmation de feedback', [
+                'feedback_id' => $feedback->idFeedBack,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\BabysitterRegistrationMail;
+use App\Jobs\SendBabysitterRegistrationNotification;
 use App\Models\shared\Intervenant;
 use App\Models\shared\Utilisateur;
 use App\Models\Babysitting\Babysitter;
@@ -128,6 +129,27 @@ class BabysitterRegistration extends Component
         $this->latitude = $latitude;
         $this->longitude = $longitude;
         $this->ville = $ville;
+    }
+
+    public function precedent()
+    {
+        \Log::info('BabysitterRegistration - Method precedent() called');
+        \Log::info('Current step: ' . $this->currentStep . ' / Total steps: ' . $this->totalSteps);
+        
+        if ($this->currentStep > 1) {
+            $this->currentStep--;
+            \Log::info('Step changed to: ' . $this->currentStep);
+            
+            // Si on revient à l'étape 1 depuis l'étape 2, réinitialiser la vérification
+            if ($this->currentStep == 1) {
+                $this->verification_sent = false;
+                $this->email_verified = false;
+                $this->verification_code = '';
+                \Log::info('Email verification reset');
+            }
+            
+            \Log::info('precedent() method completed');
+        }
     }
 
     public function rules()
@@ -609,6 +631,20 @@ class BabysitterRegistration extends Component
 
             DB::commit();
             \Log::info('Database transaction committed successfully');
+
+            // Récupérer le babysitter créé avec toutes les relations
+            $babysitterWithRelations = Utilisateur::with(['intervenant.babysitter', 'localisations'])
+                ->find($utilisateur->idUser);
+
+            \Log::info('Préparation envoi notification admins', [
+                'babysitter_id' => $babysitterWithRelations->idUser,
+                'babysitter_name' => $babysitterWithRelations->nom . ' ' . $babysitterWithRelations->prenom
+            ]);
+
+            // Envoyer la notification aux administrateurs
+            SendBabysitterRegistrationNotification::dispatch($babysitterWithRelations);
+
+            \Log::info('Job de notification aux admins dispatché');
 
             // Envoyer l'email de confirmation
             try {
