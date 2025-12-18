@@ -173,149 +173,192 @@
                         $childrenCount = $demande->enfants->count();
                         $totalPrice = $babysitterPrice * ($childrenCount > 0 ? $childrenCount : 1);
                     @endphp
-                    <div class="bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-lg transition-all"
-                        style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);">
-                        <!-- En-tête de la carte -->
-                        <div class="flex items-start mb-4">
+
+                    @if($selectedTab === 'archive')
+                        <!-- Vue Simplifiée pour l'Historique -->
+                        <div class="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex justify-between items-center">
                             <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 rounded-full flex items-center justify-center"
-                                    style="background-color: #B82E6E; color: #FFFFFF; font-weight: 800; font-size: 1.25rem;">
-                                    {{ substr($demande->client->prenom ?? 'C', 0, 1) }}{{ substr($demande->client->nom ?? 'L', 0, 1) }}
+                                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-600">
+                                    {{ substr($demande->client->prenom ?? 'C', 0, 1) }}
                                 </div>
                                 <div>
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <h3 style="color: #000000; font-weight: 800; font-size: 1.125rem;">
-                                            Famille {{ $demande->client->nom ?? 'Inconnu' }}
+                                    <h3 class="text-base font-bold text-gray-900">
+                                        {{ $demande->client->prenom ?? 'Client' }} {{ substr($demande->client->nom ?? '', 0, 1) }}.
+                                    </h3>
+                                    <p class="text-xs text-gray-500">
+                                        {{ $demande->dateSouhaitee ? $demande->dateSouhaitee->format('d/m/Y') : '-' }}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-3">
+                                <!-- Badge Statut -->
+                                @php
+                                    $statusColors = [
+                                        'en_attente' => 'bg-yellow-100 text-yellow-800',
+                                        'validée' => 'bg-green-100 text-green-800',
+                                        'refusée' => 'bg-red-100 text-red-800',
+                                        'annulée' => 'bg-gray-100 text-gray-800',
+                                        'terminée' => 'bg-blue-100 text-blue-800',
+                                    ];
+                                    $statusLabel = ucfirst($demande->statut);
+                                    $colorClass = $statusColors[$demande->statut] ?? 'bg-gray-100 text-gray-800';
+                                @endphp
+                                <span class="px-3 py-1 rounded-full text-xs font-bold {{ $colorClass }}">
+                                    {{ $statusLabel }}
+                                </span>
+
+                                <!-- Bouton Voir (optionnel, pour voir les détails si besoin) -->
+                                <button wire:click="viewDemande({{ $demande->idDemande }})"
+                                    class="p-2 text-gray-400 hover:text-[#B82E6E] transition-colors">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    @else
+                        <!-- Vue Carte Complète (En attente / Validées) -->
+                        <div class="bg-white rounded-2xl p-4 border border-gray-100 hover:shadow-lg transition-all"
+                            style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);">
+                            <!-- En-tête de la carte -->
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-xl font-bold text-gray-600">
+                                        {{ substr($demande->client->prenom ?? 'C', 0, 1) }}
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900">
+                                            {{ $demande->client->prenom ?? 'Client' }} {{ substr($demande->client->nom ?? '', 0, 1) }}.
                                         </h3>
-                                    </div>
-                                    <div class="flex items-center gap-4">
-                                        <div class="flex items-center gap-1">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFB800" stroke="none">
-                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                            </svg>
-                                            <span class="text-sm" style="color: #0a0a0a; font-weight: 700;">
-                                                4.9
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center gap-1">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                                <circle cx="12" cy="10" r="3"></circle>
-                                            </svg>
-                                            <span class="text-sm" style="color: #6b7280; font-weight: 600;">
-                                                {{ $demande->lieu ?? 'Lieu non spécifié' }}
-                                            </span>
-                                            <!-- Distance placeholder -->
-                                            <span class="text-sm ml-2" style="color: #B82E6E; font-weight: 700;">
-                                                2.5 km
-                                            </span>
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex text-yellow-400 text-sm">
+                                                ★★★★★
+                                            </div>
+                                            <span class="text-xs text-gray-400 font-medium">(4.9)</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Date et horaires -->
-                        <div class="bg-[#F7F7F7] rounded-xl p-4 mb-4">
-                            <div class="flex items-center gap-6">
-                                <div class="flex items-center gap-2">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B82E6E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                                    </svg>
-                                    <span style="color: #0a0a0a; font-weight: 700;">
-                                        {{ $demande->dateSouhaitee ? $demande->dateSouhaitee->format('d M Y') : 'Date inconnue' }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B82E6E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polyline points="12 6 12 12 16 14"></polyline>
-                                    </svg>
-                                    <span style="color: #0a0a0a; font-weight: 700;">
-                                        {{ $demande->heureDebut ? $demande->heureDebut->format('H:i') : '--:--' }} - {{ $demande->heureFin ? $demande->heureFin->format('H:i') : '--:--' }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Informations enfants -->
-                        <div class="mb-4">
-                            <p class="text-sm mb-2" style="color: #6b7280; font-weight: 600;">
-                                Enfants à garder :
-                            </p>
-                            <div class="flex flex-wrap gap-2">
-                                @forelse($demande->enfants as $enfant)
-                                    <div class="px-4 py-2 bg-[#E1EAF7] rounded-xl">
-                                        <span style="color: #2B5AA8; font-weight: 700;">
-                                            {{ $enfant->nomComplet }} ({{ $enfant->age ?? '?' }} ans)
-                                            @if(($enfant->age ?? 0) <= 3) 👶 @elseif(($enfant->age ?? 0) <= 10) 🧒 @else 👦 @endif
+                            <!-- Date et horaires -->
+                            <div class="bg-[#F7F7F7] rounded-xl p-4 mb-4">
+                                <div class="flex items-center gap-6">
+                                    <div class="flex items-center gap-2">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B82E6E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                        <span style="color: #0a0a0a; font-weight: 700;">
+                                            {{ $demande->dateSouhaitee ? $demande->dateSouhaitee->format('d M Y') : 'Date inconnue' }}
                                         </span>
                                     </div>
-                                @empty
-                                    <span class="text-gray-500 text-sm italic">Non spécifié</span>
-                                @endforelse
+                                    <div class="flex items-center gap-2">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B82E6E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                        <span style="color: #0a0a0a; font-weight: 700;">
+                                            {{ $demande->heureDebut ? $demande->heureDebut->format('H:i') : '--:--' }} - {{ $demande->heureFin ? $demande->heureFin->format('H:i') : '--:--' }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Tarif -->
-                        <div class="flex items-center justify-between mb-4 p-4 bg-green-50 rounded-xl border border-green-100">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="12" y1="1" x2="12" y2="23"></line>
-                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-green-700 font-bold uppercase tracking-wider">Estimation Gain</p>
-                                    <p class="text-xl font-extrabold text-green-900">{{ number_format($totalPrice, 2) }} MAD</p>
+                            <!-- Informations enfants -->
+                            <div class="mb-4">
+                                <p class="text-sm mb-2" style="color: #6b7280; font-weight: 600;">
+                                    Enfants à garder :
+                                </p>
+                                <div class="flex flex-wrap gap-2">
+                                    @forelse($demande->enfants as $enfant)
+                                        <div class="px-4 py-2 bg-[#E1EAF7] rounded-xl">
+                                            <span style="color: #2B5AA8; font-weight: 700;">
+                                                {{ $enfant->nomComplet }} ({{ $enfant->age ?? '?' }} ans)
+                                                @if(($enfant->age ?? 0) <= 3) 👶 @elseif(($enfant->age ?? 0) <= 10) 🧒 @else 👦 @endif
+                                            </span>
+                                        </div>
+                                    @empty
+                                        <span class="text-gray-500 text-sm italic">Non spécifié</span>
+                                    @endforelse
                                 </div>
                             </div>
+
+                            <!-- Tarif -->
+                            <div class="flex items-center justify-between mb-4 p-4 bg-green-50 rounded-xl border border-green-100">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-green-700 font-bold uppercase tracking-wider">Estimation Gain</p>
+                                        <p class="text-xl font-extrabold text-green-900">{{ number_format($totalPrice, 2) }} MAD</p>
+                                    </div>
+                                </div>
                            
-                        </div>
+                            </div>
 
-                        <!-- Actions -->
-                        <div class="flex gap-3">
-                            @if($demande->statut === 'en_attente')
-                                <button wire:click="acceptDemande({{ $demande->idDemande }})"
-                                    class="flex-1 px-6 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all"
-                                    style="font-weight: 700; box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3);">
-                                    Accepter
-                                </button>
-                            @endif
-                            
-                            <button wire:click="viewDemande({{ $demande->idDemande }})"
-                                class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all"
-                                style="font-weight: 700;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                            </button>
-
-                            @if($demande->statut === 'en_attente')
-                                <button wire:click="refuseDemande({{ $demande->idDemande }})"
-                                    class="px-6 py-3 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-all"
+                            <!-- Actions -->
+                            <div class="flex gap-3">
+                                @if($demande->statut === 'en_attente')
+                                    <button wire:click="acceptDemande({{ $demande->idDemande }})"
+                                        class="flex-1 px-6 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all"
+                                        style="font-weight: 700; box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3);">
+                                        Accepter
+                                    </button>
+                                @endif
+                                
+                                <button wire:click="viewDemande({{ $demande->idDemande }})"
+                                    class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all"
                                     style="font-weight: 700;">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
                                 </button>
-                            @endif
 
-                            @if($demande->statut === 'validée')
-                                <button wire:click="giveFeedback({{ $demande->idDemande }})"
-                                    class="flex-1 px-6 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all"
-                                    style="font-weight: 700; box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3);">
-                                    Feedback
-                                </button>
-                            @endif
+                                @if($demande->statut === 'en_attente')
+                                    <button wire:click="refuseDemande({{ $demande->idDemande }})"
+                                        class="px-6 py-3 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-all"
+                                        style="font-weight: 700;">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                @endif
+
+                                @if($demande->statut === 'validée')
+                                    @php
+                                
+                                        $endDateTime = $demande->dateSouhaitee->copy()->setTimeFrom($demande->heureFin);
+                                        $isFinished = now()->greaterThan($endDateTime);
+                                        
+                                        // Vérifier si un feedback existe déjà
+                                        $hasFeedback = \App\Models\Feedback::where('idDemande', $demande->idDemande)->exists();
+                                    @endphp
+
+                                    @if($isFinished && !$hasFeedback)
+                                        <button wire:click="giveFeedback({{ $demande->idDemande }})"
+                                            class="flex-1 px-6 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all"
+                                            style="font-weight: 700; box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3);">
+                                            Feedback
+                                        </button>
+                                    @elseif($hasFeedback)
+                                        <div class="flex-1 px-6 py-3 bg-gray-100 text-gray-500 rounded-xl text-center font-bold text-sm flex items-center justify-center">
+                                            Feedback envoyé
+                                        </div>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 @empty
                     <div class="p-12 text-center bg-white rounded-2xl border border-gray-100">
                         <svg class="mx-auto mb-4 text-gray-400" width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">

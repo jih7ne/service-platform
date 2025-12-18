@@ -24,6 +24,9 @@ class DemandesInterface extends Component
     public $maxPriceFilter = null;
     public $selectedServices = [];
     
+    // Filtre pour l'onglet archive
+    public $archiveFilter = 'all'; // all, confirmed, cancelled
+    
     // Nouveaux filtres
     public $datePeriod = 'all'; // all, today, week, month, custom
     public $timePeriod = 'all'; // all, matin, apres_midi, soir
@@ -112,7 +115,7 @@ class DemandesInterface extends Component
 
             $this->selectedDemande->update([
                 'statut' => 'refusée',
-                // 'motif_refus' => $this->refusalReason // Assuming there is a column for this, or just log it
+                'raisonAnnulation' => $this->refusalReason
             ]);
             
             $emailSent = true;
@@ -153,6 +156,15 @@ class DemandesInterface extends Component
     public function setTab($tab)
     {
         $this->selectedTab = $tab;
+        // Réinitialiser le filtre archive quand on change d'onglet
+        if ($tab !== 'archive') {
+            $this->archiveFilter = 'all';
+        }
+    }
+
+    public function setArchiveFilter($filter)
+    {
+        $this->archiveFilter = $filter;
     }
 
     public function setChildrenFilter($count)
@@ -167,19 +179,21 @@ class DemandesInterface extends Component
         return [
             [
                 'label' => 'En attente',
-                'value' => DemandeIntervention::where('idIntervenant', $userId)->where('statut', 'en_attente')->count(),
+                'value' => DemandeIntervention::where('idIntervenant', $userId)->where('idService', 2)->where('statut', 'en_attente')->count(),
                 'color' => '#F59E0B',
                 'bgColor' => '#FEF3C7'
             ],
             [
                 'label' => 'Validées',
-                'value' => DemandeIntervention::where('idIntervenant', $userId)->where('statut', 'validée')->count(),
+                'value' => DemandeIntervention::where('idIntervenant', $userId)->where('idService', 2)->where('statut', 'validée')->count(),
                 'color' => '#10B981',
                 'bgColor' => '#D1FAE5'
             ],
             [
-                'label' => 'Refusées/Annulées',
-                'value' => DemandeIntervention::where('idIntervenant', $userId)->whereIn('statut', ['refusée', 'annulée'])->count(),
+                'label' => 'Historique',
+                'value' => DemandeIntervention::where('idIntervenant', $userId)
+                    ->where('idService', 2)
+                    ->count(),
                 'color' => '#EF4444',
                 'bgColor' => '#FEE2E2'
             ]
@@ -189,8 +203,9 @@ class DemandesInterface extends Component
     public function getDemandesProperty()
     {
         $userId = Auth::id();
-        $query = DemandeIntervention::with(['client', 'service', 'enfants'])
+        $query = DemandeIntervention::with(['client.localisations', 'service', 'enfants.categorie'])
             ->where('idIntervenant', $userId)
+            ->where('idService', 2) // Filtrer uniquement les services de babysitting
             ->orderBy('dateDemande', 'desc');
 
         if ($this->selectedTab === 'en_attente') {
@@ -198,7 +213,14 @@ class DemandesInterface extends Component
         } elseif ($this->selectedTab === 'validee') {
             $query->where('statut', 'validée');
         } elseif ($this->selectedTab === 'archive') {
-            $query->whereIn('statut', ['refusée', 'annulée', 'terminée']);
+            // Historique : Affiche TOUTES les demandes (aucune restriction de statut)
+            
+            // Appliquer le filtre supplémentaire si spécifié (optionnel, si vous voulez garder le sous-filtre)
+            if ($this->archiveFilter === 'confirmed') {
+                $query->where('statut', 'validée');
+            } elseif ($this->archiveFilter === 'cancelled') {
+                $query->whereIn('statut', ['annulée', 'refusée']);
+            }
         }
 
         if ($this->searchQuery) {
@@ -314,12 +336,16 @@ class DemandesInterface extends Component
 
         $demandes = $query->get();
 
-        // Post-query filtering for Price (babysitter price * number of children)
+        // Post-query filtering for Price (babysitter price * number of children * duration)
         if ($this->minPriceFilter || $this->maxPriceFilter) {
             $demandes = $demandes->filter(function ($demande) {
-                $babysitterPrice = $this->babysitter->prixHeure ?? 50;
+                $hourlyRate = $this->babysitter->prixHeure ?? 50;
+                $duration = 0;
+                if($demande->heureDebut && $demande->heureFin) {
+                    $duration = $demande->heureDebut->diffInHours($demande->heureFin);
+                }
                 $childrenCount = $demande->enfants->count();
-                $totalPrice = $babysitterPrice * ($childrenCount > 0 ? $childrenCount : 1);
+                $totalPrice = $duration * $hourlyRate * ($childrenCount > 0 ? $childrenCount : 1);
 
                 if ($this->minPriceFilter && $totalPrice < $this->minPriceFilter) return false;
                 if ($this->maxPriceFilter && $totalPrice > $this->maxPriceFilter) return false;
