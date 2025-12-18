@@ -58,7 +58,7 @@
                     </div>
                     <div class="profile-info">
                         <h2>{{ $data['prenom'] }} {{ $data['nom'] }}</h2>
-                        <p>📍 {{ $data['ville'] }}, {{ $data['pays'] }}</p>
+  
                     </div>
                 </div>
 

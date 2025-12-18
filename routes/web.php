@@ -187,7 +187,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/reclamations/{id}/details', ReclamationDetails::class)->name('reclamations.details');
     Route::get('/reclamations/{id}/traiter', TraiterReclamation::class)->name('reclamations.traiter');
     Route::get('/intervenants', AdminIntervenants::class)->name('intervenants');
-    Route::get('/intervenant/{id}', IntervenantDetails::class)->name('intervenant.details');
+    Route::get('/intervenant/{idintervenant}/{idservice}', IntervenantDetails::class)->name('intervenant.details');
 });
 
 Route::get('/feedback/test', Feedback::class)->name('feedback.test');
