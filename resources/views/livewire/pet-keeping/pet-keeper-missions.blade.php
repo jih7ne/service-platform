@@ -131,6 +131,37 @@
 
         <!-- Main Content -->
         <div class="px-6 py-8">
+
+            <!-- Recherche -->
+            <div class="bg-white p-4 rounded-xl border border-gray-200 mb-6">
+                <!-- Add this to your view file, near the search input -->
+                <div class="mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Search input -->
+                        <div>
+                            <input 
+                                type="text" 
+                                wire:model.live="search" 
+                                placeholder="Rechercher par nom, prénom, animal ou ville..." 
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                        </div>
+                        
+                        <!-- Status filter dropdown -->
+                        <div>
+                            <select 
+                                wire:model.live="statusFilter" 
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                @foreach($availableStatuses as $value => $label)
+                                    <option value="{{ $value }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
             <!-- Active Missions Section -->
             <div class="mb-10">
                 <div class="flex items-center justify-between mb-6">
@@ -264,13 +295,25 @@
 
                                 <!-- Action Button -->
                                 <div class="flex gap-3">
+                                    @if($mission->statut == 'validée')
+                                       <a href="/pet-keeper/dashboard/mon-avis/{{ $mission->idService }}/{{ $mission->idDemande }}/{{ $user->idUser }}/{{ $mission->idClient }}/intervenant"
+                                        class="flex-1 px-4 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+                                            </svg>
+                                            Mon Avis
+                                        </a>
+                                    @endif
+                                    
+                                    <!-- "Consulter" button - always shown -->
                                     <a href="{{ route('petkeeper.mission.show', $mission->idDemande) }}" 
-                                       class="flex-1 px-4 py-2.5 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-colors shadow-sm flex items-center justify-center gap-2">
+                                    class="flex-1 px-4 py-2.5 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-colors shadow-sm flex items-center justify-center gap-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                         </svg>
                                         Consulter
                                     </a>

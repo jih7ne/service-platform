@@ -11,16 +11,28 @@ class PetKeeperMissions extends Component
     public $user;
     public $missions_a_venir = [];
     public $missions_terminees = [];
+    public $user_id;
 
+    public $search = '';
+    public $statusFilter = '';
+    public $availableStatuses = [
+        '' => 'Tous les statuts',
+        'en_attente' => 'En attente',
+        'validée' => 'Validée',
+        'en_cours' => 'En cours',
+        'terminée' => 'Terminée',
+        'refusée' => 'Refusée',
+        'annulée' => 'Annulée'
+    ];
+    
     public function mount()
     {
-        
         $authUser = Auth::user();
+        $this->user_id = Auth::id();
 
         if ($authUser) {
             $this->user = DB::table('utilisateurs')->where('email', $authUser->email)->first();
         } else {
-            
             $this->user = DB::table('utilisateurs')->where('idUser', 10)->first();
             
             if (!$this->user) {
@@ -28,6 +40,16 @@ class PetKeeperMissions extends Component
             }
         }
 
+        $this->chargerMissions();
+    }
+
+    public function updatedSearch()
+    {
+        $this->chargerMissions();
+    }
+
+    public function updatedStatusFilter()
+    {
         $this->chargerMissions();
     }
 
@@ -57,19 +79,50 @@ class PetKeeperMissions extends Component
                 )
             ->where('demandes_intervention.idIntervenant', $this->user->idUser);
 
-        // LISTE 1 : En attente / Validée / En cours
-        $this->missions_a_venir = (clone $query)
-            ->whereIn('demandes_intervention.statut', ['en_attente', 'validée', 'en_cours'])
-            ->orderBy('demandes_intervention.dateSouhaitee', 'asc')
-            ->get();
+        // Apply search filter
+        if (!empty($this->search)) {
+            $term = '%' . $this->search . '%';
+            $query->where(function($q) use ($term) {
+                $q->where('utilisateurs.nom', 'like', $term)
+                  ->orWhere('utilisateurs.prenom', 'like', $term)
+                  ->orWhere('animals.nomAnimal', 'like', $term)
+                  ->orWhere('demandes_intervention.lieu', 'like', $term)
+                  ->orWhere('demandes_intervention.statut', 'like', $term);
+            });
+        }
 
-        // LISTE 2 : Terminée / Refusée
-        $this->missions_terminees = (clone $query)
-            ->whereIn('demandes_intervention.statut', ['terminée', 'refusée', 'annulée'])
-            ->orderBy('demandes_intervention.dateSouhaitee', 'desc')
-            ->get();
+        // Apply status filter
+        if (!empty($this->statusFilter)) {
+            $query->where('demandes_intervention.statut', $this->statusFilter);
+        } else {
+            // If no status filter is selected, split into two lists as before
+            // LISTE 1 : En attente / Validée / En cours
+            $this->missions_a_venir = (clone $query)
+                ->whereIn('demandes_intervention.statut', ['en_attente', 'validée', 'en_cours'])
+                ->orderBy('demandes_intervention.dateSouhaitee', 'asc')
+                ->get();
+
+            // LISTE 2 : Terminée / Refusée / Annulée
+            $this->missions_terminees = (clone $query)
+                ->whereIn('demandes_intervention.statut', ['terminée', 'refusée', 'annulée'])
+                ->orderBy('demandes_intervention.dateSouhaitee', 'desc')
+                ->get();
+            
+            return;
+        }
+
+        
+        $allMissions = $query->orderBy('demandes_intervention.dateSouhaitee', 'desc')->get();
+        
+        
+        $this->missions_a_venir = $allMissions->filter(function($mission) {
+            return in_array($mission->statut, ['en_attente', 'validée', 'en_cours']);
+        })->values();
+        
+        $this->missions_terminees = $allMissions->filter(function($mission) {
+            return in_array($mission->statut, ['terminée', 'refusée', 'annulée']);
+        })->values();
     }
-
 
     public function parseCreneauxGrouped($json)
     {
@@ -77,7 +130,6 @@ class PetKeeperMissions extends Component
         
         try {
             $creneaux = json_decode($json, true) ?? [];
-            
             
             $grouped = [];
             foreach ($creneaux as $creneau) {
@@ -98,7 +150,6 @@ class PetKeeperMissions extends Component
             return [];
         }
     }
-
     
     public function groupAnimalsByDemande($demandes)
     {
@@ -114,7 +165,6 @@ class PetKeeperMissions extends Component
                     'creneaux' => $this->parseCreneauxGrouped($demande->note_speciales ?? '[]')
                 ];
             }
-            
             
             if ($demande->nom_animal) {
                 $grouped[$idDemande]['animals'][] = [
