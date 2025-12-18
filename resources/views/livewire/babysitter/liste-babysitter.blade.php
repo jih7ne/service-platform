@@ -3,19 +3,15 @@
     <div class="relative bg-white overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-[#B82E6E]/5 to-[#B82E6E]/10 pointer-events-none"></div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
-            <!-- Breadcrumb -->
-            <nav class="flex items-center gap-2 mb-8 text-sm font-medium text-gray-500">
-                <a href="/" wire:navigate class="hover:text-[#B82E6E] transition-colors flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    Accueil
+            <!-- Return Button -->
+            <div class="mb-8">
+                <a href="/services" wire:navigate class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 font-semibold shadow-sm hover:bg-gray-50 hover:border-[#B82E6E] hover:text-[#B82E6E] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Retour aux services
                 </a>
-                <span class="text-gray-300">/</span>
-                <a href="/services" wire:navigate class="hover:text-[#B82E6E] transition-colors">
-                    Services
-                </a>
-                <span class="text-gray-300">/</span>
-                <span class="text-[#B82E6E] font-bold">Babysitting</span>
-            </nav>
+            </div>
 
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                 <div>

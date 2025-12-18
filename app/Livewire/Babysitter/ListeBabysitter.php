@@ -302,8 +302,15 @@ class ListeBabysitter extends Component
         $allCategories = CategorieEnfant::all();
         $allExperiences = ExperienceBesoinSpeciaux::all();
 
-        // Villes disponibles
-        $villes = ['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fes', 'Agadir'];
+        // Villes disponibles depuis la base de données
+        $villes = DB::table('localisations')
+            ->select('ville')
+            ->whereNotNull('ville')
+            ->where('ville', '!=', '')
+            ->distinct()
+            ->orderBy('ville')
+            ->pluck('ville')
+            ->toArray();
 
         // Préparer les données pour la carte avec coordonnées par défaut
 $defaultCoords = [
