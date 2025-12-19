@@ -752,20 +752,19 @@
                             .then(data => {
                                 console.log('Données de géocodage:', data);
                                 const ville = data.address?.city || data.address?.town || data.address?.village || '';
+                                // Récupérer le quartier, le faubourg ou la route pour l'adresse
+                                const quartier = data.address?.neighbourhood || data.address?.suburb || data.address?.road || '';
                                 console.log('Ville détectée:', ville);
+                                console.log('Adresse/Quartier détecté:', quartier);
                                 
                                 // Appeler la méthode PHP pour mettre à jour les coordonnées
-                                @this.set('latitude', lat);
-                                @this.set('longitude', lng);
-                                @this.set('ville', ville);
+                                @this.call('setLocation', lat, lng, ville, quartier);
                                 
                                 console.log('Coordonnées envoyées à Livewire');
                             })
                             .catch(error => {
                                 console.error('Erreur de géocodage:', error);
-                                @this.set('latitude', lat);
-                                @this.set('longitude', lng);
-                                @this.set('ville', '');
+                                @this.call('setLocation', lat, lng, '', '');
                             });
                     },
                     (error) => {
