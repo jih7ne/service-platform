@@ -422,7 +422,35 @@ class BabysitterBooking extends Component
             }
         }
 
-        $this->totalPrice = $totalHours * $hourlyRate * $numberOfChildren;
+        $this->totalPrice = $totalHours * $hourlyRate;
+    }
+
+    public function getPriceBreakdown()
+    {
+        $babysitter = $this->getBabysitter();
+        $hourlyRate = $babysitter['prix_horaire'] ?? 50;
+
+        $breakdown = [];
+
+        foreach ($this->selectedSlots as $day => $slots) {
+            foreach ($slots as $slot) {
+                [$startTime, $endTime] = explode('-', $slot);
+                $start = new \DateTime($startTime);
+                $end = new \DateTime($endTime);
+                $interval = $start->diff($end);
+                $hours = $interval->h + ($interval->i / 60);
+                $price = $hours * $hourlyRate;
+
+                $breakdown[] = [
+                    'day' => $day,
+                    'slot' => $slot,
+                    'hours' => $hours,
+                    'price' => $price
+                ];
+            }
+        }
+
+        return $breakdown;
     }
 
     public function updatedStartTime()

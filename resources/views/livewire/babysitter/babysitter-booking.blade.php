@@ -165,9 +165,9 @@
                         <div class="flex items-center {{ $index < count($steps) - 1 ? 'flex-1' : '' }}">
                             <div class="flex flex-col items-center">
                                 <div class="w-12 h-12 rounded-full flex items-center justify-center transition-all font-extrabold
-                                            {{ $step['number'] === $currentStep ? 'bg-[#B82E6E] text-white scale-110' : '' }}
-                                            {{ $step['number'] < $currentStep ? 'bg-[#B82E6E] text-white' : '' }}
-                                            {{ $step['number'] > $currentStep ? 'bg-gray-200 text-gray-500' : '' }}">
+                                                    {{ $step['number'] === $currentStep ? 'bg-[#B82E6E] text-white scale-110' : '' }}
+                                                    {{ $step['number'] < $currentStep ? 'bg-[#B82E6E] text-white' : '' }}
+                                                    {{ $step['number'] > $currentStep ? 'bg-gray-200 text-gray-500' : '' }}">
                                     @if($step['number'] < $currentStep)
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -179,7 +179,7 @@
                                 </div>
                                 <span
                                     class="text-sm mt-2 font-bold
-                                            {{ $step['number'] === $currentStep || $step['number'] < $currentStep ? 'text-[#B82E6E]' : 'text-gray-500' }}">
+                                                    {{ $step['number'] === $currentStep || $step['number'] < $currentStep ? 'text-[#B82E6E]' : 'text-gray-500' }}">
                                     {{ $step['label'] }}
                                 </span>
                             </div>
@@ -206,7 +206,7 @@
                             @foreach($availableServices as $service)
                                 <button wire:click="toggleService('{{ $service['name'] }}')" type="button"
                                     class="p-6 rounded-2xl border-2 transition-all text-center
-                                                {{ in_array($service['name'], $selectedServices) ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-gray-300 bg-white' }}">
+                                                            {{ in_array($service['name'], $selectedServices) ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-gray-300 bg-white' }}">
                                     <div class="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center"
                                         style="background-color: {{ in_array($service['name'], $selectedServices) ? '#B82E6E' : ($service['color'] ?? '#E5E7EB') }}; opacity: {{ in_array($service['name'], $selectedServices) ? 1 : 0.15 }}">
                                         <span class="text-4xl">{{ $service['icon'] }}</span>
@@ -248,9 +248,9 @@
                                     @endphp
                                     <button wire:click="toggleDay('{{ $day['id'] }}')" type="button" @if(!$hasSlots) disabled @endif
                                         class="p-4 rounded-xl transition-all
-                                                    {{ $isSelected ? 'bg-[#B82E6E] text-white' : '' }}
-                                                    {{ $hasSlots && !$isSelected ? 'bg-white border-2 border-gray-200 hover:border-[#B82E6E] text-gray-700' : '' }}
-                                                    {{ !$hasSlots ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '' }}">
+                                                                {{ $isSelected ? 'bg-[#B82E6E] text-white' : '' }}
+                                                                {{ $hasSlots && !$isSelected ? 'bg-white border-2 border-gray-200 hover:border-[#B82E6E] text-gray-700' : '' }}
+                                                                {{ !$hasSlots ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : '' }}">
                                         <div class="text-xs mb-1 font-semibold">
                                             {{ substr($day['label'], 0, 3) }}
                                         </div>
@@ -488,7 +488,7 @@
 
                             <button wire:click="$set('adresseChoice', 'babysitter')" type="button"
                                 class="w-full p-6 rounded-2xl border-2 transition-all text-left mb-4
-                                            {{ $adresseChoice === 'babysitter' ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-[#B82E6E]' }}">
+                                                        {{ $adresseChoice === 'babysitter' ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-[#B82E6E]' }}">
                                 <div class="flex items-center gap-4">
                                     <div class="w-12 h-12 bg-[#B82E6E] rounded-xl flex items-center justify-center">
                                         <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -519,7 +519,7 @@
 
                             <button wire:click="$set('adresseChoice', 'client')" type="button"
                                 class="w-full p-6 rounded-2xl border-2 transition-all text-left mb-6
-                                            {{ $adresseChoice === 'client' ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-[#B82E6E]' }}">
+                                                        {{ $adresseChoice === 'client' ? 'border-[#B82E6E] bg-[#F9E0ED]' : 'border-gray-200 hover:border-[#B82E6E]' }}">
                                 <div class="flex items-center gap-4">
                                     <div class="w-12 h-12 bg-[#B82E6E] rounded-xl flex items-center justify-center">
                                         <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -839,14 +839,48 @@
                                 class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E] resize-none"></textarea>
                         </div>
 
-                        {{-- Prix total --}}
-                        <div class="bg-[#F9E0ED] rounded-xl p-4 mb-6">
-                            <div class="flex justify-between items-center">
-                                <span class="text-lg font-bold text-[#B82E6E]">Prix total estimé</span>
-                                <span class="text-2xl font-extrabold text-[#B82E6E]">{{ $totalPrice }} MAD</span>
+
+                        {{-- Détail des prix --}}
+                        <div class="bg-[#F9E0ED] rounded-xl p-6 mb-6">
+                            <h3 class="text-lg font-bold text-[#B82E6E] mb-4">Détail des prix</h3>
+
+                            @php
+                                $breakdown = $this->getPriceBreakdown();
+                                $babysitter = $babysitter ?? $this->getBabysitter();
+                                $hourlyRate = $babysitter['prix_horaire'] ?? 50;
+                            @endphp
+
+                            <div class="space-y-3 mb-4">
+                                @foreach($breakdown as $item)
+                                    <div class="bg-white rounded-lg p-3">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <div>
+                                                <span class="font-bold text-gray-800">
+                                                    @foreach($daysOfWeek as $dayItem)
+                                                        @if($dayItem['id'] === $item['day']){{ $dayItem['label'] }}@endif
+                                                    @endforeach
+                                                </span>
+                                                <span class="text-sm text-gray-600 ml-2">{{ $item['slot'] }}</span>
+                                            </div>
+                                            <span class="font-bold text-[#B82E6E]">{{ number_format($item['price'], 2) }} MAD</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            {{ number_format($item['hours'], 1) }} heure(s) × {{ $hourlyRate }} MAD/h
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
-                            <p class="text-xs text-gray-600 mt-2">
-                                * Prix basé sur le tarif horaire
+
+                            <div class="border-t-2 border-[#B82E6E] pt-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-bold text-[#B82E6E]">Prix total estimé</span>
+                                    <span class="text-2xl font-extrabold text-[#B82E6E]">{{ number_format($totalPrice, 2) }}
+                                        MAD</span>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-600 mt-3">
+                                * Prix basé sur le tarif horaire ({{ $hourlyRate }} MAD/h)
                             </p>
                         </div>
 
@@ -855,8 +889,7 @@
                                 class="w-5 h-5 text-[#B82E6E] rounded mt-1 focus:ring-[#B82E6E] focus:ring-2"
                                 style="accent-color: #B82E6E" />
                             <label for="terms" class="text-sm text-gray-500 font-semibold cursor-pointer">
-                                J'accepte les conditions générales d'utilisation et je comprends que cette demande
-                                n'est pas encore confirmée
+                                Je comprends que cette demande n'est pas encore confirmée
                             </label>
                         </div>
                     </div>
