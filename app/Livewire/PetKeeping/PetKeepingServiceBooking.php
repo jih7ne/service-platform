@@ -82,6 +82,11 @@ class PetKeepingServiceBooking extends Component
 
     public function mount($IdService)
     {
+        $user = Auth::user();
+
+        if($user == null || $user->role != 'client'){
+            return redirect()->route('login');
+        }
         $this->petkeepingId = $IdService;
         
         $this->loadServiceWithPetkeeping();

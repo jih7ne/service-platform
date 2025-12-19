@@ -8,7 +8,8 @@ use App\Models\Shared\DemandesIntervention;
 use App\Models\Shared\Localisation;
 use App\Models\Shared\Service; 
 use Livewire\Component;
-use Illuminate\Support\Facades\DB;      
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;      
 use Illuminate\Support\Facades\Log; 
 
 class PetkeeperBooking extends Component
@@ -38,6 +39,11 @@ class PetkeeperBooking extends Component
 
    public function mount()
 {
+    $user = Auth::user();
+
+    if($user == null || $user->role != 'client'){
+        return redirect()->route('login');
+    }
     
     $this->services = Service::where('statut', 'ACTIVE')->get();
 }
