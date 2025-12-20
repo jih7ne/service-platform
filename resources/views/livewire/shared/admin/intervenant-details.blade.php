@@ -46,11 +46,11 @@
                                     <h1 class="text-3xl font-bold text-gray-900">{{ $user->prenom }} {{ $user->nom }}</h1>
                                     <p class="text-gray-500 mt-1.5 text-base">{{ $user->email }}</p>
                                 </div>
-                                @if($offre->statut === 'EN_ATTENTE')
+                                @if($intervenant->statut === 'EN_ATTENTE')
                                     <span class="px-4 py-2 inline-flex text-sm font-semibold rounded-full bg-yellow-100 text-yellow-700">
                                         En attente
                                     </span>
-                                @elseif($offre->statut === 'ACTIVE')
+                                @elseif($intervenant->statut === 'VALIDE')
                                     <span class="px-4 py-2 inline-flex text-sm font-semibold rounded-full bg-green-100 text-green-700">
                                         Acceptée
                                     </span>
@@ -71,7 +71,7 @@
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                     </svg>
-                                    Demande le {{ $intervenant->created_at ? \Carbon\Carbon::parse($intervenant->created_at)->format('d M Y') : 'N/A' }}
+                                    Demande le {{ \Carbon\Carbon::parse($intervenant->created_at)->format('d M Y') }}
                                 </span>
                             </div>
                         </div>
@@ -287,20 +287,6 @@
                                             </div>
                                         </div>
                                     @endif
-
-                                    @if(isset($babysitterData->documents) && $babysitterData->documents->count() > 0)
-                                        <div class="pt-4 border-t border-gray-100">
-                                            <p class="text-sm font-semibold text-gray-900 mb-3">📂 Documents fournis</p>
-                                            <div class="space-y-2">
-                                                @foreach($babysitterData->documents as $doc)
-                                                    <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
-                                                        <span class="text-sm font-medium text-gray-800">{{ $doc['label'] }}</span>
-                                                        <a href="{{ asset('storage/' . $doc['path']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">Voir</a>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    @endif
                                 </div>
                             @endif
 
@@ -322,36 +308,13 @@
                                         </div>
                                     </div>
 
-                                    @if(isset($petkeeperData->documents) && $petkeeperData->documents->count() > 0)
+                                    @if($petkeeperData->certifications && count($petkeeperData->certifications) > 0)
                                         <div class="pt-4 border-t border-gray-100">
-                                            <p class="text-sm font-semibold text-gray-900 mb-4">📂 Documents fournis</p>
+                                            <p class="text-sm font-semibold text-gray-900 mb-4">🏆 Certifications</p>
                                             <div class="space-y-3">
-                                                @foreach($petkeeperData->documents as $doc)
-                                                    <div class="py-3 px-4 bg-gray-50 rounded-lg flex items-center justify-between">
-                                                        <span class="text-sm font-medium text-gray-900">{{ $doc['label'] }}</span>
-                                                        <a href="{{ asset('storage/' . $doc['path']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">Voir</a>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    @php
-                                        $otherCerts = $petkeeperData->otherCertifications ?? $petkeeperData->certifications;
-                                    @endphp
-
-                                    @if($otherCerts && count($otherCerts) > 0)
-                                        <div class="pt-4 border-t border-gray-100">
-                                            <p class="text-sm font-semibold text-gray-900 mb-4">🏆 Autres certifications</p>
-                                            <div class="space-y-3">
-                                                @foreach($otherCerts as $cert)
-                                                    <div class="py-3 px-4 bg-gray-50 rounded-lg flex items-center justify-between">
+                                                @foreach($petkeeperData->certifications as $cert)
+                                                    <div class="py-3 px-4 bg-gray-50 rounded-lg">
                                                         <p class="text-sm font-medium text-gray-900">{{ $cert->certification }}</p>
-                                                        @if(!empty($cert->document))
-                                                            <a href="{{ asset('storage/' . $cert->document) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">Voir</a>
-                                                        @else
-                                                            <span class="text-xs text-gray-500">Aucun fichier</span>
-                                                        @endif
                                                     </div>
                                                 @endforeach
                                             </div>
@@ -364,7 +327,7 @@
                 </div>
 
                 {{-- Boutons d'action en bas de la page --}}
-                @if($offre && $offre->statut === 'EN_ATTENTE')
+                @if($intervenant->statut === 'EN_ATTENTE')
                     <div class="mt-6 pt-6 border-t border-gray-100 flex justify-end gap-3 px-8 pb-8">
                         <button 
                             wire:click="openRefusalModal"
@@ -386,7 +349,7 @@
 
     {{-- Modal de refus --}}
     @if($showRefusalModal)
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" wire:click.self="closeRefusalModal">
+        <div class="fixed inset-0 flex items-center justify-center z-50 p-4" wire:click.self="closeRefusalModal">
             <div class="bg-white rounded-2xl max-w-md w-full shadow-xl">
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-900 mb-4">Motif du refus</h3>
