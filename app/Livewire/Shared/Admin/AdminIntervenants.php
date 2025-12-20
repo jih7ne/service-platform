@@ -63,7 +63,7 @@ class AdminIntervenants extends Component
                 'os.idintervenant',
                 'os.idService',
                 'os.statut as offre_statut',
-                DB::raw("COALESCE(services.nomService, CASE WHEN babysitters.idBabysitter IS NOT NULL THEN 'Babysitting' WHEN petkeepers.idPetKeeper IS NOT NULL THEN 'Pet Keeping' ELSE 'Service' END) as nomService")
+                DB::raw("CASE WHEN babysitters.idBabysitter IS NOT NULL THEN 'Babysitting' WHEN petkeepers.idPetKeeper IS NOT NULL THEN 'Pet Keeping' WHEN services.nomService IS NOT NULL THEN services.nomService ELSE 'Service' END as nomService")
             );
 
         // Filtre de recherche
@@ -77,14 +77,18 @@ class AdminIntervenants extends Component
             });
         }
 
-        // Filtre de statut sur statut combiné (offre ou intervenant)
+        // Filtre de statut basé STRICTEMENT sur le statut de l'intervenant en base
         if ($this->statusFilter !== 'tous') {
-            $statusMap = [
-                'en_attente' => 'EN_ATTENTE',
-                'valide' => 'ACTIVE',
-                'refuse' => 'ARCHIVED'
-            ];
-            $query->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), $statusMap[$this->statusFilter]);
+            $validStatuses = ['ACTIVE', 'VALIDE', 'VALIDÉ'];
+            $refusedStatuses = ['ARCHIVED', 'REFUSE', 'REFUSÉ'];
+
+            if ($this->statusFilter === 'en_attente') {
+                $query->where('intervenants.statut', 'EN_ATTENTE');
+            } elseif ($this->statusFilter === 'valide') {
+                $query->whereIn('intervenants.statut', $validStatuses);
+            } elseif ($this->statusFilter === 'refuse') {
+                $query->whereIn('intervenants.statut', $refusedStatuses);
+            }
         }
 
         $intervenants = $query
@@ -94,12 +98,8 @@ class AdminIntervenants extends Component
         // Charger les données spécifiques pour chaque offre
         foreach ($intervenants as $intervenant) {
             $this->loadOffreTypeData($intervenant);
-            // Statut affiché : priorise l'état de l'intervenant si encore en attente
-            if (($intervenant->intervenant_statut ?? null) === 'EN_ATTENTE') {
-                $intervenant->statut = 'EN_ATTENTE';
-            } else {
-                $intervenant->statut = $intervenant->offre_statut ?? $intervenant->intervenant_statut;
-            }
+            // Afficher exactement l'état en base de l'intervenant (normalisé)
+            $intervenant->statut = $this->normalizeStatus($intervenant->intervenant_statut ?? null);
             // Injecter un idService résolu si absent (pour activer le lien détails)
             if (empty($intervenant->idService) && isset($intervenant->derivedServiceId)) {
                 $intervenant->idService = $intervenant->derivedServiceId;
@@ -110,11 +110,13 @@ class AdminIntervenants extends Component
         $baseStatsQuery = DB::table('intervenants')
             ->leftJoin('offres_services as os', 'os.idintervenant', '=', 'intervenants.IdIntervenant');
 
+        $validStatuses = ['ACTIVE', 'VALIDE', 'VALIDÉ'];
+        $refusedStatuses = ['ARCHIVED', 'REFUSE', 'REFUSÉ'];
         $stats = [
             'total' => (clone $baseStatsQuery)->count(),
-            'en_attente' => (clone $baseStatsQuery)->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), 'EN_ATTENTE')->count(),
-            'valides' => (clone $baseStatsQuery)->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), 'ACTIVE')->count(),
-            'refuses' => (clone $baseStatsQuery)->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), 'ARCHIVED')->count(),
+            'en_attente' => (clone $baseStatsQuery)->where('intervenants.statut', 'EN_ATTENTE')->count(),
+            'valides' => (clone $baseStatsQuery)->whereIn('intervenants.statut', $validStatuses)->count(),
+            'refuses' => (clone $baseStatsQuery)->whereIn('intervenants.statut', $refusedStatuses)->count(),
         ];
 
         return view('livewire.shared.admin.admin-intervenants', [
@@ -175,5 +177,15 @@ class AdminIntervenants extends Component
         if (!isset($intervenant->statut)) {
             $intervenant->statut = $intervenant->intervenant_statut;
         }
+    }
+
+    private function normalizeStatus($status)
+    {
+        if (!$status) return null;
+        $status = strtoupper($status);
+        if (in_array($status, ['ACTIVE', 'VALIDE', 'VALIDÉ'])) return 'VALIDE';
+        if (in_array($status, ['ARCHIVED', 'REFUSE', 'REFUSÉ'])) return 'REFUSE';
+        if (in_array($status, ['EN_ATTENTE'])) return 'EN_ATTENTE';
+        return $status; // fallback
     }
 }

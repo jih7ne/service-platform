@@ -220,10 +220,12 @@
                                             <span class="text-sm text-gray-500 w-32">Expérience:</span>
                                             <span class="text-sm font-medium text-gray-900">{{ $babysitterData->expAnnee ?? 0 }} années</span>
                                         </div>
-                                        @if($babysitterData->langues)
+                                        @if(!empty($babysitterData->langues))
                                             <div class="flex items-center gap-3">
                                                 <span class="text-sm text-gray-500 w-32">Langues:</span>
-                                                <span class="text-sm font-medium text-gray-900">{{ $babysitterData->langues }}</span>
+                                                <span class="text-sm font-medium text-gray-900">
+                                                    {{ is_array($babysitterData->langues) ? implode(', ', $babysitterData->langues) : $babysitterData->langues }}
+                                                </span>
                                             </div>
                                         @endif
                                     </div>

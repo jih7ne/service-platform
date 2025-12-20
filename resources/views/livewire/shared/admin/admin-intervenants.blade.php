@@ -159,13 +159,17 @@
                                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                             En attente
                                         </span>
-                                    @elseif($intervenant->statut === 'ACTIVE')
+                                    @elseif(in_array($intervenant->statut, ['ACTIVE','VALIDE']))
                                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                             Validé
                                         </span>
-                                    @else
+                                    @elseif(in_array($intervenant->statut, ['ARCHIVED','REFUSE']))
                                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                             Refusé
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                            {{ ucfirst(strtolower(str_replace('_', ' ', $intervenant->statut))) }}
                                         </span>
                                     @endif
                                 </td>
