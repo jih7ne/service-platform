@@ -6,7 +6,6 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Shared\Intervenant;
 use App\Models\Shared\Utilisateur;
-use App\Models\Shared\Service;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\IntervenantAccepte;
@@ -18,11 +17,22 @@ class AdminIntervenants extends Component
 
     public $searchTerm = '';
     public $statusFilter = 'tous';
+    public $showDetailModal = false;
+    public $selectedIntervenant = null;
+    public $selectedUser = null;
+    public $professeurData = null;
+    public $babysitterData = null;
+    public $petkeeperData = null;
+    public $serviceType = null;
+    public $refusalReason = '';
+    public $showRefusalModal = false;
+    public $intervenantToRefuse = null;
 
     protected $paginationTheme = 'tailwind';
 
     public function mount()
     {
+        // Vérifier si l'utilisateur est admin
         if (!session()->has('is_admin')) {
             return redirect()->route('login')->with('error', 'Accès réservé aux administrateurs');
         }
@@ -38,32 +48,197 @@ class AdminIntervenants extends Component
         $this->resetPage();
     }
 
+    public function viewDetails($intervenantId)
+    {
+        $this->selectedIntervenant = Intervenant::find($intervenantId);
+        
+        if ($this->selectedIntervenant) {
+            $this->selectedUser = Utilisateur::leftJoin('localisations', 'utilisateurs.idUser', '=', 'localisations.idUser')
+                ->where('utilisateurs.idUser', $this->selectedIntervenant->IdIntervenant)
+                ->select('utilisateurs.*', 'localisations.ville', 'localisations.adresse')
+                ->first();
+            
+            // Réinitialiser les données
+            $this->professeurData = null;
+            $this->babysitterData = null;
+            $this->petkeeperData = null;
+            $this->serviceType = null;
+            
+            // Charger les données spécifiques selon le type d'intervenant
+            $this->loadIntervenantSpecificData($this->selectedIntervenant->IdIntervenant);
+            
+            $this->showDetailModal = true;
+        }
+    }
+
+    private function loadIntervenantSpecificData($idIntervenant)
+    {
+        // Vérifier si c'est un professeur
+        $professeur = DB::table('professeurs')
+            ->where('intervenant_id', $idIntervenant)
+            ->first();
+        
+        if ($professeur) {
+            $this->serviceType = 'Soutien Scolaire';
+            $this->professeurData = $professeur;
+            
+            // Charger les matières et niveaux
+            $this->professeurData->matieres = DB::table('services_prof')
+                ->join('matieres', 'services_prof.matiere_id', '=', 'matieres.id_matiere')
+                ->where('services_prof.professeur_id', $professeur->id_professeur)
+                ->select('matieres.nom_matiere', 'services_prof.type_service', 'services_prof.prix_par_heure')
+                ->get();
+            
+            return;
+        }
+        
+        // Vérifier si c'est un babysitter
+        $babysitter = DB::table('babysitters')
+            ->where('idBabysitter', $idIntervenant)
+            ->first();
+        
+        if ($babysitter) {
+            $this->serviceType = 'Babysitting';
+            $this->babysitterData = $babysitter;
+            
+            // Charger les superpouvoirs
+            $this->babysitterData->superpouvoirs = DB::table('choisir_superpourvoirs')
+                ->join('superpouvoirs', 'choisir_superpourvoirs.idSuperpourvoirs', '=', 'superpouvoirs.idSuperpourvoirs')
+                ->where('choisir_superpourvoirs.idBabysitter', $idIntervenant)
+                ->pluck('superpouvoirs.nom')
+                ->toArray();
+            
+            // Charger les formations
+            $this->babysitterData->formations = DB::table('choisir_formations')
+                ->join('formations', 'choisir_formations.idFormation', '=', 'formations.idFormation')
+                ->where('choisir_formations.idBabysitter', $idIntervenant)
+                ->pluck('formations.nom')
+                ->toArray();
+            
+            // Charger les catégories d'enfants
+            $this->babysitterData->categories = DB::table('choisir_categories')
+                ->join('categorie_enfants', 'choisir_categories.idCategorieEnfant', '=', 'categorie_enfants.idCategorieEnfant')
+                ->where('choisir_categories.idBabysitter', $idIntervenant)
+                ->pluck('categorie_enfants.trancheAge')
+                ->toArray();
+            
+            return;
+        }
+        
+        // Vérifier si c'est un gardien d'animaux
+        $petkeeper = DB::table('petkeepers')
+            ->where('idPetKeeper', $idIntervenant)
+            ->first();
+        
+        if ($petkeeper) {
+            $this->serviceType = "Garde d'animaux";
+            $this->petkeeperData = $petkeeper;
+            
+            // Charger les certifications
+            $this->petkeeperData->certifications = DB::table('petkeeper_certifications')
+                ->where('petkeeper_id', $petkeeper->id)
+                ->get();
+            
+            return;
+        }
+    }
+
+    public function closeDetailModal()
+    {
+        $this->showDetailModal = false;
+        $this->selectedIntervenant = null;
+        $this->selectedUser = null;
+        $this->professeurData = null;
+        $this->babysitterData = null;
+        $this->petkeeperData = null;
+        $this->serviceType = null;
+    }
+
+    public function approveIntervenant($intervenantId)
+    {
+        $intervenant = Intervenant::find($intervenantId);
+        
+        if ($intervenant) {
+            $intervenant->statut = 'VALIDE';
+            $intervenant->idAdmin = session('admin_id');
+            $intervenant->save();
+
+            // Récupérer l'utilisateur pour l'email
+            $user = Utilisateur::find($intervenant->IdIntervenant);
+            
+            // Envoyer l'email d'acceptation
+            try {
+                Mail::to($user->email)->send(new IntervenantAccepte($user, $this->serviceType ?? 'Intervenant'));
+            } catch (\Exception $e) {
+                // Log l'erreur mais continue l'exécution
+                \Log::error('Erreur envoi email acceptation: ' . $e->getMessage());
+            }
+
+            session()->flash('success', 'Intervenant approuvé avec succès ! Un email de confirmation a été envoyé.');
+            $this->closeDetailModal();
+        }
+    }
+
+    public function openRefusalModal($intervenantId)
+    {
+        $this->intervenantToRefuse = $intervenantId;
+        $this->showRefusalModal = true;
+        $this->refusalReason = '';
+    }
+
+    public function closeRefusalModal()
+    {
+        $this->showRefusalModal = false;
+        $this->intervenantToRefuse = null;
+        $this->refusalReason = '';
+    }
+
+    public function refuseIntervenant()
+    {
+        $this->validate([
+            'refusalReason' => 'required|min:10'
+        ], [
+            'refusalReason.required' => 'Veuillez indiquer la raison du refus',
+            'refusalReason.min' => 'La raison doit contenir au moins 10 caractères'
+        ]);
+
+        $intervenant = Intervenant::find($this->intervenantToRefuse);
+        
+        if ($intervenant) {
+            $intervenant->statut = 'REFUSE';
+            $intervenant->idAdmin = session('admin_id');
+            $intervenant->save();
+
+            // Récupérer l'utilisateur pour l'email
+            $user = Utilisateur::find($intervenant->IdIntervenant);
+            
+            // Envoyer l'email de refus
+            try {
+                Mail::to($user->email)->send(new IntervenantRefuse($user, $this->refusalReason, $this->serviceType ?? 'Intervenant'));
+            } catch (\Exception $e) {
+                // Log l'erreur mais continue l'exécution
+                \Log::error('Erreur envoi email refus: ' . $e->getMessage());
+            }
+
+            session()->flash('success', 'Demande refusée. Un email d\'information a été envoyé à l\'intervenant.');
+            $this->closeRefusalModal();
+            $this->closeDetailModal();
+        }
+    }
+
     public function render()
     {
-        // Base sur intervenants pour inclure ceux sans entrée dans offres_services (ex: Babysitting)
-        $query = DB::table('intervenants')
-            ->join('utilisateurs', 'intervenants.IdIntervenant', '=', 'utilisateurs.idUser')
-            ->leftJoin('offres_services as os', 'os.idintervenant', '=', 'intervenants.IdIntervenant')
-            ->leftJoin('services', 'os.idService', '=', 'services.idService')
+        $query = Intervenant::join('utilisateurs', 'intervenants.IdIntervenant', '=', 'utilisateurs.idUser')
             ->leftJoin('localisations', 'utilisateurs.idUser', '=', 'localisations.idUser')
-            ->leftJoin('babysitters', 'babysitters.idBabysitter', '=', 'intervenants.IdIntervenant')
-            ->leftJoin('petkeepers', 'petkeepers.idPetKeeper', '=', 'intervenants.IdIntervenant')
             ->select(
-                'intervenants.IdIntervenant',
-                'intervenants.created_at',
-                'intervenants.id',
-                'intervenants.statut as intervenant_statut',
+                'intervenants.*',
                 'utilisateurs.nom',
                 'utilisateurs.prenom',
                 'utilisateurs.email',
                 'utilisateurs.telephone',
                 'utilisateurs.photo',
                 'localisations.ville',
-                'localisations.adresse',
-                'os.idintervenant',
-                'os.idService',
-                'os.statut as offre_statut',
-                DB::raw("COALESCE(services.nomService, CASE WHEN babysitters.idBabysitter IS NOT NULL THEN 'Babysitting' WHEN petkeepers.idPetKeeper IS NOT NULL THEN 'Pet Keeping' ELSE 'Service' END) as nomService")
+                'localisations.adresse'
             );
 
         // Filtre de recherche
@@ -72,49 +247,28 @@ class AdminIntervenants extends Component
                 $q->where('utilisateurs.nom', 'like', '%' . $this->searchTerm . '%')
                   ->orWhere('utilisateurs.prenom', 'like', '%' . $this->searchTerm . '%')
                   ->orWhere('utilisateurs.email', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('localisations.ville', 'like', '%' . $this->searchTerm . '%')
-                  ->orWhere('services.nomService', 'like', '%' . $this->searchTerm . '%');
+                  ->orWhere('localisations.ville', 'like', '%' . $this->searchTerm . '%');
             });
         }
 
-        // Filtre de statut sur statut combiné (offre ou intervenant)
+        // Filtre de statut
         if ($this->statusFilter !== 'tous') {
-            $statusMap = [
-                'en_attente' => 'EN_ATTENTE',
-                'valide' => 'ACTIVE',
-                'refuse' => 'ARCHIVED'
-            ];
-            $query->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), $statusMap[$this->statusFilter]);
+            $query->where('intervenants.statut', strtoupper($this->statusFilter));
         }
 
-        $intervenants = $query
-            ->orderBy('intervenants.created_at', 'desc')
-            ->paginate(10);
+        $intervenants = $query->orderBy('intervenants.created_at', 'desc')->paginate(10);
 
-        // Charger les données spécifiques pour chaque offre
+        // Charger les données spécifiques pour chaque intervenant
         foreach ($intervenants as $intervenant) {
-            $this->loadOffreTypeData($intervenant);
-            // Statut affiché : priorise l'état de l'intervenant si encore en attente
-            if (($intervenant->intervenant_statut ?? null) === 'EN_ATTENTE') {
-                $intervenant->statut = 'EN_ATTENTE';
-            } else {
-                $intervenant->statut = $intervenant->offre_statut ?? $intervenant->intervenant_statut;
-            }
-            // Injecter un idService résolu si absent (pour activer le lien détails)
-            if (empty($intervenant->idService) && isset($intervenant->derivedServiceId)) {
-                $intervenant->idService = $intervenant->derivedServiceId;
-            }
+            $this->loadIntervenantTypeData($intervenant);
         }
 
-        // Statistiques basées sur le statut combiné
-        $baseStatsQuery = DB::table('intervenants')
-            ->leftJoin('offres_services as os', 'os.idintervenant', '=', 'intervenants.IdIntervenant');
-
+        // Statistiques
         $stats = [
-            'total' => (clone $baseStatsQuery)->count(),
-            'en_attente' => (clone $baseStatsQuery)->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), 'EN_ATTENTE')->count(),
-            'valides' => (clone $baseStatsQuery)->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), 'ACTIVE')->count(),
-            'refuses' => (clone $baseStatsQuery)->where(DB::raw('COALESCE(os.statut, intervenants.statut)'), 'ARCHIVED')->count(),
+            'total' => Intervenant::count(),
+            'en_attente' => Intervenant::where('statut', 'EN_ATTENTE')->count(),
+            'valides' => Intervenant::where('statut', 'VALIDE')->count(),
+            'refuses' => Intervenant::where('statut', 'REFUSE')->count(),
         ];
 
         return view('livewire.shared.admin.admin-intervenants', [
@@ -123,57 +277,73 @@ class AdminIntervenants extends Component
         ]);
     }
 
-    private function loadOffreTypeData($intervenant)
+    private function loadIntervenantTypeData($intervenant)
     {
-        $serviceName = strtolower($intervenant->nomService ?? '');
+        // Vérifier si c'est un professeur
+        $professeur = DB::table('professeurs')
+            ->where('intervenant_id', $intervenant->IdIntervenant)
+            ->first();
         
-        if ($serviceName === 'soutien scolaire') {
+        if ($professeur) {
             $intervenant->service_type = 'Soutien scolaire';
             $intervenant->service_icon = '📚';
             
-            $professeur = DB::table('professeurs')
-                ->where('intervenant_id', $intervenant->IdIntervenant)
+            // Charger la première matière comme aperçu
+            $matiere = DB::table('services_prof')
+                ->join('matieres', 'services_prof.matiere_id', '=', 'matieres.id_matiere')
+                ->where('services_prof.professeur_id', $professeur->id_professeur)
+                ->select('matieres.nom_matiere', 'services_prof.type_service')
                 ->first();
             
-            if ($professeur) {
-                $matiere = DB::table('services_prof')
-                    ->join('matieres', 'services_prof.matiere_id', '=', 'matieres.id_matiere')
-                    ->where('services_prof.professeur_id', $professeur->id_professeur)
-                    ->select('matieres.nom_matiere', 'services_prof.type_service')
-                    ->first();
-                
-                $intervenant->service_details = $matiere ? $matiere->nom_matiere . ' - ' . $matiere->type_service : 'Cours de soutien scolaire';
+            if ($matiere) {
+                $intervenant->service_details = $matiere->nom_matiere . ' - ' . $matiere->type_service;
+            } else {
+                $intervenant->service_details = 'Cours de soutien scolaire';
             }
-            $intervenant->derivedServiceId = $intervenant->derivedServiceId ?? Service::where('nomService', 'Soutien Scolaire')->value('idService');
-        } elseif ($serviceName === 'babysitting') {
+            
+            return;
+        }
+        
+        // Vérifier si c'est un babysitter
+        $babysitter = DB::table('babysitters')
+            ->where('idBabysitter', $intervenant->IdIntervenant)
+            ->first();
+        
+        if ($babysitter) {
             $intervenant->service_type = 'Babysitting';
             $intervenant->service_icon = '👶';
             
-            $babysitter = DB::table('babysitters')
-                ->where('idBabysitter', $intervenant->IdIntervenant)
-                ->first();
+            // Charger les catégories d'enfants
+            $categories = DB::table('choisir_categories')
+                ->join('categorie_enfants', 'choisir_categories.idCategorie', '=', 'categorie_enfants.idCategorie')
+                ->where('choisir_categories.idBabysitter', $intervenant->IdIntervenant)
+                ->pluck('categorie_enfants.categorie')
+                ->toArray();
             
-            $intervenant->service_details = $babysitter ? 'Garde d\'enfants - ' . $babysitter->prixHeure . ' DH/h' : 'Garde d\'enfants';
-            $intervenant->derivedServiceId = $intervenant->derivedServiceId ?? Service::where('nomService', 'Babysitting')->value('idService');
-        } elseif ($serviceName === 'pet keeping') {
+            if (!empty($categories)) {
+                $intervenant->service_details = 'Garde d\'enfants (' . implode(', ', $categories) . ')';
+            } else {
+                $intervenant->service_details = 'Garde d\'enfants';
+            }
+            
+            return;
+        }
+        
+        // Vérifier si c'est un gardien d'animaux
+        $petkeeper = DB::table('petkeepers')
+            ->where('idPetKeeper', $intervenant->IdIntervenant)
+            ->first();
+        
+        if ($petkeeper) {
             $intervenant->service_type = 'Garde d\'animaux';
             $intervenant->service_icon = '🐾';
-            
-            $petkeeper = DB::table('petkeepers')
-                ->where('idPetKeeper', $intervenant->IdIntervenant)
-                ->first();
-            
-            $intervenant->service_details = $petkeeper ? 'Spécialité: ' . ($petkeeper->specialite ?? 'Non spécifié') : 'Garde d\'animaux';
-            $intervenant->derivedServiceId = $intervenant->derivedServiceId ?? Service::where('nomService', 'Pet Keeping')->value('idService');
-        } else {
-            $intervenant->service_type = $intervenant->nomService;
-            $intervenant->service_icon = '💼';
-            $intervenant->service_details = 'Service disponible';
+            $intervenant->service_details = 'Spécialité: ' . ($petkeeper->specialite ?? 'Non spécifié');
+            return;
         }
-
-        // Fallback statut si aucune offre liée
-        if (!isset($intervenant->statut)) {
-            $intervenant->statut = $intervenant->intervenant_statut;
-        }
+        
+        // Par défaut
+        $intervenant->service_type = 'Service général';
+        $intervenant->service_icon = '💼';
+        $intervenant->service_details = 'Intervenant';
     }
 }
