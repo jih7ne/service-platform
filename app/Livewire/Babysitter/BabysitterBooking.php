@@ -9,6 +9,8 @@ use App\Models\Babysitting\DemandeIntervention;
 use App\Models\Babysitting\Enfant;
 use App\Models\Babysitting\Superpouvoir;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Babysitter\BabysitterNewRequestMail;
 
 class BabysitterBooking extends Component
 {
@@ -342,6 +344,8 @@ class BabysitterBooking extends Component
 
             DB::beginTransaction();
 
+            $createdDemandes = [];
+
             // Créer les demandes d'intervention pour chaque créneau sélectionné
             foreach ($this->selectedSlots as $day => $slots) {
                 foreach ($slots as $slot) {
@@ -359,6 +363,8 @@ class BabysitterBooking extends Component
                         'idService' => 2, // ID du service Babysitting
                         'statut' => 'en_attente'
                     ]);
+
+                    $createdDemandes[] = $demande;
 
                     // Ajouter les enfants pour chaque demande
                     foreach ($this->children as $child) {
@@ -386,6 +392,19 @@ class BabysitterBooking extends Component
             }
 
             DB::commit();
+
+            // Envoyer l'email au babysitter
+            if (!empty($createdDemandes)) {
+                try {
+                    $babysitter = $this->getBabysitter();
+                    if ($babysitter && isset($babysitter['utilisateur']) && $babysitter['utilisateur']->email) {
+                        Mail::to($babysitter['utilisateur']->email)->send(new BabysitterNewRequestMail($createdDemandes));
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Erreur lors de l\'envoi de l\'email au babysitter: ' . $e->getMessage());
+                }
+            }
+
             $this->showSuccess = true;
 
             session()->flash('success', 'Votre demande de réservation a été envoyée avec succès ! Prix total: ' . $this->totalPrice . ' MAD');

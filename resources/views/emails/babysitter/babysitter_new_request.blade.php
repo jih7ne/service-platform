@@ -38,6 +38,22 @@
             margin-bottom: 20px;
             border-radius: 4px;
         }
+        .button {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 12px 20px;
+            background-color: #B82E6E;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #96245a;
+        }
         .footer {
             background-color: #f1f1f1;
             padding: 20px;
@@ -45,24 +61,30 @@
             font-size: 12px;
             color: #777;
         }
+        .alert {
+            color: #B82E6E;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h2>Mise à jour de votre demande</h2>
+            <h2>Nouvelle Demande Reçue !</h2>
         </div>
         <div class="content">
-            <p>Bonjour {{ $demande->client->prenom }},</p>
-            
-            <p>Nous sommes désolés de vous informer que votre demande pour le <strong>{{ $demande->dateSouhaitee->format('d/m/Y') }}</strong> a été refusée par l'intervenant.</p>
+            <p>Bonjour,</p>
+            <p>Bonne nouvelle ! Vous avez reçu <strong>{{ count($demandes) }}</strong> nouvelle(s) demande(s) de babysitting.</p>
             
             <div class="info-box">
-                <h3 style="margin-top: 0; color: #B82E6E;">Motif du refus :</h3>
-                <p style="margin: 0;">{{ $motif }}</p>
+                <p style="margin: 0;">Connectez-vous à votre tableau de bord du service "Babysitting" pour consulter les détails complets (enfants, besoins spécifiques) et répondre à cette demande.</p>
             </div>
-            
-            <p>Nous vous invitons à effectuer une nouvelle recherche sur notre plateforme.</p>
+
+            <p class="alert">⚠️ Important : Vous avez 48 heures pour valider ou refuser cette demande, sinon elle sera automatiquement annulée.</p>
+
+    
         </div>
         <div class="footer">
             <p>Cet email a été envoyé automatiquement par Helpora Platform.</p>
