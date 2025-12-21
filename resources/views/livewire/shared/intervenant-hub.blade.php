@@ -6,7 +6,6 @@
     <!-- Contenu Principal -->
     <main class="flex-grow flex items-center justify-center p-6">
         <div class="w-full max-w-6xl mx-auto">
-        <div class="w-full max-w-6xl mx-auto">
             
             <!-- En-tête Section avec animation -->
             <div class="text-center mb-16 animate-fade-in">
@@ -167,7 +166,6 @@
                             </div>
                         </div>
                     </div>
-                    </div>
                 @endforeach
             </div>
             
@@ -189,6 +187,7 @@
                     </button>
                 </div>
             @endif
+        </div>
     </main>
     
     <!-- Footer Component -->
@@ -240,65 +239,65 @@
         </div>
     </div>
     @endif
+
+    <style>
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    
+        @keyframes slide-down {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    
+        @keyframes card-entrance {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    
+        .animate-fade-in {
+            animation: fade-in 0.6s ease-out;
+        }
+    
+        .animate-slide-down {
+            animation: slide-down 0.4s ease-out;
+        }
+    
+        .animate-card-entrance {
+            animation: card-entrance 0.7s ease-out both;
+        }
+    
+        /* Effet de pulse sur le badge actif */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
 </div>
-
-<style>
-    @keyframes fade-in {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes slide-down {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes card-entrance {
-        from {
-            opacity: 0;
-            transform: translateY(30px) scale(0.95);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-
-    .animate-fade-in {
-        animation: fade-in 0.6s ease-out;
-    }
-
-    .animate-slide-down {
-        animation: slide-down 0.4s ease-out;
-    }
-
-    .animate-card-entrance {
-        animation: card-entrance 0.7s ease-out both;
-    }
-
-    /* Effet de pulse sur le badge actif */
-    @keyframes pulse {
-        0%, 100% {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.5;
-        }
-    }
-
-    .animate-pulse {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-</style>
