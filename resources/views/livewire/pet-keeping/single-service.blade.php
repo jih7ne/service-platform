@@ -217,7 +217,7 @@
                                 Base Price *
                             </label>
                             <div class="relative">
-                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">DH</span>
                                 <input type="number" step="0.01" wire:model="service_base_price" 
                                        class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition">
                             </div>
@@ -319,7 +319,7 @@
                             
                             <div class="bg-white p-4 rounded-lg border border-gray-200">
                                 <h3 class="text-sm font-medium text-gray-500 mb-1">Base Price</h3>
-                                <p class="text-gray-900 font-medium text-lg">${{ number_format($service_base_price, 2) }}</p>
+                                <p class="text-gray-900 font-medium text-lg">{{ number_format($service_base_price, 2) }} DH</p>
                             </div>
                         </div>
 

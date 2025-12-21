@@ -50,7 +50,7 @@
                 <div>
                     <p class="text-sm font-medium text-gray-500">Revenu Total</p>
                     <p class="text-3xl font-bold text-gray-900 mt-2">
-                        {{ number_format($this->totalRevenue, 2, ',', ' ') }} €
+                        {{ number_format($this->totalRevenue, 2, ',', ' ') }} DH
                     </p>
                 </div>
                 <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
@@ -229,7 +229,7 @@
                                 <!-- Amount -->
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                     @if($client->montantTotal)
-                                        {{ number_format($client->montantTotal, 2, ',', ' ') }} €
+                                        {{ number_format($client->montantTotal, 2, ',', ' ') }} DH
                                     @else
                                         <span class="text-gray-400">Non facturé</span>
                                     @endif
@@ -346,7 +346,7 @@
                                 <div>
                                     <p class="font-medium text-gray-900">
                                         @if($client->montantTotal)
-                                            {{ number_format($client->montantTotal, 2, ',', ' ') }} €
+                                            {{ number_format($client->montantTotal, 2, ',', ' ') }} DH
                                         @else
                                             <span class="text-gray-400">Non facturé</span>
                                         @endif

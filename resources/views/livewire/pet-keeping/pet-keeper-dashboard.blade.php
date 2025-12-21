@@ -162,7 +162,7 @@
                         <div>
                             <p class="text-sm font-medium text-gray-500">Revenu total</p>
                             <p class="text-3xl font-bold text-gray-900 mt-2">
-                                {{ number_format($stats['revenu'], 2, ',', ' ') }} €
+                                {{ number_format($stats['revenu'], 2, ',', ' ') }} DH
                             </p>
                         </div>
                         <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
@@ -276,7 +276,7 @@
                                         </div>
                                         <div class="text-right">
                                             <p class="text-sm font-semibold text-gray-900">
-                                                {{ number_format($demande->montantTotal, 2, ',', ' ') }} €
+                                                {{ number_format($demande->montantTotal, 2, ',', ' ') }} DH
                                             </p>
                                             <p class="text-xs text-gray-500">Montant total</p>
                                         </div>
@@ -397,7 +397,7 @@
                                     <div class="flex items-center justify-between text-sm">
                                         <span class="text-gray-500">{{ $demande->ville_client }}</span>
                                         <span class="font-semibold text-gray-900">
-                                            {{ number_format($demande->montantTotal, 2, ',', ' ') }} €
+                                            {{ number_format($demande->montantTotal, 2, ',', ' ') }} DH
                                         </span>
                                     </div>
                                 </div>

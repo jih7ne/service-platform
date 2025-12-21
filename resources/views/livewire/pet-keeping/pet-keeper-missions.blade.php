@@ -204,7 +204,7 @@
                                     </div>
                                     <div class="text-right">
                                         <p class="text-xl font-bold text-gray-900">
-                                            {{ number_format($mission->montantTotal, 2, ',', ' ') }} €
+                                            {{ number_format($mission->montantTotal, 2, ',', ' ') }} DH
                                         </p>
                                         <p class="text-sm text-gray-500">Montant</p>
                                     </div>
@@ -420,7 +420,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                        {{ number_format($mission->montantTotal, 2, ',', ' ') }} €
+                                        {{ number_format($mission->montantTotal, 2, ',', ' ') }} DH
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <a href="{{ route('petkeeper.mission.show', $mission->idDemande) }}" 

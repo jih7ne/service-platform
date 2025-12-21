@@ -371,7 +371,7 @@
                                         <div class="flex justify-between items-center">
                                             <span class="text-lg font-bold text-gray-900">Montant total</span>
                                             <span class="text-2xl font-bold text-yellow-600">
-                                                {{ number_format($mission->montantTotal, 2, ',', ' ') }} €
+                                                {{ number_format($mission->montantTotal, 2, ',', ' ') }} DH
                                             </span>
                                         </div>
                                         <p class="text-sm text-gray-500 mt-1">TVA incluse</p>

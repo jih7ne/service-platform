@@ -160,6 +160,44 @@
                                 </select>
                             </div>
 
+
+                            <!-- Availability Filter -->
+                            <div class="pt-2 border-t border-gray-100">
+                                <label class="block font-medium text-gray-900 mb-2">Filtrage par disponibilités</label>
+                                
+                                <!-- Start Time -->
+                                <div class="mb-4">
+                                    <label class="block text-sm text-gray-700 mb-1.5">Heure début</label>
+                                    <div class="relative">
+                                        <input type="time" 
+                                            wire:model.live="startTime"
+                                            class="w-full border-gray-200 rounded-lg py-2.5 px-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200"
+                                            placeholder="HH:MM"
+                                            min="00:00"
+                                            max="23:59">
+                                    </div>
+                                </div>
+                                
+                                <!-- End Time -->
+                                <div>
+                                    <label class="block text-sm text-gray-700 mb-1.5">Heure fin</label>
+                                    <div class="relative">
+                                        <input type="time" 
+                                            wire:model.live="endTime"
+                                            class="w-full border-gray-200 rounded-lg py-2.5 px-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200"
+                                            placeholder="HH:MM"
+                                            min="00:00"
+                                            max="23:59">
+                                    </div>
+                                </div>
+                                
+                                
+                            </div>
+
+
+
+
+
                             <!-- Price Range -->
                             <div>
                                 <label class="block font-medium text-gray-900 mb-2">Fourchette de prix</label>
@@ -301,7 +339,7 @@
                                                 <!-- Price on mobile/tablet -->
                                                 <div class="text-center md:text-left">
                                                     <div class="text-gray-600 text-sm">À partir de</div>
-                                                    <div class="font-bold text-xl text-gray-900">${{ number_format($service['base_price'] ?? 0, 2) }}</div>
+                                                    <div class="font-bold text-xl text-gray-900">{{ number_format($service['base_price'] ?? 0, 2) }} DH</div>
                                                     <div class="text-gray-500 text-sm">{{ strtolower(str_replace('_', ' ', $service['paymentCriteria'] ?? '')) }}</div>
                                                 </div>
                                             </div>
@@ -349,7 +387,7 @@
                                                 <!-- Price on desktop (hidden on mobile) -->
                                                 <div class="hidden md:block text-right">
                                                     <div class="text-gray-600 text-sm">À partir de</div>
-                                                    <div class="font-bold text-2xl text-gray-900">${{ number_format($service['base_price'] ?? 0, 2) }}</div>
+                                                    <div class="font-bold text-2xl text-gray-900">{{ number_format($service['base_price'] ?? 0, 2) }} DH</div>
                                                     <div class="text-gray-500 text-sm">{{ strtolower(str_replace('_', ' ', $service['paymentCriteria'] ?? '')) }}</div>
                                                 </div>
                                             </div>

@@ -30,6 +30,8 @@ class SearchService extends Component
     public $vaccinationRequired = false;
     public $acceptsUntrainedPets = false;
     public $acceptsAggressivePets = false;
+    public $startTime = null;
+    public $endTime = null;
 
     public $services = [];
     
