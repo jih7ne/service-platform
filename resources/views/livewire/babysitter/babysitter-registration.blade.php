@@ -599,11 +599,21 @@
                                         @foreach($disponibilites[$jour] as $index => $creneau)
                                         <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                                             <div class="flex items-center gap-2 flex-1">
-                                                <input type="time" wire:model="disponibilites.{{ $jour }}.{{ $index }}.debut"
+                                                <select wire:model="disponibilites.{{ $jour }}.{{ $index }}.debut"
                                                     class="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                                    <option value="">Début</option>
+                                                    @foreach($this->heures as $heure)
+                                                        <option value="{{ $heure }}">{{ $heure }}</option>
+                                                    @endforeach
+                                                </select>
                                                 <span class="text-xs text-gray-400 font-medium">→</span>
-                                                <input type="time" wire:model="disponibilites.{{ $jour }}.{{ $index }}.fin"
+                                                <select wire:model="disponibilites.{{ $jour }}.{{ $index }}.fin"
                                                     class="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                                    <option value="">Fin</option>
+                                                    @foreach($this->heures as $heure)
+                                                        <option value="{{ $heure }}">{{ $heure }}</option>
+                                                    @endforeach
+                                                </select>
                                             </div>
                                             
                                             <div class="flex items-center gap-2">

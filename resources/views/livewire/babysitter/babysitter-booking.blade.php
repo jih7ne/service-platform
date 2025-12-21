@@ -313,14 +313,14 @@
                                     @endforeach
                                 </div>
 
-                                {{-- Saisie manuelle des créneaux --}}
+
+                                {{-- Sélection des créneaux horaires --}}
                                 <div class="bg-white rounded-xl p-6 border-2 border-gray-200">
                                     <h4 class="text-lg mb-4 text-black font-bold">
-                                        Ajouter des créneaux horaires
+                                        Sélectionnez vos créneaux horaires
                                     </h4>
                                     <p class="text-sm mb-4 text-gray-500 font-semibold">
-                                        Remplissez les heures de début et de fin, puis cliquez sur "+" pour ajouter le créneau à
-                                        tous les jours sélectionnés.
+                                        Cliquez sur les créneaux d'une heure pour les sélectionner. Vous pouvez choisir plusieurs créneaux.
                                     </p>
 
                                     {{-- Message d'erreur en rose --}}
@@ -341,48 +341,49 @@
                                         </div>
                                     @endif
 
-                                    <div class="grid grid-cols-2 gap-4 mb-4">
-                                        <div>
-                                            <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
-                                                Heure de début
-                                            </label>
-                                            <div class="relative">
-                                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                                <input type="time" wire:model.live="currentStartTime"
-                                                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
+                                    {{-- Grille de créneaux par jour --}}
+                                    @foreach($selectedDays as $day)
+                                        @php
+                                            $availableSlots = $this->availableHourlySlots[$day] ?? [];
+                                        @endphp
+                                        
+                                        @if(!empty($availableSlots))
+                                            <div class="mb-6">
+                                                <h5 class="text-sm font-semibold text-gray-700 mb-3">
+                                                    @foreach($daysOfWeek as $dayItem)
+                                                        @if($dayItem['id'] === $day){{ $dayItem['label'] }}@endif
+                                                    @endforeach
+                                                </h5>
+                                                <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                                                    @foreach($availableSlots as $slot)
+                                                        @php
+                                                            $isSelected = isset($selectedSlots[$day]) && in_array($slot, $selectedSlots[$day]);
+                                                        @endphp
+                                                        <button 
+                                                            wire:click="toggleSlot('{{ $day }}', '{{ $slot }}')" 
+                                                            type="button"
+                                                            class="px-3 py-2 rounded-lg text-xs font-semibold transition-all border-2
+                                                                {{ $isSelected 
+                                                                    ? 'bg-[#B82E6E] text-white border-[#B82E6E] shadow-md' 
+                                                                    : 'bg-white text-gray-700 border-gray-200 hover:border-[#B82E6E] hover:text-[#B82E6E]' }}">
+                                                            {{ $slot }}
+                                                        </button>
+                                                    @endforeach
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm mb-2 text-[#0a0a0a] font-bold">
-                                                Heure de fin
-                                            </label>
-                                            <div class="relative">
-                                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                                <input type="time" wire:model.live="currentEndTime"
-                                                    class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B82E6E]" />
+                                        @else
+                                            <div class="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                                                <p class="text-sm text-yellow-700 font-semibold">
+                                                    Aucun créneau disponible pour 
+                                                    @foreach($daysOfWeek as $dayItem)
+                                                        @if($dayItem['id'] === $day){{ $dayItem['label'] }}@endif
+                                                    @endforeach
+                                                </p>
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex justify-center">
-                                        <button wire:click="addTimeSlot" type="button"
-                                            class="px-6 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#9c2360] transition-colors font-bold flex items-center gap-2">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                            </svg>
-                                            Ajouter le créneau
-                                        </button>
-                                    </div>
+                                        @endif
+                                    @endforeach
                                 </div>
+
 
                                 {{-- Résumé des créneaux sélectionnés --}}
                                 @if(!empty($selectedSlots))

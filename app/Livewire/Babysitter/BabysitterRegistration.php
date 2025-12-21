@@ -646,6 +646,15 @@ class BabysitterRegistration extends Component
         }
     }
 
+    public function getHeuresProperty()
+    {
+        $heures = [];
+        for ($i = 0; $i < 24; $i++) { // Generate hours from 00:00 to 23:00
+            $heures[] = sprintf('%02d:00', $i);
+        }
+        return $heures;
+    }
+
     public function render()
     {
         return view('livewire.babysitter.babysitter-registration');

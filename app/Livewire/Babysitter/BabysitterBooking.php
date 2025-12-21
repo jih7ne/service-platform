@@ -783,6 +783,71 @@ class BabysitterBooking extends Component
         return now()->subYears($age)->format('Y-m-d');
     }
 
+    public function getAvailableHourlySlotsProperty()
+    {
+        if (empty($this->selectedDays)) {
+            return [];
+        }
+
+        $babysitter = $this->getBabysitter();
+        if (!$babysitter) {
+            return [];
+        }
+
+        $availableSlots = [];
+
+        foreach ($this->selectedDays as $day) {
+            $daySlots = [];
+
+            // Get babysitter's availability for this day
+            $availability = $babysitter['availability'][$day] ?? [];
+
+            foreach ($availability as $availabilitySlot) {
+                // Parse the availability slot (e.g., "08:00-12:00")
+                [$startTime, $endTime] = explode('-', $availabilitySlot);
+
+                // Extract hours
+                $startHour = (int) substr($startTime, 0, 2);
+                $endHour = (int) substr($endTime, 0, 2);
+
+                // Generate hourly slots within this availability range
+                for ($hour = $startHour; $hour < $endHour; $hour++) {
+                    $slotStart = sprintf('%02d:00', $hour);
+                    $slotEnd = sprintf('%02d:00', $hour + 1);
+                    $slot = $slotStart . '-' . $slotEnd;
+
+                    // Check if this slot is not already reserved
+                    $isReserved = false;
+                    $reservedSlots = $this->getReservedSlots($babysitter['id']);
+
+                    if (isset($reservedSlots[$day])) {
+                        foreach ($reservedSlots[$day] as $reservedSlot) {
+                            // Check if there's any overlap
+                            [$resStart, $resEnd] = explode('-', $reservedSlot);
+                            $resStartMin = $this->timeToMinutes($resStart);
+                            $resEndMin = $this->timeToMinutes($resEnd);
+                            $slotStartMin = $this->timeToMinutes($slotStart);
+                            $slotEndMin = $this->timeToMinutes($slotEnd);
+
+                            if ($slotStartMin < $resEndMin && $slotEndMin > $resStartMin) {
+                                $isReserved = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!$isReserved && !in_array($slot, $daySlots)) {
+                        $daySlots[] = $slot;
+                    }
+                }
+            }
+
+            $availableSlots[$day] = $daySlots;
+        }
+
+        return $availableSlots;
+    }
+
     public function render()
     {
         $babysitter = $this->getBabysitter();
