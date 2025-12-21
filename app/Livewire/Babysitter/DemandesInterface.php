@@ -4,6 +4,8 @@ namespace App\Livewire\Babysitter;
 
 use Livewire\Component;
 use App\Models\Babysitting\DemandeIntervention;
+use App\Models\Feedback;
+use App\Models\Shared\Utilisateur;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Babysitter\DemandeAcceptedForBabysitter;
@@ -146,6 +148,56 @@ class DemandesInterface extends Component
     {
         $this->showRefusalModal = false;
         $this->refusalReason = '';
+    }
+
+    public function getClientInfo($clientId)
+    {
+        $client = Utilisateur::find($clientId);
+        
+        if (!$client) {
+            return null;
+        }
+        
+        // Récupérer les avis du client
+        $feedbacks = Feedback::where('idCible', $clientId)->get();
+        $averageRating = $feedbacks->isNotEmpty() ? round($feedbacks->avg('qualiteTravail'), 1) : 0;
+        $feedbacksCount = $feedbacks->count();
+        
+        // Récupérer la ville principale du client
+        $city = $client->localisations->first()?->ville ?? 'Non spécifiée';
+        
+        // Calculer depuis combien de temps le client est inscrit
+        $clientSince = $client->created_at ? $client->created_at->format('Y') : 'Inconnue';
+        
+        return [
+            'city' => $city,
+            'average_rating' => $averageRating,
+            'feedbacks_count' => $feedbacksCount,
+            'client_since' => $clientSince
+        ];
+    }
+
+    public function getClientFeedbacks($clientId)
+    {
+        return Feedback::where('idCible', $clientId)
+            ->with(['auteur' => function($query) {
+                $query->select('idUser', 'prenom', 'nom');
+            }])
+            ->orderBy('dateCreation', 'desc')
+            ->get();
+    }
+
+    public function getClientAverageRating($clientId)
+    {
+        $feedbacks = Feedback::where('idCible', $clientId)->get();
+        if ($feedbacks->isEmpty()) {
+            return 0;
+        }
+        
+        $totalRating = $feedbacks->sum('qualiteTravail');
+        $count = $feedbacks->count();
+        
+        return $count > 0 ? round($totalRating / $count, 1) : 0;
     }
 
     public function giveFeedback($id)

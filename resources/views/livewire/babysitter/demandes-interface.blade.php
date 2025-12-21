@@ -425,17 +425,23 @@
                         <path d="M18 6L6 18M6 6l12 12"></path>
                     </svg>
                 </button>
+                @php
+                    $clientInfo = $this->getClientInfo($selectedDemande->client->idUser);
+                @endphp
                 <div class="flex items-center gap-4">
                     <div class="w-20 h-20 rounded-2xl bg-white shadow-lg flex items-center justify-center text-[#B82E6E] text-2xl font-black">
                         {{ substr($selectedDemande->client->prenom ?? 'C', 0, 1) }}{{ substr($selectedDemande->client->nom ?? 'L', 0, 1) }}
                     </div>
                     <div class="text-white">
-                        <h2 class="text-2xl font-extrabold">Famille {{ $selectedDemande->client->nom ?? 'Inconnu' }}</h2>
+                        <h2 class="text-2xl font-extrabold">{{ $selectedDemande->client->prenom ?? 'Inconnu' }} {{ $selectedDemande->client->nom ?? '' }}</h2>
                         <div class="flex items-center gap-2 text-white/90 text-sm font-medium">
                             <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                            <span>4.9 (12 avis)</span>
+                            <span>{{ $clientInfo['average_rating'] }}/5 ({{ $clientInfo['feedbacks_count'] }} avis)</span>
                             <span class="mx-1">•</span>
-                            <span>Client depuis 2023</span>
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                            <span>{{ $clientInfo['city'] }}</span>
+                            <span class="mx-1">•</span>
+                            <span>Client depuis {{ $clientInfo['client_since'] }}</span>
                         </div>
                     </div>
                 </div>
@@ -514,18 +520,102 @@
                                 </div>
                                 <div>
                                     <p class="font-bold text-gray-900">{{ $enfant->nomComplet }}</p>
-                                    <p class="text-xs text-gray-500 font-semibold">{{ $enfant->age ?? '?' }} ans • {{ $enfant->categorie->categorie ?? 'Catégorie inconnue' }}</p>
+                                    <p class="text-xs text-gray-500 font-semibold">{{ $enfant->age ?? '?' }} ans{{ $enfant->categorie && $enfant->categorie->categorie ? ' • ' . $enfant->categorie->categorie : '' }}</p>
                                 </div>
                             </div>
                             @if($enfant->besoinsSpecifiques)
                             <div class="mt-2 p-2 bg-orange-50 rounded-lg border border-orange-100">
                                 <p class="text-[10px] text-orange-700 font-black uppercase mb-1">Besoins spécifiques</p>
-                                <p class="text-xs text-orange-800 font-medium">{{ $enfant->besoinsSpecifiques }}</p>
+                                <p class="text-xs text-orange-800 font-medium">
+                                    @php
+                                        $besoinsSpecifiques = $enfant->besoinsSpecifiques;
+                                        // Remplacer les séquences Unicode par les caractères correspondants
+                                        $besoinsSpecifiques = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/', function($matches) {
+                                            return mb_convert_encoding(pack('H*', $matches[1]), 'UTF-8', 'UTF-16BE');
+                                        }, $besoinsSpecifiques);
+                                        echo $besoinsSpecifiques;
+                                    @endphp
+                                </p>
                             </div>
                             @endif
                         </div>
                         @endforeach
                     </div>
+                </div>
+
+                <!-- Avis sur le client -->
+                @php
+                    $clientFeedbacks = $this->getClientFeedbacks($selectedDemande->client->idUser);
+                    $clientRating = $this->getClientAverageRating($selectedDemande->client->idUser);
+                @endphp
+                <div class="mb-8">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">
+                        Avis sur le client ({{ $clientFeedbacks->count() }})
+                    </h3>
+                    @if($clientFeedbacks->count() > 0)
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="flex items-center gap-1">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @if($i <= round($clientRating))
+                                        <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                        </svg>
+                                    @else
+                                        <svg class="w-5 h-5 text-gray-300 fill-current" viewBox="0 0 24 24">
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                        </svg>
+                                    @endif
+                                @endfor
+                            </div>
+                            <span class="text-lg font-bold text-gray-900">{{ $clientRating }}/5</span>
+                            <span class="text-sm text-gray-500">({{ $clientFeedbacks->count() }} avis)</span>
+                        </div>
+                        
+                        <div class="space-y-3 max-h-60 overflow-y-auto">
+                            @foreach($clientFeedbacks as $feedback)
+                                <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-8 h-8 rounded-full bg-[#B82E6E] text-white flex items-center justify-center text-sm font-bold">
+                                                {{ substr($feedback->auteur->prenom ?? 'A', 0, 1) }}{{ substr($feedback->auteur->nom ?? 'U', 0, 1) }}
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-bold text-gray-900">
+                                                    {{ $feedback->auteur->prenom ?? 'Anonyme' }} {{ substr($feedback->auteur->nom ?? '', 0, 1) }}.
+                                                </p>
+                                                <p class="text-xs text-gray-500">
+                                                    {{ $feedback->dateCreation ? \Carbon\Carbon::parse($feedback->dateCreation)->format('d/m/Y') : 'Date inconnue' }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                @if($i <= $feedback->qualiteTravail)
+                                                    <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
+                                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                                    </svg>
+                                                @else
+                                                    <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 24 24">
+                                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                                    </svg>
+                                                @endif
+                                            @endfor
+                                        </div>
+                                    </div>
+                                    @if($feedback->commentaire)
+                                        <p class="text-sm text-gray-700 leading-relaxed">{{ $feedback->commentaire }}</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="p-6 rounded-xl bg-gray-50 border border-gray-100 text-center">
+                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                            <p class="text-gray-500 font-medium">Aucun avis disponible pour ce client</p>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Notes Spéciales -->
@@ -542,7 +632,6 @@
                 <div class="p-6 rounded-2xl bg-gray-900 text-white">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-gray-400 font-bold uppercase tracking-widest text-xs">Récapitulatif financier</span>
-                        <span class="px-2 py-1 bg-white/10 rounded text-[10px] font-black uppercase">Paiement via plateforme</span>
                     </div>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
