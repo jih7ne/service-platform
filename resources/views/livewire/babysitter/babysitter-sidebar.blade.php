@@ -58,18 +58,19 @@
     <nav class="p-4">
         <!-- Return Button -->
         <div class="mb-4">
-            <a href="{{ route('intervenant.hub') }}" 
-               class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+            <a href="{{ route('intervenant.hub') }}"
+                class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
                 <span>Retour à l'espace intervenant</span>
             </a>
         </div>
-        
+
         <ul class="space-y-2">
             <li>
-                <a href="{{ route('babysitter.dashboard') }}"
+                <a href="{{ route('babysitter.dashboard') }}" wire:navigate
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
                           {{ request()->routeIs('babysitter.dashboard') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,9 +82,9 @@
             </li>
 
             <li>
-                <a href="{{ route('demandes-sidebar') }}"
+                <a href="{{ route('babysitter.demandes') }}" wire:navigate
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
-                          {{ request()->routeIs('demandes-sidebar') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                          {{ request()->routeIs('babysitter.demandes') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -98,19 +99,7 @@
             </li>
 
             <li>
-                <a href="#"
-                    class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
-                          {{ request()->routeIs('babysitter.calendar') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>Calendrier</span>
-                </a>
-            </li>
-
-            <li>
-                <a href="{{ route('babysitter.disponibilites') }}"
+                <a href="{{ route('babysitter.disponibilites') }}" wire:navigate
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
                           {{ request()->routeIs('babysitter.disponibilites') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,9 +112,9 @@
                 </a>
             </li>
 
-            
+
             <li>
-                <a href="{{ route('babysitter.avis') }}"
+                <a href="{{ route('babysitter.avis') }}" wire:navigate
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
                           {{ request()->routeIs('babysitter.avis') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

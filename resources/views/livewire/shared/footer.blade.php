@@ -47,11 +47,6 @@
                             Carrières
                         </a>
                     </li>
-                    <li>
-                        <a href="/contact" wire:navigate class="hover:text-white transition-colors">
-                            Contact
-                        </a>
-                    </li>
                 </ul>
             </div>
 

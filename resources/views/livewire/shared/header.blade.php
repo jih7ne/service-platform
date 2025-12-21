@@ -18,10 +18,23 @@
                    class="text-sm font-semibold hover:text-[#2B5AA8] transition-colors {{ request()->is('services') ? 'text-[#2B5AA8]' : 'text-gray-700' }}">
                     Services
                 </a>
-                <a href="/contact" wire:navigate 
-                   class="text-sm font-semibold hover:text-[#2B5AA8] transition-colors {{ request()->is('contact') ? 'text-[#2B5AA8]' : 'text-gray-700' }}">
-                    Contact
-                </a>
+                
+                @auth
+                    @if(auth()->user()->role === 'client')
+                        <a href="/mes-demandes" wire:navigate 
+                           class="text-sm font-semibold hover:text-[#2B5AA8] transition-colors {{ request()->is('mes-demandes') ? 'text-[#2B5AA8]' : 'text-gray-700' }}">
+                            Mes Demandes
+                        </a>
+                        <a href="/mes-avis" wire:navigate 
+                           class="text-sm font-semibold hover:text-[#2B5AA8] transition-colors {{ request()->is('mes-avis') ? 'text-[#2B5AA8]' : 'text-gray-700' }}">
+                            Mes Avis
+                        </a>
+                        <a href="/mes-reclamations" wire:navigate 
+                           class="text-sm font-semibold hover:text-[#2B5AA8] transition-colors {{ request()->is('mes-reclamations') ? 'text-[#2B5AA8]' : 'text-gray-700' }}">
+                            Mes Réclamations
+                        </a>
+                    @endif
+                @endauth
             </div>
 
             <!-- Auth Section (Fixed width to prevent layout shift) -->
@@ -92,12 +105,11 @@
                                     Mes Demandes
                                 </a>
 
-
                                 <a href="/mes-avis" wire:navigate 
                                    class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                     <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                                     </svg>
                                     Mes Avis
                                 </a>
@@ -106,9 +118,9 @@
                                    class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                     <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
-                                    Mes Reclamations
+                                    Mes Réclamations
                                 </a>
 
                                 <div class="border-t border-gray-100 mt-2"></div>
@@ -163,10 +175,23 @@
                    class="block px-3 py-2 text-sm font-semibold rounded-lg {{ request()->is('services') ? 'bg-[#E1EAF7] text-[#2B5AA8]' : 'text-gray-700 hover:bg-gray-50' }}">
                     Services
                 </a>
-                <a href="/contact" wire:navigate 
-                   class="block px-3 py-2 text-sm font-semibold rounded-lg {{ request()->is('contact') ? 'bg-[#E1EAF7] text-[#2B5AA8]' : 'text-gray-700 hover:bg-gray-50' }}">
-                    Contact
-                </a>
+                
+                @auth
+                    @if(auth()->user()->role === 'client')
+                        <a href="/mes-demandes" wire:navigate 
+                           class="block px-3 py-2 text-sm font-semibold rounded-lg {{ request()->is('mes-demandes') ? 'bg-[#E1EAF7] text-[#2B5AA8]' : 'text-gray-700 hover:bg-gray-50' }}">
+                            Mes Demandes
+                        </a>
+                        <a href="/mes-avis" wire:navigate 
+                           class="block px-3 py-2 text-sm font-semibold rounded-lg {{ request()->is('mes-avis') ? 'bg-[#E1EAF7] text-[#2B5AA8]' : 'text-gray-700 hover:bg-gray-50' }}">
+                            Mes Avis
+                        </a>
+                        <a href="/mes-reclamations" wire:navigate 
+                           class="block px-3 py-2 text-sm font-semibold rounded-lg {{ request()->is('mes-reclamations') ? 'bg-[#E1EAF7] text-[#2B5AA8]' : 'text-gray-700 hover:bg-gray-50' }}">
+                            Mes Réclamations
+                        </a>
+                    @endif
+                @endauth
                 
                 <!-- Mobile User Section -->
                 @auth
@@ -200,15 +225,6 @@
                                               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
                                     Mon Profil
-                                </a>
-                                
-                                <a href="/mes-demandes" wire:navigate 
-                                   class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg">
-                                    <svg class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                    </svg>
-                                    Mes Demandes
                                 </a>
 
                                 <div class="border-t border-gray-100 my-2"></div>

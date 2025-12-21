@@ -40,7 +40,6 @@
                     <li><strong>Nom :</strong> {{ $data['nom'] }} {{ $data['prenom'] }}</li>
                     <li><strong>Email :</strong> {{ $data['email'] }}</li>
                     <li><strong>Téléphone :</strong> {{ $data['telephone'] }}</li>
-                    <li><strong>Ville :</strong> {{ $data['ville'] }}</li>
                     <li><strong>Niveau d'études :</strong> {{ $data['niveau_etudes'] }}</li>
                     <li><strong>Nombre de matières :</strong> {{ $data['nombre_matieres'] }}</li>
                 </ul>

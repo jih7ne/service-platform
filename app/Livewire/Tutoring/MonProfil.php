@@ -25,7 +25,10 @@ class MonProfil extends Component
     public $edit_ville;
     public $edit_niveau;
     public $niveauxDispo = [];
-
+   public function goToHub()
+    {
+        return redirect()->route('intervenant.hub');
+    }
     public function mount()
     {
         $this->refreshData();

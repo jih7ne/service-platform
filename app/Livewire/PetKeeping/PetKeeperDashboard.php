@@ -9,9 +9,14 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Mail\DemandeAccepteeMail;
 use App\Mail\RefusDemandeMail;
+use Livewire\Attributes\Computed;
+use Livewire\WithFileUploads;
+use App\Models\Shared\Reclamation;
+
 
 class PetKeeperDashboard extends Component
 {
+    use WithFileUploads;
     public $feedbacksSidebar = [];
 
     public $user;
@@ -21,13 +26,25 @@ class PetKeeperDashboard extends Component
     public $selectedDemandeId = null;
     public $refusalReason = '';
 
-    /* ===================== MOUNT ===================== */
+    //Reclamation
+
+    public $showReclamationModal = false;
+
+    public $reclamationFeedbackId = null; // idFeedback
+    public $reclamationCibleId = null;
+
+    public $sujet;
+    public $description;
+    public $priorite = 'moyenne';
+    public $preuves;
+
+    
     public function mount()
     {
         
         $authUser = Auth::user();
 
-        // Utilisation de l'accesseur idUser (si configuré dans le modèle) ou id standard
+       
         $authId = $authUser ? ($authUser->idUser ?? $authUser->id) : null;
 
         if ($authId) {
@@ -37,36 +54,100 @@ class PetKeeperDashboard extends Component
         }
 
         if (!$this->user) {
-            // Objet par défaut pour éviter les crashs si non connecté
-            $this->user = (object) [
-                'idUser' => 0,
-                'prenom' => 'Invité',
-                'nom' => '',
-                'photo' => null,
-                'note' => 5,
-                'statut' => 'actif',
-                'telephone' => 'Non renseigné',
-                'email' => 'email@test.com'
-            ];
+            return redirect()->route('login');
         }
 
-        // Vérification basée sur l'enum 'statut' de votre table utilisateurs
+       
         $this->isAvailable = ($this->user->statut === 'actif');
         $this->loadFeedbacks();
-        //
+        
+    }
+
+
+    public function openReclamationModal($idFeedback)
+    {
+        $this->reclamationFeedbackId = $idFeedback;
+        
+
+        $avis = DB::table('feedbacks')
+            ->where('idFeedBack', $idFeedback)
+            ->first();
+
+        if (!$avis) {
+            session()->flash('error', 'Avis introuvable.');
+            return;
+        }
+
+        $this->reclamationFeedbackId  = $idFeedback;
+        $this->reclamationCibleId = $avis->idAuteur;
+
+        $this->reset([
+            'sujet',
+            'description',
+            'priorite',
+            'preuves',
+        ]);
+
+        $this->priorite = 'moyenne';
+        $this->showReclamationModal = true;
+    }
+
+    public function closeReclamationModal()
+    {
+        $this->reset([
+            'showReclamationModal',
+            'reclamationAvisId',
+            'reclamationCibleId',
+            'sujet',
+            'description',
+            'priorite',
+            'preuves',
+        ]);
+    }
+
+
+    public function submitReclamation()
+    {
+        $this->validate([
+            'sujet' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'priorite' => 'required|in:faible,moyenne,urgente',
+            'preuves' => 'nullable|file|max:2048',
+        ]);
+
+        $preuvePath = null;
+
+        if ($this->preuves) {
+            $preuvePath = $this->preuves->store('reclamations', 'public');
+        }
+
+        Reclamation::create([
+            'idAuteur'    => $this->user->idUser,
+            'idCible'     => $this->reclamationCibleId,
+            'idFeedback'  => $this->reclamationAvisId,
+            'sujet'       => $this->sujet,
+            'description' => $this->description,
+            'priorite'    => $this->priorite,
+            'preuves'     => $preuvePath,
+            'statut'      => 'en_attente',
+        ]);
+
+        $this->closeReclamationModal();
+
+        session()->flash('success', 'Réclamation envoyée avec succès.');
     }
 
 
     private function loadFeedbacks()
-{
-    $this->feedbacksSidebar = DB::table('feedbacks')
-        ->join('utilisateurs', 'feedbacks.idAuteur', '=', 'utilisateurs.idUser')
-        ->where('feedbacks.idCible', $this->user->idUser)
-        ->where('feedbacks.estVisible', 1)
-        ->orderBy('feedbacks.dateCreation', 'desc')
-        ->select('feedbacks.commentaire', 'utilisateurs.prenom')
-        ->get();
-}
+    {
+        $this->feedbacksSidebar = DB::table('feedbacks')
+            ->join('utilisateurs', 'feedbacks.idAuteur', '=', 'utilisateurs.idUser')
+            ->where('feedbacks.idCible', $this->user->idUser)
+            ->where('feedbacks.estVisible', 1)
+            ->orderBy('feedbacks.dateCreation', 'desc')
+            ->select('feedbacks.commentaire', 'utilisateurs.prenom')
+            ->get();
+    }
 
 
     public function toggleAvailability()
@@ -81,73 +162,104 @@ class PetKeeperDashboard extends Component
         $this->user->statut = $nouveauStatut;
     }
 
-    /* ===================== PRIX ===================== */
-    private function calculerPrix($heureDebut, $heureFin)
+
+
+    
+    public function parseCreneauxGrouped($json)
     {
-        $prix = 300;
-
-        if ($heureDebut && $heureFin) {
-            try {
-                $heures = Carbon::parse($heureDebut)
-                    ->diffInHours(Carbon::parse($heureFin));
-                $prix = max($heures * 120, 300);
-            } catch (\Exception $e) {}
+        if (!$json) return [];
+        
+        try {
+            $creneaux = json_decode($json, true) ?? [];
+            
+            
+            $grouped = [];
+            foreach ($creneaux as $creneau) {
+                $date = $creneau['date'] ?? null;
+                if ($date) {
+                    if (!isset($grouped[$date])) {
+                        $grouped[$date] = [];
+                    }
+                    $grouped[$date][] = [
+                        'heureDebut' => $creneau['heureDebut'] ?? '',
+                        'heureFin' => $creneau['heureFin'] ?? ''
+                    ];
+                }
+            }
+            
+            return $grouped;
+        } catch (\Exception $e) {
+            return [];
         }
+    }
 
-        return $prix;
+    
+    public function groupAnimalsByDemande($demandes)
+    {
+        $grouped = [];
+        
+        foreach ($demandes as $demande) {
+            $idDemande = $demande->idDemande;
+            
+            if (!isset($grouped[$idDemande])) {
+                $grouped[$idDemande] = [
+                    'demande' => $demande,
+                    'animals' => [],
+                    'creneaux' => $this->parseCreneauxGrouped($demande->note_speciales ?? '[]')
+                ];
+            }
+            
+            
+            if ($demande->nom_animal) {
+                $grouped[$idDemande]['animals'][] = [
+                    'nom' => $demande->nom_animal,
+                    'race' => $demande->race_animal,
+                    'age' => $demande->age,
+                    'espece' => $demande->espece,
+                    'statutVaccination' => $demande->statutVaccination,
+                    'note_comportementale' => $demande->note_comportementale
+                ];
+            }
+        }
+        
+        return array_values($grouped);
+    }
+
+    
+    
+
+
+    private function parseCreneaux(?string $json)
+    {
+        if (!$json) return [];
+
+        try {
+            return json_decode($json, true) ?? [];
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
 
-/* ===================== CRENEAUX JSON ===================== */
-private function parseCreneaux(?string $json)
-{
-    if (!$json) return [];
+   
 
-    try {
-        return json_decode($json, true) ?? [];
-    } catch (\Exception $e) {
-        return [];
-    }
-}
-
-/* ===================== PRIX DEPUIS CRENEAUX ===================== */
-private function calculerPrixDepuisCreneaux(array $creneaux)
-{
-    $total = 0;
-
-    foreach ($creneaux as $c) {
-        if (!isset($c['heureDebut'], $c['heureFin'])) continue;
-
-        $debut = Carbon::createFromFormat('H:i', $c['heureDebut']);
-        $fin   = Carbon::createFromFormat('H:i', $c['heureFin']);
-
-        $minutes = $debut->diffInMinutes($fin);
-        $heures  = max($minutes / 60, 1);
-
-        $total += $heures * 120;
+    private function getAnimauxByDemande($idDemande)
+    {
+        return DB::table('animal_demande')
+            ->join('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
+            ->where('animal_demande.idDemande', $idDemande)
+            ->select(
+                'animals.nomAnimal',
+                'animals.race',
+                'animals.age',
+                'animals.sexe',
+                'animals.poids'
+            )
+            ->get();
     }
 
-    return max($total, 300);
-}
 
-/* ===================== ANIMAUX D’UNE DEMANDE ===================== */
-private function getAnimauxByDemande($idDemande)
-{
-    return DB::table('animal_demande')
-        ->join('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
-        ->where('animal_demande.idDemande', $idDemande)
-        ->select(
-            'animals.nomAnimal',
-            'animals.race',
-            'animals.age',
-            'animals.sexe',
-            'animals.poids'
-        )
-        ->get();
-}
-
-
-    /* ===================== REFUS ===================== */
+ 
     public function openRefusalModal($idDemande)
     {
         $this->selectedDemandeId = $idDemande;
@@ -161,67 +273,19 @@ private function getAnimauxByDemande($idDemande)
         $this->selectedDemandeId = null;
     }
 
-    /* ===================== REFUS ===================== */
-public function confirmRefusal()
-{
-    $this->validate([
-        'refusalReason' => 'required|min:5|max:255'
-    ]);
-
-    $demande = DB::table('demandes_intervention')
-        ->where('idDemande', $this->selectedDemandeId)
-        ->first();
-
-    if (!$demande) {
-        session()->flash('error', 'Demande introuvable');
-        return;
-    }
-
-    $client = DB::table('utilisateurs')
-        ->where('idUser', $demande->idClient)
-        ->first();
-
-    /* 1️⃣ ENVOI EMAIL AVANT UPDATE */
-    if ($client && $client->email) {
-        Mail::to($client->email)->send(
-            new RefusDemandeMail(
-                $demande,
-                $this->user,
-                $client,
-                $this->refusalReason
-            )
-        );
-    }
-
-    /* 2️⃣ UPDATE APRÈS */
-    DB::table('demandes_intervention')
-        ->where('idDemande', $this->selectedDemandeId)
-        ->update([
-            'statut' => 'refusée',
-            'raisonAnnulation' => $this->refusalReason
+    
+    public function confirmRefusal()
+    {
+        $this->validate([
+            'refusalReason' => 'required|min:5|max:255'
         ]);
 
-    $this->closeRefusalModal();
-    session()->flash('success', 'Demande refusée avec succès.');
-}
-
-
-    /* ===================== ACCEPTATION ===================== */
-   public function accepterDemande($idDemande)
-{
-    try {
         $demande = DB::table('demandes_intervention')
-            ->where('idDemande', $idDemande)
+            ->where('idDemande', $this->selectedDemandeId)
             ->first();
 
         if (!$demande) {
-            session()->flash('error', 'Demande introuvable.');
-            return;
-        }
-
-        // Vérifier que ce n'est pas sa propre demande
-        if ($demande->idClient == $this->user->idUser) {
-            session()->flash('error', 'Vous ne pouvez pas accepter vos propres demandes.');
+            session()->flash('error', 'Demande introuvable');
             return;
         }
 
@@ -229,100 +293,122 @@ public function confirmRefusal()
             ->where('idUser', $demande->idClient)
             ->first();
 
-        if (!$client) {
-            session()->flash('error', 'Client introuvable.');
-            return;
+       
+        if ($client && $client->email) {
+            Mail::to($client->email)->send(
+                new RefusDemandeMail(
+                    $demande,
+                    $this->user,
+                    $client,
+                    $this->refusalReason
+                )
+            );
         }
 
-        // VÉRIFIER SI L'UTILISATEUR EST BIEN UN INTERVENANT
-        if ($this->user->role !== 'intervenant') {
-            session()->flash('error', 'Vous devez être intervenant pour accepter des demandes.');
-            return;
-        }
-
-        // OPTION 1: Désactiver temporairement les contraintes FK
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         
         DB::table('demandes_intervention')
-            ->where('idDemande', $idDemande)
+            ->where('idDemande', $this->selectedDemandeId)
             ->update([
-                'statut' => 'validée',
-                'idIntervenant' => $this->user->idUser
+                'statut' => 'refusée',
+                'raisonAnnulation' => $this->refusalReason
             ]);
-            
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
-        
-        // OPTION 2: Alternative sans désactiver les contraintes
-        // Essayer d'abord normalement, si échec, essayer sans idIntervenant
-        /*
+
+        $this->closeRefusalModal();
+        session()->flash('success', 'Demande refusée avec succès.');
+    }
+
+
+
+   public function accepterDemande($idDemande)
+    {
         try {
+            $demande = DB::table('demandes_intervention')
+                ->where('idDemande', $idDemande)
+                ->first();
+
+            if (!$demande) {
+                session()->flash('error', 'Demande introuvable.');
+                return;
+            }
+
+         
+            if ($demande->idClient == $this->user->idUser) {
+                session()->flash('error', 'Vous ne pouvez pas accepter vos propres demandes.');
+                return;
+            }
+
+            $client = DB::table('utilisateurs')
+                ->where('idUser', $demande->idClient)
+                ->first();
+
+            if (!$client) {
+                session()->flash('error', 'Client introuvable.');
+                return;
+            }
+
+           
+            if ($this->user->role !== 'intervenant') {
+                session()->flash('error', 'Vous devez être intervenant pour accepter des demandes.');
+                return;
+            }
+
+            
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            
             DB::table('demandes_intervention')
                 ->where('idDemande', $idDemande)
                 ->update([
                     'statut' => 'validée',
                     'idIntervenant' => $this->user->idUser
                 ]);
-        } catch (\Exception $e) {
-            // Si échec à cause de la FK, mettre à jour seulement le statut
-            DB::table('demandes_intervention')
-                ->where('idDemande', $idDemande)
-                ->update([
-                    'statut' => 'validée'
-                    // idIntervenant reste NULL pour l'instant
-                ]);
-        }
-        */
+                
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            
 
-        // Récupérer l'animal associé
-        $animal = null;
-        try {
-            $animal = DB::table('animal_demande')
-                ->join('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
-                ->where('animal_demande.idDemande', $demande->idDemande)
-                ->select('animals.*')
-                ->first();
-        } catch (\Exception $e) {
-            // Table animal_demande n'existe pas
-        }
-
-        // Préparer les données pour l'email
-        $demande->animal = $animal;
-        $demande->prix = $this->calculerPrix($demande->heureDebut, $demande->heureFin);
-
-        if ($client->email) {
-            try {
-                Mail::to($client->email)->send(
-                    new DemandeAccepteeMail($demande, $this->user, $client)
-                );
-            } catch (\Exception $e) {
-                \Log::error('Erreur envoi email: ' . $e->getMessage());
+            if ($client->email) {
+                try {
+                    Mail::to($client->email)->send(
+                        new DemandeAccepteeMail($demande, $this->user, $client)
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('Erreur envoi email: ' . $e->getMessage());
+                }
             }
-        }
 
-        session()->flash('success', 'Demande acceptée avec succès !');
-        
-    } catch (\Exception $e) {
-        \Log::error('Erreur acceptation demande: ' . $e->getMessage());
-        session()->flash('error', 'Une erreur est survenue: ' . $e->getMessage());
+            session()->flash('success', 'Demande acceptée avec succès !');
+            
+        } catch (\Exception $e) {
+            \Log::error('Erreur acceptation demande: ' . $e->getMessage());
+            session()->flash('error', 'Une erreur est survenue: ' . $e->getMessage());
+        }
     }
-}
-    /* ===================== RENDER ===================== */
+
+    #[Computed]
+    public function totalRevenue()
+    {
+        return DB::table('demandes_intervention')
+            ->join('factures', 'factures.idDemande', '=', 'demandes_intervention.idDemande')
+            ->where('idIntervenant', Auth::id())
+            ->whereIn('demandes_intervention.statut', ['validée', 'terminée'])
+            ->sum('factures.montantTotal');
+    }
+
+   
     public function render()
     {
         $intervenantId = $this->user->idUser;
 
-        // 1. Calcul des statistiques exactes selon votre DB
+        
         $missionsCount = DB::table('demandes_intervention')
             ->where('idIntervenant', $intervenantId)
             ->where('statut', 'validée')
             ->count();
 
         $attenteCount = DB::table('demandes_intervention')
-    ->where('statut', 'en_attente')
-    ->count();
+            ->where('statut', 'en_attente')
+            ->count();
 
-
-        // Pourcentage de missions terminées
+        
         $missionsTotales = DB::table('demandes_intervention')
             ->where('idIntervenant', $intervenantId)
             ->count();
@@ -336,72 +422,71 @@ public function confirmRefusal()
             ? round(($missionsTerminees / $missionsTotales) * 100) 
             : 0;
 
-        // Revenu du mois - calculé à partir des heures
-        $debutMois = Carbon::now()->startOfMonth();
-        $finMois = Carbon::now()->endOfMonth();
-
-        $revenuMois = 0;
-        $demandesMois = DB::table('demandes_intervention')
-            ->where('idIntervenant', $intervenantId)
-            ->where('statut', 'terminée')
-            ->whereBetween('dateSouhaitee', [$debutMois, $finMois])
-            ->get(['heureDebut', 'heureFin']);
-
-        foreach ($demandesMois as $demande) {
-            $revenuMois += $this->calculerPrix($demande->heureDebut, $demande->heureFin);
-        }
-
-        // Note moyenne réelle depuis la table feedbacks
-       $noteMoyenne = DB::table('feedbacks')
-    ->where('idCible', $this->user->idUser)
-    ->selectRaw('AVG((credibilite + sympathie + ponctualite + proprete + qualiteTravail) / 5)')
-    ->value(DB::raw('AVG((credibilite + sympathie + ponctualite + proprete + qualiteTravail) / 5)'));
-
+        
+        $noteMoyenne = DB::table('feedbacks')
+            ->where('idCible', $this->user->idUser)
+            ->selectRaw('AVG((credibilite + sympathie + ponctualite + proprete + qualiteTravail) / 5)')
+            ->value(DB::raw('AVG((credibilite + sympathie + ponctualite + proprete + qualiteTravail) / 5)'));
 
         if (!$noteMoyenne) {
             $noteMoyenne = $this->user->note ?? 4.8;
         }
 
-        // 2. Demandes urgentes (pour les intervenants disponibles)
+        
         $demandesUrgentes = [];
-        if ($this->isAvailable) {
-           $demandesUrgentes = DB::table('demandes_intervention')
-    ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
-    ->leftJoin('animal_demande', 'demandes_intervention.idDemande', '=', 'animal_demande.idDemande')
-    ->leftJoin('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
-    ->select(
-        'demandes_intervention.*',
-        'demandes_intervention.idDemande as id_demande_reelle',
-        'utilisateurs.nom as nom_client',
-        'utilisateurs.prenom as prenom_client',
-        'utilisateurs.note as note_client',
-        'utilisateurs.photo as photo_client',
-        'demandes_intervention.lieu as ville_client',
-        'animals.nomAnimal as nom_animal',
-        'animals.race as race_animal'
-    )
-    ->where('demandes_intervention.statut', 'en_attente')
-    ->whereDate('demandes_intervention.dateSouhaitee', '>=', Carbon::today())
-    ->orderBy('demandes_intervention.dateDemande', 'asc')
-    ->limit(5)
-    ->get();
 
-            foreach ($demandesUrgentes as $d) {
-                $d->prix_estime = $this->calculerPrix($d->heureDebut, $d->heureFin);
-            }
+        if ($this->isAvailable) {
+            $demandesUrgentes = DB::table('demandes_intervention')
+                ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
+                ->leftJoin('animal_demande', 'demandes_intervention.idDemande', '=', 'animal_demande.idDemande')
+                ->leftJoin('factures', 'factures.idDemande', '=', 'demandes_intervention.idDemande')
+                ->leftJoin('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
+                ->select(
+                    'demandes_intervention.*',
+                    'demandes_intervention.idDemande as id_demande_reelle',
+                    'utilisateurs.nom as nom_client',
+                    'utilisateurs.prenom as prenom_client',
+                    'utilisateurs.note as note_client',
+                    'utilisateurs.photo as photo_client',
+                    'demandes_intervention.lieu as ville_client',
+                    'animals.nomAnimal as nom_animal',
+                    'animals.age',
+                    'animals.espece',
+                    'animals.race as race_animal',
+                    'animals.statutVaccination',
+                    'animals.note_comportementale',
+                    'factures.numFacture as numFac',
+                    'factures.montantTotal'
+                )
+                ->where('demandes_intervention.statut', 'en_attente')
+                ->whereDate('demandes_intervention.dateSouhaitee', '>=', Carbon::today())
+                ->orderBy('demandes_intervention.dateDemande', 'asc')
+                ->limit(5)
+                ->get();
         }
 
-        // 3. Missions à venir
+        
         $missionsAVenir = DB::table('demandes_intervention')
             ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
             ->leftJoin('animal_demande', 'demandes_intervention.idDemande', '=', 'animal_demande.idDemande')
+            ->leftJoin('factures', 'factures.idDemande', '=', 'demandes_intervention.idDemande')
             ->leftJoin('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
             ->select(
                 'demandes_intervention.*',
+                'demandes_intervention.idDemande as id_demande_reelle',
                 'utilisateurs.nom as nom_client',
                 'utilisateurs.prenom as prenom_client',
+                'utilisateurs.note as note_client',
                 'utilisateurs.photo as photo_client',
-                'animals.nomAnimal as nom_animal'
+                'demandes_intervention.lieu as ville_client',
+                'animals.nomAnimal as nom_animal',
+                'animals.age',
+                'animals.espece',
+                'animals.race as race_animal',
+                'animals.statutVaccination',
+                'animals.note_comportementale',
+                'factures.numFacture as numFac',
+                'factures.montantTotal'
             )
             ->where('demandes_intervention.idIntervenant', $intervenantId)
             ->whereIn('demandes_intervention.statut', ['validée', 'en_cours'])
@@ -410,12 +495,7 @@ public function confirmRefusal()
             ->limit(3)
             ->get();
 
-        // Calculer le prix pour chaque mission à venir
-        foreach ($missionsAVenir as $mission) {
-            $mission->prix_estime = $this->calculerPrix($mission->heureDebut, $mission->heureFin);
-        }
-
-        // 4. Avis récents
+        
         $avisRecents = DB::table('feedbacks')
             ->join('utilisateurs', 'feedbacks.idAuteur', '=', 'utilisateurs.idUser')
             ->select(
@@ -430,23 +510,22 @@ public function confirmRefusal()
             ->limit(2)
             ->get();
 
-
+        //  dd($demandesUrgentes);
 
         return view('livewire.pet-keeping.pet-keeper-dashboard', [
-
             'stats' => [
                 'missions' => $missionsCount,
                 'attente' => $attenteCount,
                 'note' => round($noteMoyenne, 1),
-                'revenu' => $revenuMois,
-                'clients_fideles' => 0, // Vous pouvez ajouter cette logique si nécessaire
+                'revenu' => $this->totalRevenue(),
+                'clients_fideles' => 0, 
                 'pourcentage_missions' => $pourcentageMissions
             ],
             'demandesUrgentes' => $demandesUrgentes,
             'missionsAVenir' => $missionsAVenir,
-            'avisRecents' => $avisRecents
-            
+            'avisRecents' => $avisRecents,
+            'groupedDemandesUrgentes' => $this->groupAnimalsByDemande($demandesUrgentes),
+            'groupedMissionsAVenir' => $this->groupAnimalsByDemande($missionsAVenir)
         ]);
-        
     }
 }

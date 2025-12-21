@@ -16,7 +16,10 @@ class MesClients extends Component
     // Filtres
     public $search = '';
     public $filterStatus = 'all'; // 'all', 'en_cours', 'terminé'
-
+   public function goToHub()
+    {
+        return redirect()->route('intervenant.hub');
+    }
     public function mount()
     {
         $user = Auth::user();

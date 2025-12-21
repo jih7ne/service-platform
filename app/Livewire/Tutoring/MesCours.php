@@ -39,7 +39,10 @@ class MesCours extends Component
     public $detailCours;
     public $statsClients = 0;
     public $statsHeures = 0;
-
+   public function goToHub()
+    {
+        return redirect()->route('intervenant.hub');
+    }
     public function mount()
     {
         $user = Auth::user();

@@ -174,7 +174,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <a 
-                                        href="{{ route('admin.intervenant.details', $intervenant->id) }}"
+                                        href="{{ route('admin.intervenant.details', ['idintervenant' => $intervenant->IdIntervenant, 'idservice' => $intervenant->idService ?? 1]) }}"
                                         class="text-blue-600 hover:text-blue-900 font-medium"
                                     >
                                         Voir détails

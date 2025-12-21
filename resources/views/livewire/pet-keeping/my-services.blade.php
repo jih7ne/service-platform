@@ -65,6 +65,25 @@
                 </svg>
                 Mes Services
             </a>
+
+
+            <a href="/pet-keeper/dashboard/clients" 
+            class="flex items-center gap-3 px-4 py-3 text-gray-700 font-medium hover:text-yellow-600 rounded-lg transition-colors duration-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13 0a11 11 0 01-2.5 7.5"/>
+                </svg>
+                <span>Mes Clients</span>
+            </a>
+
+            <a href="/pet-keeper/dashboard/disponibilites" 
+            class="flex items-center gap-3 px-4 py-3 text-gray-600 font-medium hover:text-yellow-600 rounded-lg transition-colors duration-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span>Disponibilités</span>
+            </a>
         </nav>
 
         <div class="p-6">
@@ -77,9 +96,18 @@
 
 
     <!-- Header -->
-    <div class="mb-8">
+    <div class="mb-8 flex items-center justify-between">
+    <div>
         <h1 class="text-3xl font-bold text-gray-900">Mes Services</h1>
-        <p class="mt-2 text-gray-600">Gérez et consultez tous vos services de garde d’animaux</p>
+        <p class="mt-2 text-gray-600">Gérez et consultez tous vos services de garde d'animaux</p>
+    </div>
+    <a href="/pet-keeper/dashboard/add-service" 
+       class="px-5 py-2.5 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-colors shadow-sm flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Ajouter un service
+    </a>
     </div>
 
     <!-- Filters -->
@@ -214,18 +242,37 @@
                             @endif
                         </div>
 
-                        <!-- Action Button -->
-                        <div class="border-t border-gray-100 pt-4">
+                        <!-- Action Buttons -->
+                        <div class="border-t border-gray-100 pt-4 flex gap-3">
+                            <!-- View Details Button -->
                             <button wire:click="viewService({{ $service->service_id }})" 
-                                    class="w-full px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition duration-200 flex items-center justify-center gap-2">
+                                    class="flex-1 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-medium rounded-lg transition duration-200 flex items-center justify-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                 </svg>
-                                View Details
+                                Voir détails
                             </button>
+                            
+                            <!-- Status Dropdown -->
+                            <div class="relative flex-1">
+                                <select wire:change="updateServiceStatus({{ $service->service_id }}, $event.target.value)"
+                                        class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition appearance-none bg-white cursor-pointer hover:border-gray-300">
+                                    <option value="ACTIVE">
+                                        Actif
+                                    </option>
+                                    <option value="ARCHIVED">
+                                        Archivé
+                                    </option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

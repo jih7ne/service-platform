@@ -16,7 +16,10 @@ class DemandeDetails extends Component
     public $prenom;
     public $photo;
     public $enAttente = 0;
-
+   public function goToHub()
+    {
+        return redirect()->route('intervenant.hub');
+    }
     public function mount($id)
     {
         $user = Auth::user();

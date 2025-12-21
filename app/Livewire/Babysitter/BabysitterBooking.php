@@ -39,13 +39,13 @@ class BabysitterBooking extends Component
     public function mount($id = null)
     {
         $this->babysitterId = $id ?? 1;
-        
+
         // Charger les préférences du babysitter
         $babysitter = $this->getBabysitter();
         if ($babysitter && isset($babysitter['lieux_preference'])) {
             $this->babysitterLieuxPreference = is_string($babysitter['lieux_preference']) ? json_decode($babysitter['lieux_preference'], true) : $babysitter['lieux_preference'];
             $this->babysitterLieuxPreference = $this->babysitterLieuxPreference ?: [];
-            
+
             // Récupérer l'adresse du babysitter
             if (isset($babysitter['utilisateur']) && $babysitter['utilisateur']->localisations) {
                 $localisation = $babysitter['utilisateur']->localisations->first();
@@ -60,40 +60,40 @@ class BabysitterBooking extends Component
             session()->flash('error', 'Veuillez remplir les heures de début et de fin');
             return;
         }
-        
+
         // Valider que le créneau est dans les disponibilités du babysitter
         $validationMessage = $this->validateTimeSlot($this->currentStartTime, $this->currentEndTime);
-        
+
         if ($validationMessage) {
             session()->flash('error', $validationMessage);
             return;
         }
-        
+
         // Valider que le créneau ne chevauche pas les créneaux existants
         $overlapMessage = $this->validateNoOverlap($this->currentStartTime, $this->currentEndTime);
-        
+
         if ($overlapMessage) {
             session()->flash('error', $overlapMessage);
             return;
         }
-        
+
         foreach ($this->selectedDays as $day) {
             if (!isset($this->selectedSlots[$day])) {
                 $this->selectedSlots[$day] = [];
             }
-            
+
             $slot = $this->currentStartTime . '-' . $this->currentEndTime;
-            
+
             // Vérifier si le créneau est déjà ajouté
             if (!in_array($slot, $this->selectedSlots[$day])) {
                 $this->selectedSlots[$day][] = $slot;
             }
         }
-        
+
         // Réinitialiser les champs
         $this->currentStartTime = '';
         $this->currentEndTime = '';
-        
+
         $this->calculateTotalPrice();
     }
 
@@ -101,15 +101,15 @@ class BabysitterBooking extends Component
     {
         $newStartMinutes = $this->timeToMinutes($startTime);
         $newEndMinutes = $this->timeToMinutes($endTime);
-        
+
         foreach ($this->selectedDays as $day) {
             $existingSlots = $this->selectedSlots[$day] ?? [];
-            
+
             foreach ($existingSlots as $existingSlot) {
                 [$existingStart, $existingEnd] = explode('-', $existingSlot);
                 $existingStartMinutes = $this->timeToMinutes($existingStart);
                 $existingEndMinutes = $this->timeToMinutes($existingEnd);
-                
+
                 // Vérifier si les créneaux se chevauchent
                 if (($newStartMinutes < $existingEndMinutes && $newEndMinutes > $existingStartMinutes)) {
                     $dayName = $this->getDayName($day);
@@ -117,50 +117,50 @@ class BabysitterBooking extends Component
                 }
             }
         }
-        
+
         return null; // Pas de chevauchement
     }
 
     public function validateTimeSlot($startTime, $endTime)
     {
         $babysitter = $this->getBabysitter();
-        
+
         \Log::info('validateTimeSlot called', [
             'startTime' => $startTime,
             'endTime' => $endTime,
             'selectedDays' => $this->selectedDays,
             'babysitterAvailability' => $babysitter['availability'] ?? []
         ]);
-        
+
         // Convertir les heures en minutes pour la comparaison
         $startMinutes = $this->timeToMinutes($startTime);
         $endMinutes = $this->timeToMinutes($endTime);
-        
+
         \Log::info('Time conversion', [
             'startMinutes' => $startMinutes,
             'endMinutes' => $endMinutes
         ]);
-        
+
         // Vérifier que l'heure de fin est après l'heure de début
         if ($endMinutes <= $startMinutes) {
             return "L'heure de fin doit être après l'heure de début";
         }
-        
+
         // Vérifier pour chaque jour sélectionné
         foreach ($this->selectedDays as $day) {
             $availableSlots = $babysitter['availability'][$day] ?? [];
             $isValidForDay = false;
-            
+
             \Log::info('Checking day', [
                 'day' => $day,
                 'availableSlots' => $availableSlots
             ]);
-            
+
             foreach ($availableSlots as $availableSlot) {
                 [$availableStart, $availableEnd] = explode('-', $availableSlot);
                 $availableStartMinutes = $this->timeToMinutes($availableStart);
                 $availableEndMinutes = $this->timeToMinutes($availableEnd);
-                
+
                 \Log::info('Comparing slots', [
                     'availableSlot' => $availableSlot,
                     'availableStartMinutes' => $availableStartMinutes,
@@ -170,7 +170,7 @@ class BabysitterBooking extends Component
                     'condition1' => $startMinutes >= $availableStartMinutes,
                     'condition2' => $endMinutes <= $availableEndMinutes
                 ]);
-                
+
                 // Vérifier si le créneau demandé est complètement dans un créneau disponible
                 if ($startMinutes >= $availableStartMinutes && $endMinutes <= $availableEndMinutes) {
                     $isValidForDay = true;
@@ -178,7 +178,7 @@ class BabysitterBooking extends Component
                     break;
                 }
             }
-            
+
             if (!$isValidForDay) {
                 $dayName = $this->getDayName($day);
                 \Log::info('Slot not valid for day', [
@@ -189,7 +189,7 @@ class BabysitterBooking extends Component
                 return "Le créneau $startTime-$endTime n'est pas disponible pour le $dayName. Tous les créneaux non disponibles : " . implode(', ', $availableSlots);
             }
         }
-        
+
         \Log::info('Slot is valid for all days');
         return null; // Pas d'erreur
     }
@@ -197,21 +197,21 @@ class BabysitterBooking extends Component
     public function timeToMinutes($time)
     {
         [$hours, $minutes] = explode(':', $time);
-        return (int)$hours * 60 + (int)$minutes;
+        return (int) $hours * 60 + (int) $minutes;
     }
 
     public function getDayName($dayId)
     {
         $days = [
             'lundi' => 'Lundi',
-            'mardi' => 'Mardi', 
+            'mardi' => 'Mardi',
             'mercredi' => 'Mercredi',
             'jeudi' => 'Jeudi',
             'vendredi' => 'Vendredi',
             'samedi' => 'Samedi',
             'dimanche' => 'Dimanche'
         ];
-        
+
         return $days[$dayId] ?? $dayId;
     }
 
@@ -220,18 +220,18 @@ class BabysitterBooking extends Component
         if (isset($this->selectedSlots[$day])) {
             $this->selectedSlots[$day] = array_values(array_diff($this->selectedSlots[$day], [$slot]));
         }
-        
+
         $this->calculateTotalPrice();
     }
 
     public function toggleSlot($day, $slot)
     {
         \Log::info('toggleSlot called', ['day' => $day, 'slot' => $slot, 'selectedSlots' => $this->selectedSlots]);
-        
+
         if (!isset($this->selectedSlots[$day])) {
             $this->selectedSlots[$day] = [];
         }
-        
+
         if (in_array($slot, $this->selectedSlots[$day])) {
             $this->selectedSlots[$day] = array_values(array_diff($this->selectedSlots[$day], [$slot]));
             \Log::info('Slot removed', ['day' => $day, 'slot' => $slot]);
@@ -239,7 +239,7 @@ class BabysitterBooking extends Component
             $this->selectedSlots[$day][] = $slot;
             \Log::info('Slot added', ['day' => $day, 'slot' => $slot]);
         }
-        
+
         \Log::info('Updated selectedSlots', ['selectedSlots' => $this->selectedSlots]);
         $this->calculateTotalPrice();
     }
@@ -270,11 +270,11 @@ class BabysitterBooking extends Component
     {
         $age = trim($this->currentChild['age']);
         $sexe = trim($this->currentChild['sexe']);
-        
+
         if (!empty($age) && is_numeric($age) && !empty($sexe)) {
             $this->children[] = [
                 'id' => time() . rand(1000, 9999),
-                'age' => (int)$age,
+                'age' => (int) $age,
                 'sexe' => $sexe,
                 'besoinsSpeciaux' => $this->currentChild['besoinsSpeciaux'] ?? [],
                 'autresBesoins' => trim($this->currentChild['autresBesoins'] ?? '')
@@ -285,7 +285,7 @@ class BabysitterBooking extends Component
 
     public function removeChild($id)
     {
-        $this->children = array_values(array_filter($this->children, function($child) use ($id) {
+        $this->children = array_values(array_filter($this->children, function ($child) use ($id) {
             return $child['id'] != $id;
         }));
     }
@@ -294,12 +294,12 @@ class BabysitterBooking extends Component
     {
         if ($this->currentStep < 5) {
             $this->currentStep++;
-            
+
             // Initialisation automatique au Step 3
             if ($this->currentStep === 3) {
                 $babysitter = $this->getBabysitter();
                 $preferencesDomicile = $babysitter['preference_domicil'] ?? '';
-                
+
                 // Si domicil_babysitter, pré-remplir automatiquement
                 if ($preferencesDomicile === 'domicil_babysitter') {
                     if (isset($babysitter['utilisateur']) && $babysitter['utilisateur']->localisations) {
@@ -308,7 +308,7 @@ class BabysitterBooking extends Component
                     }
                     $this->adresseChoice = 'babysitter';
                 }
-                
+
                 // Si domicil_client, pré-définir le choix
                 if ($preferencesDomicile === 'domicil_client') {
                     $this->adresseChoice = 'client';
@@ -333,20 +333,20 @@ class BabysitterBooking extends Component
                 session()->flash('error', 'Veuillez compléter toutes les informations.');
                 return;
             }
-            
+
             // Calculer le prix total
             $this->calculateTotalPrice();
-            
+
             // Pour les tests, on utilise directement l'ID 1
             $clientId = auth()->id() ?? 1;
-            
+
             DB::beginTransaction();
-            
+
             // Créer les demandes d'intervention pour chaque créneau sélectionné
             foreach ($this->selectedSlots as $day => $slots) {
                 foreach ($slots as $slot) {
                     [$startTime, $endTime] = explode('-', $slot);
-                    
+
                     $demande = DemandeIntervention::create([
                         'dateDemande' => now(),
                         'dateSouhaitee' => $this->selectedDates[$day] ?? $this->getDateFromDay($day),
@@ -359,7 +359,7 @@ class BabysitterBooking extends Component
                         'idService' => 2, // ID du service Babysitting
                         'statut' => 'en_attente'
                     ]);
-                    
+
                     // Ajouter les enfants pour chaque demande
                     foreach ($this->children as $child) {
                         $besoinsSpecifiques = '';
@@ -369,10 +369,10 @@ class BabysitterBooking extends Component
                         if (!empty($child['autresBesoins'])) {
                             $besoinsSpecifiques .= ($besoinsSpecifiques ? ', ' : '') . $child['autresBesoins'];
                         }
-                        
+
                         // Créer un nom fictif basé sur le sexe et l'âge
                         $nomComplet = ($child['sexe'] === 'Garçon' ? 'Garçon' : 'Fille') . ' de ' . $child['age'] . ' ans';
-                        
+
                         Enfant::create([
                             'nomComplet' => $nomComplet,
                             'dateNaissance' => $this->calculateBirthDate($child['age']),
@@ -384,32 +384,32 @@ class BabysitterBooking extends Component
                     }
                 }
             }
-            
+
             DB::commit();
             $this->showSuccess = true;
-            
+
             session()->flash('success', 'Votre demande de réservation a été envoyée avec succès ! Prix total: ' . $this->totalPrice . ' MAD');
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             session()->flash('error', 'Une erreur est survenue lors de la réservation. Veuillez réessayer.');
             \Log::error('Erreur lors de la réservation: ' . $e->getMessage());
         }
     }
-    
+
     public function calculateTotalPrice()
     {
         // Récupérer le babysitter pour obtenir son prix horaire
         $babysitter = $this->getBabysitter();
         $hourlyRate = 50; // Prix par défaut si non trouvé
-        
+
         if ($babysitter && isset($babysitter['prix_horaire'])) {
             $hourlyRate = $babysitter['prix_horaire'];
         }
-        
+
         $totalHours = 0;
         $numberOfChildren = max(1, count($this->children));
-        
+
         // Calculer le nombre total d'heures pour tous les créneaux sélectionnés
         foreach ($this->selectedSlots as $day => $slots) {
             foreach ($slots as $slot) {
@@ -421,20 +421,48 @@ class BabysitterBooking extends Component
                 $totalHours += $hours;
             }
         }
-        
-        $this->totalPrice = $totalHours * $hourlyRate * $numberOfChildren;
+
+        $this->totalPrice = $totalHours * $hourlyRate;
     }
-    
+
+    public function getPriceBreakdown()
+    {
+        $babysitter = $this->getBabysitter();
+        $hourlyRate = $babysitter['prix_horaire'] ?? 50;
+
+        $breakdown = [];
+
+        foreach ($this->selectedSlots as $day => $slots) {
+            foreach ($slots as $slot) {
+                [$startTime, $endTime] = explode('-', $slot);
+                $start = new \DateTime($startTime);
+                $end = new \DateTime($endTime);
+                $interval = $start->diff($end);
+                $hours = $interval->h + ($interval->i / 60);
+                $price = $hours * $hourlyRate;
+
+                $breakdown[] = [
+                    'day' => $day,
+                    'slot' => $slot,
+                    'hours' => $hours,
+                    'price' => $price
+                ];
+            }
+        }
+
+        return $breakdown;
+    }
+
     public function updatedStartTime()
     {
         $this->calculateTotalPrice();
     }
-    
+
     public function updatedEndTime()
     {
         $this->calculateTotalPrice();
     }
-    
+
     public function updatedChildren()
     {
         $this->calculateTotalPrice();
@@ -445,25 +473,25 @@ class BabysitterBooking extends Component
         switch ($this->currentStep) {
             case 1:
                 return count($this->selectedServices) > 0;
-                
+
             case 2:
                 return count($this->selectedDays) > 0 && $this->hasSelectedSlots();
-                
+
             case 3:
                 // Récupérer la préférence de domicile du babysitter
                 $babysitter = $this->getBabysitter();
                 $preferencesDomicile = $babysitter['preference_domicil'] ?? '';
-                
+
                 // Cas 1: Si babysitter uniquement chez elle → toujours valide
                 if ($preferencesDomicile === 'domicil_babysitter') {
                     return true;
                 }
-                
+
                 // Cas 2: Si babysitter uniquement chez client → vérifier que l'adresse est remplie
                 if ($preferencesDomicile === 'domicil_client') {
                     return !empty($this->address);
                 }
-                
+
                 // Cas 3: Les deux options → vérifier selon le choix
                 if ($preferencesDomicile === 'les_deux') {
                     // Si choix = babysitter → OK
@@ -477,16 +505,16 @@ class BabysitterBooking extends Component
                     // Si pas de choix fait encore
                     return false;
                 }
-                
+
                 // Cas 4: Préférence vide/null → vérifier l'adresse ou le choix
                 return $this->useRegisteredAddress || !empty($this->address) || $this->adresseChoice === 'babysitter';
-                
+
             case 4:
                 return count($this->children) > 0;
-                
+
             case 5:
                 return $this->agreedToTerms;
-                
+
             default:
                 return false;
         }
@@ -509,25 +537,25 @@ class BabysitterBooking extends Component
         }
 
         $babysitter = $this->getBabysitter();
-        
+
         foreach ($this->selectedDays as $day) {
             $availableSlots = $babysitter['availability'][$day] ?? [];
 
             $isValidForDay = false;
             foreach ($availableSlots as $slot) {
                 [$slotStart, $slotEnd] = explode('-', $slot);
-                
-                $slotStartVal = (int)str_replace(':', '', $slotStart);
-                $slotEndVal = (int)str_replace(':', '', $slotEnd);
-                $selectedStartVal = (int)str_replace(':', '', $this->startTime);
-                $selectedEndVal = (int)str_replace(':', '', $this->endTime);
+
+                $slotStartVal = (int) str_replace(':', '', $slotStart);
+                $slotEndVal = (int) str_replace(':', '', $slotEnd);
+                $selectedStartVal = (int) str_replace(':', '', $this->startTime);
+                $selectedEndVal = (int) str_replace(':', '', $this->endTime);
 
                 if ($selectedStartVal >= $slotStartVal && $selectedEndVal <= $slotEndVal) {
                     $isValidForDay = true;
                     break;
                 }
             }
-            
+
             if (!$isValidForDay) {
                 return false;
             }
@@ -547,33 +575,33 @@ class BabysitterBooking extends Component
                 'categoriesEnfants', // Relation avec les catégories d'enfants acceptées
                 'experiencesBesoinsSpeciaux' // Relation avec les besoins spéciaux acceptés
             ])->find($this->babysitterId);
-            
+
             if (!$babysitter) {
                 return null;
             }
-            
+
             // Récupérer les créneaux déjà réservés
             $reservedSlots = $this->getReservedSlots($babysitter->idBabysitter);
-            
+
             // Filtrer les disponibilités pour exclure les créneaux réservés
-            $availableDispos = $babysitter->disponibilites->flatMap(function($dispo) use ($reservedSlots) {
+            $availableDispos = $babysitter->disponibilites->flatMap(function ($dispo) use ($reservedSlots) {
                 $jour = strtolower($dispo->jourFormatted);
                 $originalRange = $dispo->plageHoraire;
-                
+
                 // Récupérer les créneaux réservés pour ce jour
                 $dayReservedSlots = $reservedSlots[$jour] ?? [];
-                
+
                 if (empty($dayReservedSlots)) {
                     return collect([$dispo]);
                 }
-                
+
                 // Diviser le créneau original en créneaux disponibles
                 $availableRanges = $this->splitAvailableTime($originalRange, $dayReservedSlots);
-                
+
                 if (empty($availableRanges)) {
                     return collect([]);
                 }
-                
+
                 // Créer de nouvelles disponibilités pour chaque créneau disponible
                 $newDispos = collect([]);
                 foreach ($availableRanges as $range) {
@@ -589,12 +617,12 @@ class BabysitterBooking extends Component
                     $newDispo->jourFormatted = $dispo->jourFormatted;
                     $newDispos->push($newDispo);
                 }
-                
+
                 return $newDispos;
-            })->filter(function($dispo) {
+            })->filter(function ($dispo) {
                 return $dispo !== null && isset($dispo->plageHoraire);
             });
-            
+
             // Transformer les données pour compatibilité avec la vue
             return [
                 'id' => $babysitter->idBabysitter,
@@ -607,7 +635,7 @@ class BabysitterBooking extends Component
                 'utilisateur' => $babysitter->utilisateur,
                 'categories_enfants' => $babysitter->categoriesEnfants->pluck('categorie')->toArray(),
                 'besoins_speciaux' => $babysitter->experiencesBesoinsSpeciaux->pluck('experience')->toArray(),
-                'services' => $babysitter->superpouvoirs->isNotEmpty() 
+                'services' => $babysitter->superpouvoirs->isNotEmpty()
                     ? $babysitter->superpouvoirs->pluck('superpouvoir')->toArray()
                     : ['Cuisine', 'Tâches ménagères', 'Aide aux devoirs'],
                 'availability' => $this->formatDisponibilites($availableDispos)
@@ -621,12 +649,12 @@ class BabysitterBooking extends Component
     private function getReservedSlots($babysitterId)
     {
         $validatedDemands = DemandeIntervention::where('idIntervenant', $babysitterId)
-            ->where('statut', 'validee')
+            ->whereIn('statut', ['validee', 'en_attente'])
             ->where('dateSouhaitee', '>=', now()->format('Y-m-d'))
             ->get();
 
         $reservedSlots = [];
-        
+
         foreach ($validatedDemands as $demand) {
             $dayName = strtolower(date('l', strtotime($demand->dateSouhaitee)));
             $dayMap = [
@@ -638,16 +666,16 @@ class BabysitterBooking extends Component
                 'saturday' => 'samedi',
                 'sunday' => 'dimanche'
             ];
-            
+
             $jour = $dayMap[$dayName] ?? 'lundi';
             $plage = $demand->heureDebut->format('H:i') . '-' . $demand->heureFin->format('H:i');
-            
+
             if (!isset($reservedSlots[$jour])) {
                 $reservedSlots[$jour] = [];
             }
             $reservedSlots[$jour][] = $plage;
         }
-        
+
         return $reservedSlots;
     }
 
@@ -656,13 +684,13 @@ class BabysitterBooking extends Component
         [$start, $end] = explode('-', $originalRange);
         $startMin = $this->timeToMinutes($start);
         $endMin = $this->timeToMinutes($end);
-        
+
         $reservedRanges = [];
         foreach ($reservedSlots as $slot) {
             [$slotStart, $slotEnd] = explode('-', $slot);
             $reservedStart = $this->timeToMinutes($slotStart);
             $reservedEnd = $this->timeToMinutes($slotEnd);
-            
+
             if ($reservedStart < $endMin && $reservedEnd > $startMin) {
                 $reservedRanges[] = [
                     'start' => max($reservedStart, $startMin),
@@ -670,29 +698,29 @@ class BabysitterBooking extends Component
                 ];
             }
         }
-        
+
         if (empty($reservedRanges)) {
             return [$originalRange];
         }
-        
-        usort($reservedRanges, function($a, $b) {
+
+        usort($reservedRanges, function ($a, $b) {
             return $a['start'] - $b['start'];
         });
-        
+
         $availableRanges = [];
         $currentStart = $startMin;
-        
+
         foreach ($reservedRanges as $reserved) {
             if ($reserved['start'] > $currentStart) {
                 $availableRanges[] = $this->minutesToTime($currentStart) . '-' . $this->minutesToTime($reserved['start']);
             }
             $currentStart = max($currentStart, $reserved['end']);
         }
-        
+
         if ($currentStart < $endMin) {
             $availableRanges[] = $this->minutesToTime($currentStart) . '-' . $this->minutesToTime($endMin);
         }
-        
+
         return $availableRanges;
     }
 
@@ -720,14 +748,14 @@ class BabysitterBooking extends Component
     {
         $daysMap = [
             'lundi' => 'Monday',
-            'mardi' => 'Tuesday', 
+            'mardi' => 'Tuesday',
             'mercredi' => 'Wednesday',
             'jeudi' => 'Thursday',
             'vendredi' => 'Friday',
             'samedi' => 'Saturday',
             'dimanche' => 'Sunday'
         ];
-        
+
         $dayName = $daysMap[$day] ?? 'Monday';
         return now()->next($dayName)->format('Y-m-d');
     }
@@ -737,7 +765,7 @@ class BabysitterBooking extends Component
         if (!empty($this->address)) {
             return $this->address;
         }
-        
+
         if ($this->adresseChoice === 'babysitter' || $this->useRegisteredAddress) {
             $babysitter = $this->getBabysitter();
             if (isset($babysitter['utilisateur']) && $babysitter['utilisateur']->localisations) {
@@ -746,7 +774,7 @@ class BabysitterBooking extends Component
             }
             return "23 Rue des Fleurs, Maârif - Casablanca";
         }
-        
+
         return $this->address;
     }
 
@@ -758,7 +786,7 @@ class BabysitterBooking extends Component
     public function render()
     {
         $babysitter = $this->getBabysitter();
-        
+
         if (!$babysitter) {
             return view('livewire.babysitter.babysitter-booking', [
                 'babysitter' => null,

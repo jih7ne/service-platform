@@ -20,11 +20,7 @@ class AdminDashboard extends Component
 
     public function mount()
     {
-        // Vérifier si l'utilisateur est admin
-        if (!session()->has('is_admin')) {
-            return redirect()->route('login')->with('error', 'Accès réservé aux administrateurs');
-        }
-
+        // La vérification se fait dans le middleware, pas ici
         $this->loadStats();
         $this->loadServicesData();
         $this->loadServiceDistribution();

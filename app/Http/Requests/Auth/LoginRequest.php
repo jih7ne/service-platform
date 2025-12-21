@@ -14,7 +14,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email|exists:utilisateurs,email',
+            'email' => 'required|email',
             'password' => 'required|string|min:6',
             'remember' => 'boolean',
         ];
@@ -25,7 +25,6 @@ class LoginRequest extends FormRequest
         return [
             'email.required' => 'L\'email est requis',
             'email.email' => 'L\'email doit être valide',
-            'email.exists' => 'Aucun compte ne correspond à cet email',
             'password.required' => 'Le mot de passe est requis',
             'password.min' => 'Le mot de passe doit contenir au moins 6 caractères',
         ];

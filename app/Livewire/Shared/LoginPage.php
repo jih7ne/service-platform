@@ -13,7 +13,7 @@ class LoginPage extends Component
     public $email = '';
     public $password = '';
     public $showPassword = false;
-    public $suspendedMessage = ''; // 👈 AJOUTER CETTE LIGNE
+    public $suspendedMessage = '';
 
     protected $rules = [
         'email' => 'required|email',
@@ -34,77 +34,60 @@ class LoginPage extends Component
 
     public function login()
     {
-        $this->validate();
+        // Validation simple sans validate() pour éviter les erreurs
+        if (empty($this->email) || empty($this->password)) {
+            session()->flash('error', 'Email et mot de passe sont requis.');
+            return;
+        }
 
-        // ========================================
-        // 1. VÉRIFIER SI C'EST UN ADMIN D'ABORD
-        // ========================================
+        // Vérifier si c'est un admin
         $admin = Admin::where('emailAdmin', $this->email)->first();
         
         if ($admin && Hash::check($this->password, $admin->passwordAdmin)) {
-            // Connexion admin réussie
             session()->regenerate();
             session()->put('admin_id', $admin->idAdmin);
             session()->put('admin_email', $admin->emailAdmin);
             session()->put('is_admin', true);
             
+            // Debug pour confirmer la connexion
+            \Log::info('LoginPage: Connexion admin réussie', [
+                'admin_id' => $admin->idAdmin,
+                'admin_email' => $admin->emailAdmin,
+                'session_complete' => session()->all()
+            ]);
+            
             session()->flash('success', 'Bienvenue Admin !');
-            return redirect()->route('admin.dashboard');
+            
+            // Sauvegarder la session explicitement
+            session()->save();
+            
+            // Dispatch l'événement pour la redirection
+            $this->dispatch('redirect-admin', url: route('admin.dashboard'));
         }
 
-        // ========================================
-        // 2. VÉRIFIER L'UTILISATEUR NORMAL
-        // ========================================
+        // Vérifier l'utilisateur normal
         $user = Utilisateur::where('email', $this->email)->first();
 
-        // DEBUG - À SUPPRIMER APRÈS
-        \Log::info('User trouvé:', ['user' => $user ? $user->toArray() : 'null']);
-
-        // Si l'utilisateur n'existe pas
-        if (!$user) {
-            $this->addError('email', 'Email ou mot de passe incorrect.');
+        if (!$user || !Hash::check($this->password, $user->password)) {
+            session()->flash('error', 'Email ou mot de passe incorrect.');
             return;
         }
 
-        // DEBUG - À SUPPRIMER APRÈS
-        \Log::info('Vérification mot de passe:', [
-            'hash_check' => Hash::check($this->password, $user->password),
-            'password_input' => $this->password,
-            'password_hash' => $user->password
-        ]);
-
-        // Vérifier le mot de passe
-        if (!Hash::check($this->password, $user->password)) {
-            $this->addError('email', 'Email ou mot de passe incorrect.');
-            return;
-        }
-
-        // DEBUG - À SUPPRIMER APRÈS
-        \Log::info('Statut utilisateur:', ['statut' => $user->statut]);
-
-        // Vérifier le statut
         if ($user->statut !== 'actif') {
-            \Log::info('Compte suspendu détecté!');
-            $this->suspendedMessage = 'Votre compte est suspendu. Veuillez consulter votre email pour connaître la raison de la désactivation.';
+            $this->suspendedMessage = 'Votre compte est suspendu.';
             return;
         }
 
-        // ========================================
-        // 3. TOUT EST OK - CONNECTER L'UTILISATEUR
-        // ========================================
+        // Connecter l'utilisateur
         Auth::login($user);
         session()->regenerate();
+        session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
 
-        // --- LOGIQUE DE REDIRECTION UTILISATEUR ---
+        // Redirection simple
         if ($user->role === 'intervenant') {
-            session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
-            return redirect()->route('intervenant.hub');
+            return redirect('/intervenant/hub');
         }
-
-        if ($user->role === 'client') {
-            return redirect('/');
-        }
-
+        
         return redirect('/');
     }
 

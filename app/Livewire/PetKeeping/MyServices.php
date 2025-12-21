@@ -11,12 +11,15 @@ use Livewire\WithPagination;
 class MyServices extends Component
 {
     use WithPagination;
+
+    
     
     public $search = '';
     public $categoryFilter = '';
     public $petTypeFilter = '';
     public $perPage = 10;
     public $user;
+    public $user_id;
 
     public function mount(){
         $user = Auth::user();
@@ -24,6 +27,34 @@ class MyServices extends Component
             return redirect()->route('login');
         }
         $this->user = $user;
+        $this->user_id = $user->idUser;
+    }
+
+    public function updateServiceStatus($serviceId, $newStatus)
+    {
+        try {
+            DB::beginTransaction();
+            
+            
+            $updated = DB::table('offres_services')
+                ->where('idService', $serviceId)
+                ->where('idIntervenant', $this->user_id) 
+                ->update([
+                    'statut' => $newStatus,
+                ]);
+            
+            if ($updated) {
+                DB::commit();
+                session()->flash('success', 'Statut du service mis à jour avec succès!');
+            } else {
+                DB::rollBack();
+                session()->flash('error', 'Service non trouvé ou non autorisé.');
+            }
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('error', 'Erreur lors de la mise à jour: ' . $e->getMessage());
+        }
     }
     
     public function render()

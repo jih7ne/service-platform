@@ -33,7 +33,10 @@ class MesDemandes extends Component
     // -------------------------
 
     // Note : On retire "public $demandes" car on utilise la méthode calculée ci-dessous
-
+   public function goToHub()
+    {
+        return redirect()->route('intervenant.hub');
+    }
     public function mount()
     {
         $user = Auth::user();

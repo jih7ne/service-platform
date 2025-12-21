@@ -97,14 +97,14 @@ class BabysitterRegistration extends Component
     ];
 
     public $langues_list = ['Français', 'Anglais', 'Arabe', 'Espagnol', 'Allemand'];
-    
+
     public $categories_enfants_list = ['Nouveau-né (0-6 mois)', 'Bébé (6-18 mois)', 'Tout-petit (18-36 mois)', 'Enfant (3-6 ans)', 'Enfant plus âgé (6-12 ans)'];
-    
+
     public $preferences_domicile_list = [
         ['label' => 'Chez moi', 'value' => 'domicile_babysitter', 'icon' => '🏠'],
         ['label' => 'Chez la famille', 'value' => 'domicile_client', 'icon' => '🚗'],
     ];
-    
+
     public $certifications_list = ['Premiers secours', 'Sauvetage aquatique', 'Garde d\'enfants', 'Assistant maternel', 'Éducation spécialisée'];
 
     public function mount()
@@ -123,11 +123,12 @@ class BabysitterRegistration extends Component
         }
     }
 
-    public function setLocation($latitude, $longitude, $ville)
+    public function setLocation($latitude, $longitude, $ville, $adresse = '')
     {
         $this->latitude = $latitude;
         $this->longitude = $longitude;
         $this->ville = $ville;
+        $this->adresse = $adresse;
     }
 
     public function rules()
@@ -160,7 +161,7 @@ class BabysitterRegistration extends Component
                 'telephone' => 'required|string|max:20',
                 'photo_profil' => 'nullable|image|max:5120',
             ];
-            
+
             // L'adresse n'est requise que si la géolocalisation automatique n'est pas activée
             if (!$this->auto_localisation) {
                 $rules['adresse'] = 'required|string|max:500';
@@ -173,7 +174,7 @@ class BabysitterRegistration extends Component
                 'adresse' => 'required|string|max:500',
                 'photo_profil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             ];
-            
+
             // Si géolocalisation automatique, l'adresse n'est pas obligatoire
             if ($this->auto_localisation) {
                 unset($rules['adresse']);
@@ -191,12 +192,12 @@ class BabysitterRegistration extends Component
                 'preferences_domicile' => 'required|string|in:domicile_babysitter,domicile_client,les_deux',
                 'a_maladies' => 'required|string|in:oui,non',
             ];
-            
+
             // Si "Autre formation" est sélectionné, le champ autre_formation est requis
             if ($this->niveau_etudes === 'Autre formation') {
                 $rules['autre_formation'] = 'required|string|max:500';
             }
-            
+
             // Si "Oui" pour maladies, au moins une maladie doit être sélectionnée
             if ($this->a_maladies === 'oui') {
                 $rules['maladies_selectionnees'] = 'nullable|array';
@@ -261,13 +262,13 @@ class BabysitterRegistration extends Component
     {
         \Log::info('BabysitterRegistration - Method suivant() called');
         \Log::info('Current step: ' . $this->currentStep . ' / Total steps: ' . $this->totalSteps);
-        
+
         // Si on est à l'étape 1, envoyer le code et passer à l'étape 2
         if ($this->currentStep == 1) {
             \Log::info('Step 1 - validating and sending verification code');
             $rules = $this->rules();
             \Log::info('Rules retrieved: ' . (empty($rules) ? 'no rules' : 'has rules'));
-            
+
             if (!empty($rules)) {
                 \Log::info('Validating form data...');
                 try {
@@ -278,22 +279,22 @@ class BabysitterRegistration extends Component
                     throw $e;
                 }
             }
-            
+
             $this->sendVerificationCode();
             return;
         }
-        
+
         // Si on est à l'étape 2, vérifier le code
         if ($this->currentStep == 2) {
             \Log::info('Step 2 - verifying email code');
             $this->verifyEmailCode();
             return;
         }
-        
+
         // Pour les autres étapes, validation normale
         $rules = $this->rules();
         \Log::info('Rules retrieved: ' . (empty($rules) ? 'no rules' : 'has rules'));
-        
+
         if (!empty($rules)) {
             \Log::info('Validating form data...');
             try {
@@ -304,7 +305,7 @@ class BabysitterRegistration extends Component
                 throw $e;
             }
         }
-        
+
         if ($this->currentStep < $this->totalSteps) {
             $oldStep = $this->currentStep;
             $this->currentStep++;
@@ -312,7 +313,7 @@ class BabysitterRegistration extends Component
         } else {
             \Log::info('Cannot advance - already at maximum step');
         }
-        
+
         \Log::info('suivant() method completed');
     }
 
@@ -320,56 +321,56 @@ class BabysitterRegistration extends Component
     {
         try {
             \Log::info('Sending verification code to email: ' . $this->email);
-            
+
             // Générer un code à 5 chiffres
             $code = str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT);
             \Log::info('Generated code: ' . $code);
-            
+
             // Stocker dans le cache pendant 30 minutes
             Cache::put("email_verification_{$this->email}", $code, now()->addMinutes(30));
             \Log::info('Code stored in cache for 30 minutes');
-            
+
             // Envoyer l'email avec le code
             \Log::info('Attempting to send email...');
-            \Mail::raw("Votre code de vérification est : {$code}", function($message) {
+            \Mail::raw("Votre code de vérification est : {$code}", function ($message) {
                 $message->to($this->email)
                     ->subject('Code de vérification - Inscription Babysitter');
             });
             \Log::info('Email sent successfully');
-            
+
             $this->verification_sent = true;
             $this->currentStep = 2; // Passer à l'étape de vérification
-            
+
             session()->flash('success', 'Un code de vérification à 5 chiffres a été envoyé à votre email.');
             \Log::info('Verification code process completed successfully');
-            
+
         } catch (\Exception $e) {
             \Log::error('Error sending verification code: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
             session()->flash('error', 'Erreur lors de l\'envoi du code de vérification.');
         }
     }
-    
+
     public function verifyEmailCode()
     {
         \Log::info('Verifying email code: ' . $this->verification_code . ' for email: ' . $this->email);
-        
+
         $this->validate([
             'verification_code' => 'required|digits:5'
         ], [
             'verification_code.required' => 'Le code de vérification est obligatoire',
             'verification_code.digits' => 'Le code doit contenir exactement 5 chiffres'
         ]);
-        
+
         // Vérifier le code dans le cache
         $storedCode = Cache::get("email_verification_{$this->email}");
         \Log::info('Stored code in cache: ' . ($storedCode ?? 'null'));
-        
+
         if ($storedCode && $storedCode === $this->verification_code) {
             \Log::info('Code verification successful');
             // Supprimer le code du cache après vérification
             Cache::forget("email_verification_{$this->email}");
-            
+
             $this->email_verified = true;
             $this->currentStep = 3; // Passer à l'étape suivante
             session()->flash('success', 'Email vérifié avec succès !');
@@ -378,7 +379,7 @@ class BabysitterRegistration extends Component
             session()->flash('error', 'Code invalide ou expiré. Veuillez réessayer.');
         }
     }
-    
+
     public function resendCode()
     {
         $this->verification_sent = false;
@@ -388,7 +389,7 @@ class BabysitterRegistration extends Component
     public function ajouterDisponibilite($jour)
     {
         $this->disponibilites[$jour][] = [
-            'debut' => '', 
+            'debut' => '',
             'fin' => '',
             'est_reccurent' => true
         ];
@@ -409,13 +410,13 @@ class BabysitterRegistration extends Component
     {
         \Log::info('Babysitter registration started');
         \Log::info('Current step: ' . $this->currentStep);
-        
+
         // Vérifier que l'email est bien vérifié
         if (!$this->email_verified) {
             session()->flash('error', 'Veuillez vérifier votre email avant de finaliser l\'inscription.');
             return;
         }
-        
+
         $this->validate();
         \Log::info('Validation passed');
 
@@ -466,27 +467,35 @@ class BabysitterRegistration extends Component
             \Log::info('Intervenant created');
 
             // 5. Upload des documents
-            $procedeJuridique = $this->casier_judiciaire ? 
+            $procedeJuridique = $this->casier_judiciaire ?
                 $this->casier_judiciaire->store('babysitters/documents', 'public') : null;
-            $coprocultureSelles = $this->coproculture_selles ? 
+            $coprocultureSelles = $this->coproculture_selles ?
                 $this->coproculture_selles->store('babysitters/documents', 'public') : null;
-            $certifAptitude = $this->certificat_aptitude ? 
+            $certifAptitude = $this->certificat_aptitude ?
                 $this->certificat_aptitude->store('babysitters/documents', 'public') : null;
-            $radiographieThorax = $this->radiographie_thorax ? 
+            $radiographieThorax = $this->radiographie_thorax ?
                 $this->radiographie_thorax->store('babysitters/documents', 'public') : null;
 
             // 6. Convertir années d'expérience
             $expAnneeInt = 0;
-            switch($this->annees_experience) {
-                case '0-1': $expAnneeInt = 0; break;
-                case '1-3': $expAnneeInt = 2; break;
-                case '3-5': $expAnneeInt = 4; break;
-                case '5+': $expAnneeInt = 5; break;
+            switch ($this->annees_experience) {
+                case '0-1':
+                    $expAnneeInt = 0;
+                    break;
+                case '1-3':
+                    $expAnneeInt = 2;
+                    break;
+                case '3-5':
+                    $expAnneeInt = 4;
+                    break;
+                case '5+':
+                    $expAnneeInt = 5;
+                    break;
             }
 
             // 7. Déterminer preference_domicil
             $preferenceDomicil = $this->preferences_domicile;
-            
+
             // Mapper les valeurs du formulaire vers les valeurs de la base de données
             if ($preferenceDomicil == 'domicile_babysitter') {
                 $preferenceDomicil = 'domicil_babysitter';
@@ -613,10 +622,10 @@ class BabysitterRegistration extends Component
             // Envoyer l'email de confirmation
             try {
                 \Log::info('Tentative envoi email à: ' . $this->email);
-                
+
                 // Envoyer à l'email du babysitter
                 Mail::to($this->email)->send(new BabysitterRegistrationMail($this->nom, $this->prenom));
-                
+
                 \Log::info('Email envoyé avec succès à: ' . $this->email);
             } catch (\Exception $e) {
                 // Continue même si l'email échoue
@@ -630,9 +639,9 @@ class BabysitterRegistration extends Component
             DB::rollBack();
             \Log::error('Error in babysitter registration: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             session()->flash('error', 'Une erreur est survenue lors de l\'inscription: ' . $e->getMessage());
-            
+
             return;
         }
     }

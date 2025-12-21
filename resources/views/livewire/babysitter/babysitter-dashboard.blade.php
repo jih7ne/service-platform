@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-[#F3F4F6] font-sans flex text-left">
+<div class="min-h-screen bg-[#F3F4F6] font-sans flex text-left" wire:poll.3s="refreshData">
 
     <!-- Sidebar -->
     @include('livewire.babysitter.babysitter-sidebar')
@@ -19,7 +19,8 @@
                 <div class="hidden md:flex items-center space-x-4">
                     <div class="text-right">
                         <p class="text-sm font-bold text-gray-800">{{ $babysitter?->utilisateur?->nom ?? '' }}
-                            {{ $babysitter?->utilisateur?->prenom ?? '' }}</p>
+                            {{ $babysitter?->utilisateur?->prenom ?? '' }}
+                        </p>
                         <p class="text-xs text-green-500 font-semibold flex items-center justify-end">
                             <span class="w-2 h-2 rounded-full bg-green-500 mr-1 animate-pulse"></span> En ligne
                         </p>
@@ -84,8 +85,8 @@
                     <!-- Pending Requests Card -->
                     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                         <div class="flex items-center justify-between mb-4">
-                            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor"
+                            <div class="w-12 h-12 bg-[#E0B2CD] rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-[#4A132F]" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -99,11 +100,11 @@
                         <p class="text-sm text-gray-600 mt-2">À traiter</p>
                     </div>
 
-                    <!-- Total Earnings Card -->
+                    <!-- Total Earnings Card #E0B2CD-->
                     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                         <div class="flex items-center justify-between mb-4">
-                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor"
+                            <div class="w-12 h-12 bg-[#D5E2EE] rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-[#132F4A]" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -123,7 +124,7 @@
                 <!-- Charts Section -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <!-- Monthly Earnings Chart -->
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100" >
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Revenus mensuels</h3>
                         <div class="h-64">
                             <canvas id="earningsChart"></canvas>
@@ -131,7 +132,7 @@
                     </div>
 
                     <!-- Rating Distribution Chart -->
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100" >
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Distribution des notes</h3>
                         <div class="h-64">
                             <canvas id="ratingChart"></canvas>
@@ -140,7 +141,7 @@
                 </div>
 
                 <!-- Performance Metrics -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="grid grid-cols-1 gap-6 mb-8">
                     <!-- Response Rate -->
                     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Taux de réponse</h3>
@@ -148,7 +149,7 @@
                             <div class="relative w-32 h-32">
                                 <svg class="w-32 h-32 transform -rotate-90">
                                     <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="12" fill="none" />
-                                    <circle cx="64" cy="64" r="56" stroke="#8b5cf6" stroke-width="12" fill="none"
+                                    <circle cx="64" cy="64" r="56" stroke="#F5D0E3" stroke-width="12" fill="none"
                                         stroke-dasharray="{{ 351.86 * $statistics['responseRate'] / 100 }} 351.86"
                                         stroke-linecap="round" />
                                 </svg>
@@ -161,25 +162,7 @@
                         <p class="text-center text-gray-600 mt-4">Des demandes acceptées/refusées</p>
                     </div>
 
-                    <!-- On Time Rate -->
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Ponctualité</h3>
-                        <div class="flex items-center justify-center">
-                            <div class="relative w-32 h-32">
-                                <svg class="w-32 h-32 transform -rotate-90">
-                                    <circle cx="64" cy="64" r="56" stroke="#e5e7eb" stroke-width="12" fill="none" />
-                                    <circle cx="64" cy="64" r="56" stroke="#10b981" stroke-width="12" fill="none"
-                                        stroke-dasharray="{{ 351.86 * $statistics['onTimeRate'] / 100 }} 351.86"
-                                        stroke-linecap="round" />
-                                </svg>
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <span
-                                        class="text-2xl font-bold text-gray-800">{{ $statistics['onTimeRate'] }}%</span>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="text-center text-gray-600 mt-4">Des gardes à l'heure</p>
-                    </div>
+
                 </div>
 
                 <!-- Upcoming Sittings -->
@@ -262,16 +245,7 @@
                                                 <p class="text-xs text-gray-600">{{ $activity['description'] }}</p>
                                             </div>
                                         </div>
-                                        <div class="flex items-center gap-2">
-                                            @if($activity['status'] === 'terminée' || $activity['status'] === 'completed')
-                                                <a href="{{ route('feedback.babysitter', ['idService' => 2, 'demandeId' => $activity['idDemande'] ?? 1, 'auteurId' => auth()->id(), 'cibleId' => $activity['idClient'] ?? 1, 'typeAuteur' => 'intervenant']) }}" 
-                                                   class="px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-                                                    Avis
-                                                </a>
-                                            @endif
-                                            <span class="text-xs text-gray-500">{{ $activity['date'] }}</span>
-                                        </div>
+                                        <span class="text-xs text-gray-500">{{ $activity['date'] }}</span>
                                     </div>
                                 @endforeach
                             </div>
@@ -287,49 +261,75 @@
     </div>
 </div>
 
-    <!-- Chart.js Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('livewire:init', () => {
-            // Monthly Earnings Chart
-            const earningsCtx = document.getElementById('earningsChart').getContext('2d');
-            new Chart(earningsCtx, {
+<!-- Chart.js Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Setup chart init and update handlers for Livewire navigation/load
+    (function () {
+        let earningsChart = null;
+        let ratingChart = null;
+
+        function initEarningsChart(data) {
+            const canvas = document.getElementById('earningsChart');
+            if (!canvas) return;
+
+            if (earningsChart) {
+                earningsChart.destroy();
+                earningsChart = null;
+            }
+
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(143, 36, 88, 0.3)');
+            gradient.addColorStop(1, 'rgba(245, 208, 227, 0.1)');
+
+            earningsChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: @json(is_array($monthlyEarnings) ? array_column($monthlyEarnings, 'month') : []),
+                    labels: (data || []).map(i => i.month),
                     datasets: [{
                         label: 'Revenus (MAD)',
-                        data: @json(is_array($monthlyEarnings) ? array_column($monthlyEarnings, 'earnings') : []),
-                        borderColor: 'rgb(139, 92, 246)',
-                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        data: (data || []).map(i => i.earnings),
+                        borderColor: '#8F2458',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        pointBackgroundColor: '#8F2458',
+                        pointBorderColor: '#FFFFFF',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
                         tension: 0.4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true
-                        }
+                        y: { beginAtZero: true, ticks: { color: '#8F2458' } },
+                        x: { ticks: { color: '#8F2458' } }
                     }
                 }
             });
+        }
 
-            // Rating Distribution Chart
-            const ratingCtx = document.getElementById('ratingChart').getContext('2d');
-            new Chart(ratingCtx, {
+        function initRatingChart(data) {
+            const canvas = document.getElementById('ratingChart');
+            if (!canvas) return;
+
+            if (ratingChart) {
+                ratingChart.destroy();
+                ratingChart = null;
+            }
+
+            const ctx = canvas.getContext('2d');
+            ratingChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: @json(is_array($ratingDistribution) ? array_map(fn($r) => $r['rating'] . ' étoiles', $ratingDistribution) : []),
+                    labels: (data || []).map(i => i.label),
                     datasets: [{
-                        label: 'Nombre d\'avis',
-                        data: @json(is_array($ratingDistribution) ? array_column($ratingDistribution, 'count') : []),
+                        label: "Nombre d'avis",
+                        data: (data || []).map(i => i.count),
                         backgroundColor: [
                             'rgba(251, 191, 36, 0.8)',
                             'rgba(251, 191, 36, 0.7)',
@@ -342,20 +342,37 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
                     }
                 }
             });
-        });
-    </script>
+        }
+
+        function setupCharts() {
+            // Initialize with server-rendered data if present
+            try {
+                initEarningsChart({!! json_encode($monthlyEarnings) !!});
+                initRatingChart({!! json_encode($ratingDistribution) !!});
+            } catch (e) {
+                // in some navigation flows the server-rendered JSON may not be present; ignore
+            }
+
+            // Listen for updates emitted by the Livewire component
+            Livewire.on('updateCharts', (payload) => {
+                // payload may be an object with keys or an array wrapper; handle both
+                const data = payload && payload.monthlyEarnings ? payload : (Array.isArray(payload) ? payload[0] : payload);
+                if (!data) return;
+                initEarningsChart(data.monthlyEarnings || []);
+                initRatingChart(data.ratingDistribution || []);
+            });
+        }
+
+        document.addEventListener('livewire:load', setupCharts);
+        document.addEventListener('livewire:navigated', setupCharts);
+        // also in case of simple full page load
+        document.addEventListener('DOMContentLoaded', setupCharts);
+    })();
+</script>
+</div>
