@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Collection;
 use Livewire\Component;
 
 class SearchService extends Component
@@ -53,6 +54,7 @@ class SearchService extends Component
     public $currentPage = 1;
     public $perPage = 3;
     public $countries = ['Morocco', 'France'];
+    public $petKeepersMap = [];
 
     public function mount()
     {
@@ -255,6 +257,7 @@ class SearchService extends Component
         }
     }
 
+
     public function updateMapMarkers()
     {
         // Load ALL services for map view with fresh query
@@ -427,26 +430,7 @@ class SearchService extends Component
 
     public function loadCities()
     {
-        $cacheKey = 'morocco_cities';
-        $cacheDuration = now()->addDays(30);
-        
-        $this->cities = Cache::remember($cacheKey, $cacheDuration, function () {
-            // Get distinct cities from localisations table
-            $dbCities = DB::table('localisations')
-                ->select('ville')
-                ->distinct()
-                ->whereNotNull('ville')
-                ->where('ville', '!=', '')
-                ->orderBy('ville')
-                ->pluck('ville')
-                ->toArray();
-            
-            if (!empty($dbCities)) {
-                return $dbCities;
-            }
-            
-            // Fallback to static Moroccan cities if database is empty
-            return [
+        $this->cities = [
                 'Casablanca',
                 'Rabat',
                 'Fès',
@@ -468,7 +452,6 @@ class SearchService extends Component
                 'Settat',
                 'Khémisset'
             ];
-        });
     }
 
     public function updatedSelectedCity()
@@ -593,6 +576,7 @@ class SearchService extends Component
             'services' => $this->services,
             'totalPages' => ceil(count($this->services) / $this->perPage),
             'mapMarkers' => $this->mapMarkers,
+            'petKeepersMap' => $this->petKeepersMap,
             'cities' => $this->cities,
         ]);
     }

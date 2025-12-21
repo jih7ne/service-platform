@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-white">
     <livewire:shared.header />
     
-    <div class="min-h-screen bg-gradient-to-br from-amber-100 to-amber-200 p-4 md:p-6">
+    <div class="min-h-screen bg-amber-50 p-4 md:p-6">
         <!-- Centered Title Section -->
         <div class="flex flex-col items-center justify-center text-center w-full mb-8">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Trouvez des Services de Garde d'Animaux</h1>
@@ -407,7 +407,7 @@
                                                 <!-- Action Buttons -->
                                                 <div class="flex flex-wrap gap-2">
                                                     <button wire:click="bookService({{ $service['id'] ?? 0 }})" 
-                                                            class="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition shadow-sm">
+                                                            class="px-8 py-2.5 bg-amber-700 hover:bg-amber-600 text-white font-medium rounded-lg transition shadow-sm">
                                                         <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                         </svg>
@@ -541,7 +541,7 @@
                                                         class="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
                                                     Voir détails
                                                 </button>
-                                                <button onclick="window.bookService({{ $marker['id'] }})" 
+                                                <button wire:click="bookService({{ $marker['id'] }})" 
                                                         class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors">
                                                     Réserver
                                                 </button>
@@ -569,7 +569,7 @@
     </div>
 </div>
 
-@push('scripts')
+@section('scripts')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin="" />
@@ -1055,4 +1055,4 @@
         background: #555;
     }
 </style>
-@endpush
+@endsection
