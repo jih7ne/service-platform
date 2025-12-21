@@ -62,6 +62,8 @@ class DemandeDetails extends Component
         if (!$this->demande) {
             return redirect()->route('tutoring.requests');
         }
+
+        // Carte désactivée: pas de géocodage
     }
 
     public function refreshPendingRequests(): void

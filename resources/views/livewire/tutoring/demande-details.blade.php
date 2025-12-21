@@ -32,7 +32,8 @@
                             <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 mb-2">{{ $demande->client_prenom }} {{ $demande->client_nom }}</h1>
                             
                             <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3">
-                                @if($demande->type_service === 'enligne')
+                                @php($lieu = trim(strtolower($demande->lieu ?? '')))
+                                @if($lieu === 'en ligne')
                                     <span class="inline-flex items-center bg-purple-50 text-purple-700 px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold border border-purple-100">
                                         Cours en Ligne
                                     </span>
@@ -88,7 +89,6 @@
                 <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100">
                     <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2 text-sm sm:text-base">
                         @if($demande->type_service === 'enligne')
-                            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                             Mode de cours
                         @else
                             <svg class="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -96,7 +96,8 @@
                         @endif
                     </h3>
 
-                    @if($demande->type_service === 'enligne')
+                        @php($lieuBloc = trim(strtolower($demande->lieu ?? '')))
+                        @if($lieuBloc === 'en ligne')
                         <div class="bg-purple-50 text-purple-800 p-4 sm:p-6 rounded-xl border border-purple-100 flex items-center gap-3 sm:gap-4">
                             <div class="bg-white p-2 sm:p-3 rounded-full text-purple-600 shadow-sm flex-shrink-0">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
@@ -109,16 +110,10 @@
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="font-bold text-gray-900 text-base sm:text-lg break-words">{{ $demande->client_adresse }}</p>
-                                <p class="text-gray-500 font-medium text-sm sm:text-base">{{ $demande->client_ville }}</p>
+                                    <p class="font-bold text-gray-900 text-base sm:text-lg break-words">{{ $demande->lieu }}</p>
                             </div>
                         </div>
-                        <div class="mt-4 w-full h-32 sm:h-40 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 border border-gray-200">
-                            <div class="text-center">
-                                <svg class="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 7m0 13V7"></path></svg>
-                                <span class="text-xs sm:text-sm">Aperçu de la carte</span>
-                            </div>
-                        </div>
+                        {{-- Carte désactivée --}}
                     @endif
                 </div>
 

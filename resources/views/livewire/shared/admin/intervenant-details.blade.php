@@ -46,17 +46,20 @@
                                     <h1 class="text-3xl font-bold text-gray-900">{{ $user->prenom }} {{ $user->nom }}</h1>
                                     <p class="text-gray-500 mt-1.5 text-base">{{ $user->email }}</p>
                                 </div>
-                                @if($offre->statut === 'EN_ATTENTE')
-                                    <span class="px-4 py-2 inline-flex text-sm font-semibold rounded-full bg-yellow-100 text-yellow-700">
-                                        En attente
-                                    </span>
-                                @elseif($offre->statut === 'ACTIVE')
+                                @php
+                                    $status = strtoupper($intervenant->statut ?? $offre->statut ?? 'EN_ATTENTE');
+                                @endphp
+                                @if(in_array($status, ['VALIDE','VALIDÉ','ACTIVE']))
                                     <span class="px-4 py-2 inline-flex text-sm font-semibold rounded-full bg-green-100 text-green-700">
                                         Acceptée
                                     </span>
-                                @else
+                                @elseif(in_array($status, ['REFUSE','REFUSÉ','ARCHIVED']))
                                     <span class="px-4 py-2 inline-flex text-sm font-semibold rounded-full bg-red-100 text-red-700">
                                         Refusée
+                                    </span>
+                                @else
+                                    <span class="px-4 py-2 inline-flex text-sm font-semibold rounded-full bg-yellow-100 text-yellow-700">
+                                        En attente
                                     </span>
                                 @endif
                             </div>
@@ -220,10 +223,12 @@
                                             <span class="text-sm text-gray-500 w-32">Expérience:</span>
                                             <span class="text-sm font-medium text-gray-900">{{ $babysitterData->expAnnee ?? 0 }} années</span>
                                         </div>
-                                        @if($babysitterData->langues)
+                                        @if(!empty($babysitterData->langues))
                                             <div class="flex items-center gap-3">
                                                 <span class="text-sm text-gray-500 w-32">Langues:</span>
-                                                <span class="text-sm font-medium text-gray-900">{{ $babysitterData->langues }}</span>
+                                                <span class="text-sm font-medium text-gray-900">
+                                                    {{ is_array($babysitterData->langues) ? implode(', ', $babysitterData->langues) : $babysitterData->langues }}
+                                                </span>
                                             </div>
                                         @endif
                                     </div>

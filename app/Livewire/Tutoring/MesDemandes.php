@@ -86,6 +86,7 @@ class MesDemandes extends Component
                 'demandes_intervention.dateSouhaitee',
                 'demandes_intervention.heureDebut',
                 'demandes_intervention.heureFin',
+            'demandes_intervention.lieu',
                 'utilisateurs.nom as client_nom',
                 'utilisateurs.prenom as client_prenom',
                 'utilisateurs.photo as client_photo',

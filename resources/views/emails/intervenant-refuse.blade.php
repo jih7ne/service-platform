@@ -57,7 +57,7 @@
                 <strong>Motif du refus :</strong>
             </p>
             <p>
-                {{ $refusalReason }}
+                {{ $reason }}
             </p>
         </div>
 

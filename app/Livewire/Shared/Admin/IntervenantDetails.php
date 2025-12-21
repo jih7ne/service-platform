@@ -131,6 +131,15 @@ class IntervenantDetails extends Component
             if ($babysitter) {
                 $this->serviceType = 'Babysitting';
                 $this->babysitterData = $babysitter;
+                // Normaliser l'affichage des langues pour éviter les chaînes JSON brutes
+                if (!empty($this->babysitterData->langues)) {
+                    $decoded = is_string($this->babysitterData->langues)
+                        ? json_decode($this->babysitterData->langues, true)
+                        : $this->babysitterData->langues;
+                    $this->babysitterData->langues = is_array($decoded) ? $decoded : (array) $decoded;
+                } else {
+                    $this->babysitterData->langues = [];
+                }
                 
                 $this->babysitterData->superpouvoirs = DB::table('choisir_superpourvoirs')
                     ->join('superpouvoirs', 'choisir_superpourvoirs.idSuperpouvoir', '=', 'superpouvoirs.idSuperpouvoir')
