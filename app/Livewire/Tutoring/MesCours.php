@@ -236,7 +236,7 @@ class MesCours extends Component
         }
 
         // Conversion en heures (arrondi à 1 chiffre après la virgule)
-        $this->statsHeures = round($minutes / 60, 1);
+        $this->statsHeures = max(0, round($minutes / 60, 1));
 
         $this->showDetailModal = true;
     }
