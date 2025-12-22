@@ -1,4 +1,4 @@
-name: Deploy Laravel to Hostinger (Shared)
+name: Deploy Laravel to Hostinger
 
 on:
   push:
@@ -8,64 +8,36 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
       
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, xml, ctype, json, bcmath, pdo, mysql
           tools: composer:v2
       
-      - name: Get composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
       
-      - name: Cache composer dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-      
-      - name: Install Composer dependencies
+      - name: Clean
         run: |
-          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-          composer dump-autoload --optimize --classmap-authoritative
+          rm -rf .git .github tests node_modules
+          find vendor -name "*.md" -delete
+          find vendor -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true
       
-      - name: Verify installation
+      - name: Deploy via LFTP
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
         run: |
-          php artisan --version
-          php artisan route:list --except-vendor || true
-      
-      - name: Create deployment package
-        run: |
-          mkdir -p deployment
-          # Copy application files
-          rsync -av --exclude='.git' --exclude='.github' --exclude='node_modules' \
-                --exclude='tests' --exclude='.env' --exclude='.env.example' \
-                ./ deployment/
-      
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASS }}
-          port: ${{ secrets.FTP_PORT }}
-          local-dir: ./deployment/
-          server-dir: /public_html/
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/.github/**
-            **/node_modules/**
-            **/tests/**
-            **/.env
-            **/.env.example
-            **/phpunit.xml
-            **/README.md
+          sudo apt-get install -y lftp
+          lftp -c "
+          set ftp:ssl-allow no;
+          set net:max-retries 5;
+          set net:timeout 30;
+          open -u $FTP_USER,$FTP_PASS $FTP_HOST;
+          mirror -Rev --parallel=3 --exclude .git/ --exclude .github/ --exclude .env ./ /public_html/;
+          "
