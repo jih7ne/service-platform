@@ -1,34 +1,31 @@
 name: Deploy Laravel to Hostinger (Shared)
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           tools: composer
-
+      
       - name: Install Composer dependencies
         run: composer install --no-dev --optimize-autoloader
-
+      
       - name: Prepare files for shared hosting
         run: |
           cp -r public/* .
           rm -rf public
-
-      - name: Deploy via SFTP
-        uses: samkirkland/ftp-deploy-action@v4
+      
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
@@ -38,5 +35,6 @@ jobs:
           server-dir: /public_html/
           exclude: |
             **/.git*
+            **/.git*/**
             **/.env
-            node_modules/**
+            **/node_modules/**
