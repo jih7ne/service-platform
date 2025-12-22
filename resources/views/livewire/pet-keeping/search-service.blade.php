@@ -607,7 +607,8 @@
     </div>
 </div>
 
-@section('scripts')
+
+@push('scripts')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin="" />
@@ -615,81 +616,191 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin=""></script>
 
+<!-- Include Leaflet Marker Cluster for better marker management -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
 <script>
     // Map variables
-    let map;
-    let markers = [];
-    let currentLocationMarker;
-    let userLocationCircle;
-    let isMapInitialized = false;
-
+    let map = null;
+    let markersLayer = null;
+    
+    // Custom marker icons
+    const markerIcons = {
+        default: L.divIcon({
+            html: `
+                <div class="relative">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 border-2 border-white shadow-lg flex items-center justify-center transform hover:scale-125 transition-transform duration-200">
+                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border border-white"></div>
+                </div>
+            `,
+            className: 'custom-marker-icon',
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32]
+        }),
+        
+        premium: L.divIcon({
+            html: `
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-full bg-yellow-500 border-2 border-white shadow-lg flex items-center justify-center transform hover:scale-125 transition-transform duration-200">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full border-2 border-white flex items-center justify-center">
+                        <svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+            `,
+            className: 'premium-marker-icon',
+            iconSize: [40, 40],
+            iconAnchor: [20, 40],
+            popupAnchor: [0, -40]
+        }),
+        
+        highRating: L.divIcon({
+            html: `
+                <div class="relative">
+                    <div class="w-9 h-9 rounded-full bg-green-500 border-2 border-white shadow-lg flex items-center justify-center transform hover:scale-125 transition-transform duration-200">
+                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                    </div>
+                </div>
+            `,
+            className: 'high-rating-marker-icon',
+            iconSize: [36, 36],
+            iconAnchor: [18, 36],
+            popupAnchor: [0, -36]
+        })
+    };
+    
     // Initialize map
     function initMap() {
-        if (isMapInitialized) return;
+        console.log('Initializing map with markers...');
         
-        console.log('Initializing map...');
+        // Remove existing map if any
+        if (map) {
+            map.remove();
+            map = null;
+        }
+        
+        const mapElement = document.getElementById('map');
+        if (!mapElement) {
+            console.error('Map element not found');
+            return;
+        }
+        
+        // Clear any loading content
+        mapElement.innerHTML = '';
         
         try {
-            // Use initial center from Livewire or default
-            const initialCenter = @json($mapCenter) || [33.5731, -7.5898];
-            const initialZoom = @json($mapZoom) || 10;
+            // Get data from Livewire
+            const mapMarkers = @json($mapMarkers);
+            const mapCenter = @json($mapCenter) || { lat: 33.5731, lng: -7.5898 };
+            const mapZoom = @json($mapZoom) || 10;
             
-            console.log('Map center:', initialCenter, 'Zoom:', initialZoom);
+            console.log('Map data:', {
+                markersCount: mapMarkers?.length || 0,
+                center: mapCenter,
+                zoom: mapZoom,
+                markers: mapMarkers
+            });
             
             // Create map
-            map = L.map('map', {
-                center: initialCenter,
-                zoom: initialZoom,
-                zoomControl: false,
-                attributionControl: true
-            });
-
-            // Add OpenStreetMap tiles
+            map = L.map('map').setView([mapCenter.lat, mapCenter.lng], mapZoom);
+            
+            // Add tile layer
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19,
-                minZoom: 3
             }).addTo(map);
-
+            
+            // Create marker cluster group
+            markersLayer = L.markerClusterGroup({
+                showCoverageOnHover: false,
+                zoomToBoundsOnClick: true,
+                spiderfyOnMaxZoom: true,
+                removeOutsideVisibleBounds: false,
+                animate: true,
+                animateAddingMarkers: true
+            });
+            
+            // Add markers if we have data
+            if (mapMarkers && mapMarkers.length > 0) {
+                console.log(`Adding ${mapMarkers.length} markers...`);
+                addMarkersToLayer(mapMarkers);
+                map.addLayer(markersLayer);
+                
+                // Fit bounds to show all markers
+                if (markersLayer.getBounds().isValid()) {
+                    map.fitBounds(markersLayer.getBounds(), {
+                        padding: [50, 50],
+                        maxZoom: 15
+                    });
+                }
+            } else {
+                console.log('No markers to display');
+                // Add a message marker in center
+                const messageMarker = L.marker([mapCenter.lat, mapCenter.lng], {
+                    icon: L.divIcon({
+                        html: `
+                            <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200 max-w-xs">
+                                <div class="text-center">
+                                    <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    <p class="text-sm text-gray-600">Aucun pet-sitter dans cette zone</p>
+                                    <p class="text-xs text-gray-500 mt-1">Modifiez vos filtres pour voir plus de résultats</p>
+                                </div>
+                            </div>
+                        `,
+                        className: 'no-markers-icon',
+                        iconSize: [250, 100],
+                        iconAnchor: [125, 50]
+                    })
+                }).addTo(map);
+            }
+            
             // Add zoom control
             L.control.zoom({
                 position: 'topright'
             }).addTo(map);
-
-            // Fit the map to its container after a short delay
+            
+            // Add scale control
+            L.control.scale({
+                imperial: false,
+                metric: true
+            }).addTo(map);
+            
+            console.log('Map initialized successfully');
+            
+            // Invalidate size after render
             setTimeout(() => {
                 if (map) {
                     map.invalidateSize();
                     console.log('Map size invalidated');
-                    
-                    // Add initial markers
-                    const initialMarkers = @json($mapMarkers);
-                    if (initialMarkers && initialMarkers.length > 0) {
-                        console.log('Adding initial markers:', initialMarkers.length);
-                        updateMarkers(initialMarkers);
-                    }
                 }
             }, 100);
-
-            isMapInitialized = true;
             
         } catch (error) {
             console.error('Error initializing map:', error);
-            showMapError('Erreur lors de l\'initialisation de la carte. Veuillez recharger la page.');
-        }
-    }
-
-    // Show map error
-    function showMapError(message) {
-        const mapContainer = document.getElementById('map');
-        if (mapContainer) {
-            mapContainer.innerHTML = `
+            mapElement.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-full bg-gray-100 rounded-lg p-8">
                     <svg class="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.698-.833-2.464 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                     </svg>
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">Erreur de carte</h3>
-                    <p class="text-gray-600 text-center mb-4">${message}</p>
+                    <p class="text-gray-600 text-center mb-4">${error.message}</p>
                     <button onclick="initMap()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
                         Réessayer
                     </button>
@@ -697,400 +808,413 @@
             `;
         }
     }
-
-    // Update markers on map
-    function updateMarkers(markersData, center = null, zoom = null) {
-        if (!map) {
-            console.error('Map not initialized');
+    
+    // Add markers to the cluster layer
+    function addMarkersToLayer(markersData) {
+        if (!markersLayer || !map) {
+            console.error('Map or markers layer not initialized');
             return;
         }
-
-        console.log('Updating markers with data:', markersData);
-
-        // Clear existing markers
-        markers.forEach(marker => {
-            if (marker && map) {
-                map.removeLayer(marker);
+        
+        markersData.forEach((data, index) => {
+            // Skip if no coordinates
+            if (!data.lat || !data.lng) {
+                console.warn(`Marker ${index} missing coordinates:`, data);
+                return;
             }
+            
+            // Choose icon based on data
+            let icon;
+            if (data.rating >= 4.5) {
+                icon = markerIcons.highRating;
+            } else if (data.price > 100) { // Premium if price > 100
+                icon = markerIcons.premium;
+            } else {
+                icon = markerIcons.default;
+            }
+            
+            // Create marker
+            const marker = L.marker([data.lat, data.lng], {
+                icon: icon,
+                title: data.name,
+                riseOnHover: true
+            });
+            
+            // Create popup content
+            const popupContent = createPopupContent(data);
+            
+            // Bind popup to marker
+            marker.bindPopup(popupContent, {
+                maxWidth: 300,
+                minWidth: 250,
+                className: 'custom-popup'
+            });
+            
+            // Add hover effects
+            marker.on('mouseover', function() {
+                this.openPopup();
+            });
+            
+            marker.on('mouseout', function() {
+                this.closePopup();
+            });
+            
+            // Add click event
+            marker.on('click', function(e) {
+                console.log('Marker clicked:', data);
+                // Center map on marker
+                map.setView(e.latlng, 15);
+            });
+            
+            // Add to cluster layer
+            markersLayer.addLayer(marker);
         });
-        markers = [];
-
-        // Add new markers
-        if (markersData && markersData.length > 0) {
-            markersData.forEach(data => {
-                if (!data.lat || !data.lng) {
-                    console.warn('Marker missing coordinates:', data);
-                    return;
-                }
-
-                // Create custom icon
-                const icon = L.divIcon({
+        
+        console.log(`Added ${markersData.length} markers to layer`);
+    }
+    
+    // Create popup content
+    function createPopupContent(data) {
+        const ratingStars = Array.from({length: 5}, (_, i) => {
+            const starClass = i < Math.floor(data.rating || 0) ? 'text-yellow-500' : 'text-gray-300';
+            return `<svg class="w-4 h-4 ${starClass}" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+            </svg>`;
+        }).join('');
+        
+        return `
+            <div class="p-3 min-w-[250px] max-w-[300px]">
+                <div class="flex items-start gap-3 mb-3">
+                    <img src="${data.photo || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(data.name || 'default')}" 
+                         class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 shadow-sm">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-900 text-sm mb-1">${data.name || 'Pet Sitter'}</h4>
+                        <div class="flex items-center gap-1 mb-1">
+                            ${ratingStars}
+                            <span class="text-sm font-medium ml-1">${(data.rating || 0).toFixed(1)}</span>
+                            <span class="text-xs text-gray-500">(${data.reviews || 0} avis)</span>
+                        </div>
+                        ${data.city ? `<p class="text-xs text-gray-600 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                            </svg>
+                            ${data.city}${data.country ? ', ' + data.country : ''}
+                        </p>` : ''}
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Prix:</span>
+                        <span class="font-bold text-gray-900">${(data.price || 0).toFixed(2)} DH</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Critère:</span>
+                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                            ${data.criteria || 'Non spécifié'}
+                        </span>
+                    </div>
+                    
+                    ${data.services && data.services.length > 0 ? `
+                    <div>
+                        <span class="text-sm text-gray-600 block mb-1">Services:</span>
+                        <div class="flex flex-wrap gap-1">
+                            ${data.services.slice(0, 3).map(service => 
+                                `<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">${service}</span>`
+                            ).join('')}
+                            ${data.services.length > 3 ? `<span class="text-xs text-gray-500">+${data.services.length - 3} plus</span>` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${data.description ? `
+                    <div class="pt-2 border-t border-gray-100">
+                        <p class="text-sm text-gray-600 line-clamp-2">${data.description}</p>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="flex gap-2 mt-4">
+                    <button onclick="window.Livewire.dispatch('view-details', {id: ${data.id || 0}})" 
+                            class="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
+                        Voir détails
+                    </button>
+                    <button onclick="window.Livewire.dispatch('book-service', {id: ${data.id || 0}})" 
+                            class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors duration-200">
+                        Réserver
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Map control functions
+    window.zoomIn = function() {
+        if (map) map.zoomIn();
+    }
+    
+    window.zoomOut = function() {
+        if (map) map.zoomOut();
+    }
+    
+    window.locateMe = function() {
+        if (!map || !navigator.geolocation) {
+            alert('La géolocalisation n\'est pas disponible');
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                const accuracy = position.coords.accuracy;
+                
+                // Add user location marker
+                const userIcon = L.divIcon({
                     html: `
                         <div class="relative">
-                            <div class="w-10 h-10 rounded-full ${getMarkerColor(data)} border-2 border-white shadow-lg flex items-center justify-center transition-transform hover:scale-110 cursor-pointer">
+                            <div class="w-10 h-10 rounded-full bg-blue-600 border-3 border-white shadow-lg flex items-center justify-center animate-pulse">
                                 <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
                                 </svg>
                             </div>
                         </div>
                     `,
-                    className: 'custom-div-icon',
+                    className: 'user-location-icon',
                     iconSize: [40, 40],
                     iconAnchor: [20, 40]
                 });
-
-                const marker = L.marker([data.lat, data.lng], { 
-                    icon: icon,
-                    title: data.name
+                
+                const userMarker = L.marker([latitude, longitude], {
+                    icon: userIcon,
+                    zIndexOffset: 1000
                 }).addTo(map);
-
-                // Create popup content
-                const popupContent = `
-                    <div class="p-3 min-w-[280px]">
-                        <div class="flex items-start gap-3 mb-3">
-                            <img src="${data.photo}" 
-                                 class="w-14 h-14 rounded-full object-cover border border-gray-200">
-                            <div class="flex-1">
-                                <h4 class="font-bold text-gray-900 text-sm mb-1">${data.name}</h4>
-                                <div class="flex items-center gap-1 mb-1">
-                                    ${data.rating ? `
-                                        <svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                                        </svg>
-                                        <span class="text-sm font-medium">${data.rating.toFixed(1)}</span>
-                                    ` : ''}
-                                </div>
-                                ${data.city ? `<p class="text-xs text-gray-600">📍 ${data.city}, ${data.country || ''}</p>` : ''}
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <div class="text-lg font-bold text-gray-900 mb-2">
-                                $${data.price.toFixed(2)} / ${data.criteria}
-                            </div>
-                            <div class="flex flex-wrap gap-1 mb-2">
-                                ${(data.services || []).map(service => 
-                                    `<span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs">${service}</span>`
-                                ).join('')}
-                            </div>
-                            ${data.description ? `<p class="text-sm text-gray-600">${data.description}</p>` : ''}
-                        </div>
-                        
-                        <div class="flex gap-2">
-                            <button onclick="window.viewServiceDetails(${data.id})" 
-                                    class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
-                                Voir détails
-                            </button>
-                            <button onclick="window.bookService(${data.id})" 
-                                    class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors">
-                                Réserver
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                marker.bindPopup(popupContent);
                 
-                marker.on('click', function() {
-                    this.openPopup();
+                // Add accuracy circle
+                L.circle([latitude, longitude], {
+                    color: '#3b82f6',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.1,
+                    radius: accuracy
+                }).addTo(map);
+                
+                userMarker.bindPopup('Votre position actuelle').openPopup();
+                
+                // Center map on user location
+                map.setView([latitude, longitude], 15);
+                
+                // Send to Livewire
+                window.Livewire.dispatch('user-located', {
+                    lat: latitude,
+                    lng: longitude
                 });
-
-                markers.push(marker);
-            });
-
-            // Fit bounds to show all markers
-            if (markers.length > 0) {
-                const group = L.featureGroup(markers);
-                const bounds = group.getBounds();
-                
-                if (bounds.isValid()) {
-                    // Add padding
-                    bounds.pad(0.1);
-                    
-                    // Use provided center/zoom or fit to bounds
-                    if (center && zoom) {
-                        map.setView([center.lat, center.lng], zoom, {
-                            animate: true,
-                            duration: 1
-                        });
-                    } else {
-                        map.fitBounds(bounds, {
-                            padding: [50, 50],
-                            animate: true,
-                            duration: 1
-                        });
-                    }
-                }
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                alert('Impossible d\'obtenir votre position. Vérifiez les permissions de géolocalisation.');
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
             }
-        } else {
-            // No markers - show message
-            const bounds = map.getBounds();
-            const center = bounds.getCenter();
-            
-            const overlay = L.marker(center, {
-                icon: L.divIcon({
-                    html: `
-                        <div class="bg-white p-4 rounded-lg shadow-lg border border-gray-200 max-w-xs">
-                            <div class="text-center">
-                                <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                                <p class="text-sm text-gray-600">Aucun pet-sitter dans cette zone</p>
-                                <p class="text-xs text-gray-500 mt-1">Modifiez vos filtres pour voir plus de résultats</p>
-                            </div>
-                        </div>
-                    `,
-                    className: 'no-markers-icon',
-                    iconSize: [250, 100],
-                    iconAnchor: [125, 50]
-                })
-            }).addTo(map);
-            
-            markers.push(overlay);
-        }
+        );
     }
-
-    // Get marker color based on data
-    function getMarkerColor(data) {
-        if (data.rating >= 4.5) return 'bg-yellow-500';
-        if (data.status === 'actif') return 'bg-green-500';
-        return 'bg-indigo-500';
-    }
-
-    // Map controls
-    window.zoomIn = function() {
-        if (map) map.zoomIn();
-    }
-
-    window.zoomOut = function() {
-        if (map) map.zoomOut();
-    }
-
-    window.locateMe = function() {
-        if (!map) {
-            console.error('Map not initialized');
-            return;
-        }
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    
-                    console.log('User location found:', latitude, longitude);
-                    
-                    // Remove old location marker and circle
-                    if (currentLocationMarker) {
-                        map.removeLayer(currentLocationMarker);
-                    }
-                    if (userLocationCircle) {
-                        map.removeLayer(userLocationCircle);
-                    }
-                    
-                    // Add blue circle for accuracy
-                    userLocationCircle = L.circle([latitude, longitude], {
-                        color: '#3b82f6',
-                        fillColor: '#3b82f6',
-                        fillOpacity: 0.2,
-                        radius: position.coords.accuracy || 100
-                    }).addTo(map);
-                    
-                    // Add location marker
-                    currentLocationMarker = L.marker([latitude, longitude], {
-                        icon: L.divIcon({
-                            html: `
-                                <div class="relative">
-                                    <div class="w-10 h-10 rounded-full bg-blue-500 border-3 border-white shadow-lg flex items-center justify-center animate-pulse">
-                                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                                        </svg>
-                                    </div>
-                                </div>
-                            `,
-                            className: 'location-div-icon',
-                            iconSize: [40, 40],
-                            iconAnchor: [20, 40]
-                        })
-                    }).addTo(map)
-                    .bindPopup('Votre position actuelle')
-                    .openPopup();
-                    
-                    // Center map on user location
-                    map.setView([latitude, longitude], 15, {
-                        animate: true,
-                        duration: 1
-                    });
-                    
-                    // Dispatch to Livewire
-                    Livewire.dispatch('user-located', {
-                        lat: latitude,
-                        lng: longitude
-                    });
-
-                },
-                (error) => {
-                    console.error('Geolocation error:', error);
-                    let message = 'Impossible d\'obtenir votre position. ';
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            message += 'Permission refusée.';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            message += 'Position indisponible.';
-                            break;
-                        case error.TIMEOUT:
-                            message += 'Délai d\'attente dépassé.';
-                            break;
-                        default:
-                            message += 'Erreur inconnue.';
-                    }
-                    alert(message);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
-            );
-        } else {
-            alert('La géolocalisation n\'est pas supportée par votre navigateur.');
-        }
-    }
-
-    // View service details
-    window.viewServiceDetails = function(id) {
-        Livewire.dispatch('view-details', {id: id});
-    }
-
-    // Book service
-    window.bookService = function(id) {
-        Livewire.dispatch('book-service', {id: id});
-    }
-
-    // Initialize when DOM is ready
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, checking for map view...');
+    
+    // Livewire event handlers
+    document.addEventListener('livewire:initialized', () => {
+        console.log('Livewire initialized, view mode:', @json($viewMode));
         
-        // Check if we're in map view
+        // Initialize map if in map view
         if (@json($viewMode) === 'map') {
-            console.log('Initializing map on DOM load...');
+            console.log('In map view, initializing...');
             setTimeout(initMap, 300);
         }
-    });
-
-    // Initialize map when Livewire is ready
-    document.addEventListener('livewire:initialized', () => {
-        console.log('Livewire initialized');
         
-        // Initialize map when in map view
-        if (@this.get('viewMode') === 'map') {
-            console.log('Already in map view, initializing...');
-            setTimeout(initMap, 100);
-        }
-
-        // Listen for view mode changes
+        // Listen for view changes
         Livewire.on('switched-to-map-view', () => {
-            console.log('Switched to map view, initializing map...');
-            isMapInitialized = false;
+            console.log('Switched to map view');
             setTimeout(() => {
                 initMap();
+                // Invalidate size
                 setTimeout(() => {
-                    if (map) {
-                        map.invalidateSize();
-                    }
-                }, 100);
+                    if (map) map.invalidateSize();
+                }, 200);
             }, 200);
         });
-
-        // Update markers when data changes
+        
+        // Listen for map refresh
         Livewire.on('refresh-map', (data) => {
-            console.log('Refreshing map with data:', data);
-            if (!isMapInitialized) {
+            console.log('Refresh map event received:', data);
+            
+            if (!map && @json($viewMode) === 'map') {
                 initMap();
+                return;
             }
             
-            if (map && data.markers) {
-                updateMarkers(data.markers, data.center, data.zoom);
-            }
-        });
-
-        // Add window resize handler
-        window.addEventListener('resize', function() {
             if (map) {
-                setTimeout(() => {
-                    map.invalidateSize();
-                }, 200);
+                // Clear existing markers
+                if (markersLayer) {
+                    map.removeLayer(markersLayer);
+                    markersLayer.clearLayers();
+                }
+                
+                // Add new markers if provided
+                if (data.markers && data.markers.length > 0) {
+                    markersLayer = L.markerClusterGroup();
+                    addMarkersToLayer(data.markers);
+                    map.addLayer(markersLayer);
+                    
+                    // Fit bounds
+                    if (markersLayer.getBounds().isValid()) {
+                        map.fitBounds(markersLayer.getBounds(), {
+                            padding: [50, 50],
+                            maxZoom: 15
+                        });
+                    }
+                }
+                
+                // Update center if provided
+                if (data.center) {
+                    map.setView([data.center.lat, data.center.lng], data.zoom || map.getZoom());
+                }
             }
         });
     });
-
-    // Fallback: Try to initialize map after a timeout
-    setTimeout(function() {
-        if (@json($viewMode) === 'map' && !isMapInitialized) {
-            console.log('Fallback map initialization...');
-            initMap();
+    
+    // Initialize on DOM ready as fallback
+    document.addEventListener('DOMContentLoaded', function() {
+        if (@json($viewMode) === 'map') {
+            console.log('DOM ready - initializing map');
+            setTimeout(initMap, 500);
         }
-    }, 1000);
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (map) {
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 200);
+        }
+    });
+    
+    // Debug function to check markers
+    window.debugMarkers = function() {
+        console.log('Map debug info:');
+        console.log('- Map instance:', map ? 'Yes' : 'No');
+        console.log('- Markers layer:', markersLayer ? 'Yes' : 'No');
+        console.log('- Total markers:', markersLayer ? markersLayer.getLayers().length : 0);
+        
+        const mapMarkers = @json($mapMarkers);
+        console.log('- Livewire markers:', mapMarkers);
+        console.log('- Marker count:', mapMarkers?.length || 0);
+        
+        if (mapMarkers && mapMarkers.length > 0) {
+            mapMarkers.forEach((marker, i) => {
+                console.log(`  Marker ${i}:`, {
+                    name: marker.name,
+                    lat: marker.lat,
+                    lng: marker.lng,
+                    hasCoords: !!(marker.lat && marker.lng)
+                });
+            });
+        }
+    };
 </script>
 
 <style>
-    /* Leaflet map styles */
+    /* Map container */
     #map {
-        z-index: 1;
-        border-radius: 0.5rem;
+        width: 100% !important;
+        height: 600px !important;
         min-height: 600px;
-        height: 600px;
-        width: 100%;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        background: #f3f4f6;
+        position: relative;
     }
     
+    #map:empty::before {
+        content: 'Chargement de la carte...';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6b7280;
+        font-style: italic;
+        font-size: 0.875rem;
+    }
+    
+    /* Leaflet styles */
     .leaflet-container {
-        font-family: inherit;
+        font-family: inherit !important;
         width: 100% !important;
         height: 100% !important;
-        border-radius: 0.5rem;
+        border-radius: 0.75rem !important;
+        z-index: 1 !important;
     }
     
-    .custom-div-icon {
-        text-align: center;
+    /* Marker cluster styles */
+    .marker-cluster-small {
+        background-color: rgba(59, 130, 246, 0.6) !important;
+    }
+    .marker-cluster-small div {
+        background-color: rgba(59, 130, 246, 0.8) !important;
+        color: white !important;
     }
     
-    .location-div-icon {
-        text-align: center;
+    .marker-cluster-medium {
+        background-color: rgba(245, 158, 11, 0.6) !important;
+    }
+    .marker-cluster-medium div {
+        background-color: rgba(245, 158, 11, 0.8) !important;
+        color: white !important;
     }
     
-    /* Custom popup styles */
-    .leaflet-popup-content {
-        margin: 12px;
-        font-family: inherit;
+    .marker-cluster-large {
+        background-color: rgba(16, 185, 129, 0.6) !important;
+    }
+    .marker-cluster-large div {
+        background-color: rgba(16, 185, 129, 0.8) !important;
+        color: white !important;
     }
     
-    .leaflet-popup-content-wrapper {
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    /* Custom popup */
+    .custom-popup .leaflet-popup-content-wrapper {
+        border-radius: 0.75rem !important;
+        border: none !important;
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+        padding: 0 !important;
+        overflow: hidden;
     }
     
-    .leaflet-popup-tip {
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    .custom-popup .leaflet-popup-content {
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
-    /* Custom scrollbar for popups */
-    .leaflet-popup-content::-webkit-scrollbar {
-        width: 6px;
+    .custom-popup .leaflet-popup-tip {
+        box-shadow: none !important;
     }
     
-    .leaflet-popup-content::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 3px;
+    /* Marker hover effects */
+    .custom-marker-icon, .premium-marker-icon, .high-rating-marker-icon, .user-location-icon {
+        transition: transform 0.2s ease !important;
     }
     
-    .leaflet-popup-content::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 3px;
+    .leaflet-marker-icon:hover {
+        transform: scale(1.25) !important;
+        z-index: 1000 !important;
     }
     
-    .leaflet-popup-content::-webkit-scrollbar-thumb:hover {
-        background: #555;
+    /* Line clamp for description */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 </style>
-@endsection
+@endpush
+

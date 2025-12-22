@@ -22,7 +22,7 @@ class SearchService extends Component
     public $serviceType = 'all';
     public $location = '';
     public $minPrice = 0;
-    public $maxPrice = 100;
+    public $maxPrice = null;
     public $minRating = 0;
     public $minRatingPetKeeper = 0;
     public $serviceCategory = '';
@@ -209,10 +209,11 @@ class SearchService extends Component
         }
 
         // Price Range
-        if (!empty($this->minPrice)) {
+        if ($this->minPrice > 0) {
             $query->where('pk.base_price', '>=', $this->minPrice);
         }
-        if (!empty($this->maxPrice)) {
+
+        if ($this->maxPrice !== null && $this->maxPrice > 0) {
             $query->where('pk.base_price', '<=', $this->maxPrice);
         }
 
@@ -545,7 +546,7 @@ class SearchService extends Component
         $this->serviceType = 'all';
         $this->location = '';
         $this->minPrice = 0;
-        $this->maxPrice = 100;
+        $this->maxPrice = null;
         $this->minRating = 0;
         $this->minRatingPetKeeper = 0;
         $this->serviceCategory = '';
