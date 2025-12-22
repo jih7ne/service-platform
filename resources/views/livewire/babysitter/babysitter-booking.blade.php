@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-[#F7F7F7]">
+<div class="min-h-screen bg-[#F7F7F7]" wire:poll.3s>
     @php $babysitter = $babysitter ?? null; @endphp
     @if(isset($error))
         {{-- Message d'erreur --}}

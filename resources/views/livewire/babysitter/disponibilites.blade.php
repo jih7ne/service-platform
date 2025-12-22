@@ -3,7 +3,7 @@
     $babysitterPhoto = $babysitter?->utilisateur?->photo ?? null;
 @endphp
 
-<div>
+<div wire:init="loadDisponibilites">
     <div class="min-h-screen bg-gray-50 flex">
         <!-- Include Sidebar -->
         @include('livewire.babysitter.babysitter-sidebar', ['babysitter' => $babysitter])

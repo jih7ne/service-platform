@@ -301,8 +301,8 @@ class BabysitterBooking extends Component
         foreach ($acceptedCategories as $cat) {
             // Cherche un intervalle du type "0-6 mois" ou "1-3 ans" dans le nom
             if (preg_match('/(\d+)[^\d]+(\d+)\s*(mois|an|ans)/iu', $cat, $matches)) {
-                $min = (int)$matches[1];
-                $max = (int)$matches[2];
+                $min = (int) $matches[1];
+                $max = (int) $matches[2];
                 $unit = strtolower($matches[3]);
                 // Convertit tout en mois
                 if (str_starts_with($unit, 'an')) {
@@ -312,7 +312,7 @@ class BabysitterBooking extends Component
                 $intervals[] = [$min, $max];
             } elseif (preg_match('/(\d+)\s*(mois|an|ans)/iu', $cat, $matches)) {
                 // Cas unique : "0-6 mois" ou "12 ans" (un seul nombre)
-                $min = (int)$matches[1];
+                $min = (int) $matches[1];
                 $max = $min;
                 $unit = strtolower($matches[2]);
                 if (str_starts_with($unit, 'an')) {
@@ -412,8 +412,14 @@ class BabysitterBooking extends Component
 
             $createdDemandes = [];
 
-            // Créer les demandes d'intervention pour chaque créneau sélectionné
-            foreach ($this->selectedSlots as $day => $slots) {
+            // Regrouper les créneaux consécutifs par jour
+            $mergedSlots = $this->mergeConsecutiveSlots($this->selectedSlots);
+
+            // Charger le babysitter une seule fois
+            $babysitterData = $this->getBabysitter();
+
+            // Créer les demandes d'intervention pour chaque créneau fusionné
+            foreach ($mergedSlots as $day => $slots) {
                 foreach ($slots as $slot) {
                     [$startTime, $endTime] = explode('-', $slot);
 
@@ -460,7 +466,7 @@ class BabysitterBooking extends Component
                             'Adolescent(13-18 ans)' => [156, 216],
                         ];
                         $idCategorie = null;
-                        foreach ($babysitter['categories_enfants'] ?? [] as $cat) {
+                        foreach ($babysitterData['categories_enfants'] ?? [] as $cat) {
                             if (isset($categories[$cat])) {
                                 [$min, $max] = $categories[$cat];
                                 if ($months >= $min && $months <= $max) {
@@ -510,6 +516,60 @@ class BabysitterBooking extends Component
             session()->flash('error', 'Une erreur est survenue lors de la réservation. Veuillez réessayer.');
             \Log::error('Erreur lors de la réservation: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Fusionne les créneaux horaires consécutifs pour chaque jour
+     * Par exemple: ['08:00-09:00', '09:00-10:00', '10:00-11:00'] devient ['08:00-11:00']
+     * Mais ['08:00-12:00', '16:00-18:00'] reste séparé en deux créneaux
+     */
+    private function mergeConsecutiveSlots($selectedSlots)
+    {
+        $mergedSlots = [];
+
+        foreach ($selectedSlots as $day => $slots) {
+            if (empty($slots)) {
+                continue;
+            }
+
+            // Trier les créneaux par heure de début
+            usort($slots, function ($a, $b) {
+                [$startA] = explode('-', $a);
+                [$startB] = explode('-', $b);
+                return $this->timeToMinutes($startA) - $this->timeToMinutes($startB);
+            });
+
+            $merged = [];
+            $currentSlot = null;
+
+            foreach ($slots as $slot) {
+                [$start, $end] = explode('-', $slot);
+
+                if ($currentSlot === null) {
+                    // Premier créneau
+                    $currentSlot = ['start' => $start, 'end' => $end];
+                } else {
+                    // Vérifier si le créneau actuel est consécutif au précédent
+                    if ($currentSlot['end'] === $start) {
+                        // Fusionner : étendre l'heure de fin
+                        $currentSlot['end'] = $end;
+                    } else {
+                        // Non consécutif : sauvegarder le créneau actuel et commencer un nouveau
+                        $merged[] = $currentSlot['start'] . '-' . $currentSlot['end'];
+                        $currentSlot = ['start' => $start, 'end' => $end];
+                    }
+                }
+            }
+
+            // Ajouter le dernier créneau
+            if ($currentSlot !== null) {
+                $merged[] = $currentSlot['start'] . '-' . $currentSlot['end'];
+            }
+
+            $mergedSlots[$day] = $merged;
+        }
+
+        return $mergedSlots;
     }
 
     public function calculateTotalPrice()

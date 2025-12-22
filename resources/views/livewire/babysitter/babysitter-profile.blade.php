@@ -1,4 +1,4 @@
-<div class="flex h-screen bg-gray-50">
+<div class="flex h-screen bg-gray-50" wire:poll.6s>
     <!-- Sidebar -->
     @include('livewire.babysitter.babysitter-sidebar')
 
