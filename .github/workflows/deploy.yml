@@ -28,7 +28,7 @@ jobs:
           rm -rf public
 
       - name: Deploy via SFTP
-        uses: samkirkland/ftp-deploy-action@v3
+        uses: samkirkland/ftp-deploy-action@v4
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
