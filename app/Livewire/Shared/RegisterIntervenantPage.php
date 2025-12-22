@@ -62,7 +62,7 @@ class RegisterIntervenantPage extends Component
             case 'petkeeper':
                 // Rediriger vers le formulaire petkeeper
                 session(['serviceType' => 'petkeeper']);
-                return redirect('/inscriptionIntervenant/formulaire');
+                return redirect('/pet-keeper/inscription');
             
             default:
                 return redirect('/inscriptionIntervenant/formulaire');
