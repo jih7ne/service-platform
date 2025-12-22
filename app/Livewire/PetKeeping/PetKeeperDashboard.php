@@ -29,9 +29,11 @@ class PetKeeperDashboard extends Component
     //Reclamation
 
     public $showReclamationModal = false;
+    public $showCommentsOnClientModel = false;
 
     public $reclamationFeedbackId = null; // idFeedback
     public $reclamationCibleId = null;
+    public $commentsOnClient = [];
 
     public $sujet;
     public $description;
@@ -393,6 +395,30 @@ class PetKeeperDashboard extends Component
             ->sum('factures.montantTotal');
     }
 
+
+    public function getFeedbacksOnClient($idClient){
+        $this->commentsOnClient = DB::table('feedbacks')
+            ->join('utilisateurs', 'feedbacks.idAuteur', '=', 'utilisateurs.idUser')
+            ->where('feedbacks.idCible', $idClient)
+            ->where('feedbacks.estVisible', 1)
+            ->orderBy('feedbacks.dateCreation', 'desc')
+            ->select('feedbacks.commentaire')
+            ->limit(5)
+            ->get();
+    }
+
+
+    public function openCommentsOnClientModal($idClient){
+        $this->getFeedbacksOnClient($idClient);
+        $this->showCommentsOnClientModel = true;
+    }
+
+    public function closeCommentsOnClientModal(){
+        $this->reset([
+            'showCommentsOnClientModel',
+        ]);
+    }
+
    
     public function render()
     {
@@ -448,6 +474,7 @@ class PetKeeperDashboard extends Component
                     'utilisateurs.prenom as prenom_client',
                     'utilisateurs.note as note_client',
                     'utilisateurs.photo as photo_client',
+                    'utilisateurs.idUser as user_id',
                     'demandes_intervention.lieu as ville_client',
                     'animals.nomAnimal as nom_animal',
                     'animals.age',
@@ -478,6 +505,7 @@ class PetKeeperDashboard extends Component
                 'utilisateurs.prenom as prenom_client',
                 'utilisateurs.note as note_client',
                 'utilisateurs.photo as photo_client',
+                'utilisateurs.idUser as user_id',
                 'demandes_intervention.lieu as ville_client',
                 'animals.nomAnimal as nom_animal',
                 'animals.age',

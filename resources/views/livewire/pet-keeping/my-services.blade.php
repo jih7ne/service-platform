@@ -188,7 +188,7 @@
                                 </p>
                             </div>
                             <span class="px-3 py-1 text-sm font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                                ${{ number_format($service->service_base_price, 2) }}
+                                {{ number_format($service->service_base_price, 2) }} DH
                             </span>
                         </div>
                     </div>

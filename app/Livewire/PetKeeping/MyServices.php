@@ -97,7 +97,7 @@ class MyServices extends Component
 
         // Apply category filter
         if ($this->categoryFilter) {
-            $query->where('pk.category_petkeeping', $this->categoryFilter);
+            $query->where('pk.categorie_petkeeping', $this->categoryFilter);
         }
 
         // Apply pet type filter

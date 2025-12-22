@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-white">
     <livewire:shared.header />
     
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-6">
+    <div class="min-h-screen bg-amber-50 p-4 md:p-6">
         <!-- Centered Title Section -->
         <div class="flex flex-col items-center justify-center text-center w-full mb-8">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Trouvez des Services de Garde d'Animaux</h1>
@@ -160,12 +160,50 @@
                                 </select>
                             </div>
 
+
+                            <!-- Availability Filter -->
+                            <div class="pt-2 border-t border-gray-100">
+                                <label class="block font-medium text-gray-900 mb-2">Filtrage par disponibilités</label>
+                                
+                                <!-- Start Time -->
+                                <div class="mb-4">
+                                    <label class="block text-sm text-gray-700 mb-1.5">Heure début</label>
+                                    <div class="relative">
+                                        <input type="time" 
+                                            wire:model.live="startTime"
+                                            class="w-full border-gray-200 rounded-lg py-2.5 px-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200"
+                                            placeholder="HH:MM"
+                                            min="00:00"
+                                            max="23:59">
+                                    </div>
+                                </div>
+                                
+                                <!-- End Time -->
+                                <div>
+                                    <label class="block text-sm text-gray-700 mb-1.5">Heure fin</label>
+                                    <div class="relative">
+                                        <input type="time" 
+                                            wire:model.live="endTime"
+                                            class="w-full border-gray-200 rounded-lg py-2.5 px-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200"
+                                            placeholder="HH:MM"
+                                            min="00:00"
+                                            max="23:59">
+                                    </div>
+                                </div>
+                                
+                                
+                            </div>
+
+
+
+
+
                             <!-- Price Range -->
                             <div>
                                 <label class="block font-medium text-gray-900 mb-2">Fourchette de prix</label>
                                 <div class="flex items-center gap-2">
                                     <div class="flex-1 relative">
-                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">$</span>
+                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">DH</span>
                                         <input type="number" wire:model.blur="minPrice" 
                                                placeholder="Min"
                                                class="w-full pl-8 pr-3 py-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200">
@@ -301,7 +339,7 @@
                                                 <!-- Price on mobile/tablet -->
                                                 <div class="text-center md:text-left">
                                                     <div class="text-gray-600 text-sm">À partir de</div>
-                                                    <div class="font-bold text-xl text-gray-900">${{ number_format($service['base_price'] ?? 0, 2) }}</div>
+                                                    <div class="font-bold text-xl text-gray-900">{{ number_format($service['base_price'] ?? 0, 2) }} DH</div>
                                                     <div class="text-gray-500 text-sm">{{ strtolower(str_replace('_', ' ', $service['paymentCriteria'] ?? '')) }}</div>
                                                 </div>
                                             </div>
@@ -349,7 +387,7 @@
                                                 <!-- Price on desktop (hidden on mobile) -->
                                                 <div class="hidden md:block text-right">
                                                     <div class="text-gray-600 text-sm">À partir de</div>
-                                                    <div class="font-bold text-2xl text-gray-900">${{ number_format($service['base_price'] ?? 0, 2) }}</div>
+                                                    <div class="font-bold text-2xl text-gray-900">{{ number_format($service['base_price'] ?? 0, 2) }} DH</div>
                                                     <div class="text-gray-500 text-sm">{{ strtolower(str_replace('_', ' ', $service['paymentCriteria'] ?? '')) }}</div>
                                                 </div>
                                             </div>
@@ -407,7 +445,7 @@
                                                 <!-- Action Buttons -->
                                                 <div class="flex flex-wrap gap-2">
                                                     <button wire:click="bookService({{ $service['id'] ?? 0 }})" 
-                                                            class="px-8 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition shadow-sm">
+                                                            class="px-8 py-2.5 bg-amber-700 hover:bg-amber-600 text-white font-medium rounded-lg transition shadow-sm">
                                                         <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                         </svg>
@@ -541,7 +579,7 @@
                                                         class="flex-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors">
                                                     Voir détails
                                                 </button>
-                                                <button onclick="window.bookService({{ $marker['id'] }})" 
+                                                <button wire:click="bookService({{ $marker['id'] }})" 
                                                         class="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors">
                                                     Réserver
                                                 </button>
@@ -569,7 +607,7 @@
     </div>
 </div>
 
-@push('scripts')
+@section('scripts')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin="" />
@@ -1055,4 +1093,4 @@
         background: #555;
     }
 </style>
-@endpush
+@endsection

@@ -35,6 +35,33 @@ class MesDemandes extends Component
     public function updatedFiltreService() { $this->resetPage(); }
     public function updatedFiltreStatut() { $this->resetPage(); }
 
+
+    private function parseAvailability($value): array
+    {
+        if (!is_string($value)) {
+            return [
+                'type' => 'text',
+                'value' => '',
+            ];
+        }
+
+        $decoded = json_decode($value, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return [
+                'type' => 'json',
+                'value' => $decoded,
+            ];
+        }
+
+        
+        return [
+            'type' => 'text',
+            'value' => $value,
+        ];
+    }
+
+
     public function openModal($id)
     {
         // 1. Récupération de la demande de base

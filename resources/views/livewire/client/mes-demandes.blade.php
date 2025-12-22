@@ -189,85 +189,93 @@
             @endif
 
             @foreach($demandes as $demande)
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-md transition-shadow duration-200">
-                    
-                    <!-- SECTION GAUCHE : Informations de la demande -->
-                    <div class="space-y-3 flex-1">
-                        <div class="flex items-start justify-between">
-                            <h3 class="text-lg font-bold text-gray-900">
-                                {{ $demande->nomService }}
-                            </h3>
-                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
-                                @if($demande->statut === 'validée') bg-green-100 text-green-700
-                                @elseif($demande->statut === 'en_attente') bg-amber-100 text-amber-700
-                                @elseif($demande->statut === 'refusée') bg-red-100 text-red-700
-                                @elseif($demande->statut === 'annulée') bg-gray-100 text-gray-700
-                                @else bg-red-100 text-red-700
-                                @endif">
-                                {{ ucfirst(str_replace('_', ' ', $demande->statut)) }}
-                            </span>
-                        </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:shadow-md transition-shadow duration-200">
+        
+        <!-- LEFT SECTION: Request Information -->
+        <div class="space-y-3 flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-3"> <!-- Changed from flex-col sm:flex-row -->
+                <h3 class="text-lg font-bold text-gray-900 truncate flex-1"> <!-- Added flex-1 -->
+                    {{ $demande->nomService }}
+                </h3>
+                <span class="inline-block px-3 py-1 rounded-full text-xs font-bold shrink-0 ml-0
+                    @if($demande->statut === 'validée') bg-green-100 text-green-700
+                    @elseif($demande->statut === 'en_attente') bg-amber-100 text-amber-700
+                    @elseif($demande->statut === 'refusée') bg-red-100 text-red-700
+                    @elseif($demande->statut === 'annulée') bg-gray-100 text-gray-700
+                    @else bg-red-100 text-red-700
+                    @endif">
+                    {{ ucfirst(str_replace('_', ' ', $demande->statut)) }}
+                </span>
+            </div>
 
-                        @if($demande->note_speciales)
-                            <p class="text-sm text-gray-600 line-clamp-2">
-                                {{ $demande->note_speciales }}
-                            </p>
-                        @endif
-
-                        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                            <span class="flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Time slots section - HORIZONTAL layout -->
+            <div class="mt-2">
+                @if($this->parseAvailability($demande->note_speciales)['type'] === 'json')
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($this->parseAvailability($demande->note_speciales)['value'] as $slot)
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-100">
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                 </svg>
-                                {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->format('d M Y') }}
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                {{ substr($demande->heureDebut,0,5) }} - {{ substr($demande->heureFin,0,5) }}
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                </svg>
-                                {{ $demande->lieu }}
-                            </span>
-                        </div>
+                                <span class="font-medium whitespace-nowrap">
+                                    {{ \Carbon\Carbon::parse($slot['date'])->format('d M') }}
+                                </span>
+                                <span class="text-blue-600 whitespace-nowrap">
+                                    {{ $slot['heureDebut'] }}–{{ $slot['heureFin'] }}
+                                </span>
+                            </div>
+                        @endforeach
                     </div>
+                @else
+                    <p class="text-sm text-gray-600 line-clamp-2">
+                        {{ $demande->note_speciales }}
+                    </p>
+                @endif
+            </div>
 
-                    <!-- SECTION DROITE : Prix et actions -->
-                    <div class="text-right space-y-3 min-w-[200px]">
-                        <div>
-                            <p class="text-sm text-gray-500">Prix estimé</p>
-                            <p class="text-xl font-extrabold text-gray-900">
-    {{ $demande->prix_estime ?? 0 }} MAD
-</p>
+            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 pt-1">
+                <span class="flex items-center gap-1 whitespace-nowrap">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->format('d M Y') }}
+                </span>
+                <span class="flex items-center gap-1 whitespace-nowrap">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    {{ substr($demande->heureDebut,0,5) }} - {{ substr($demande->heureFin,0,5) }}
+                </span>
+                <span class="flex items-center gap-1 truncate max-w-[180px]">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    </svg>
+                    {{ $demande->lieu }}
+                </span>
+            </div>
+        </div>
 
-                        </div>
+        <!-- RIGHT SECTION: Price and actions -->
+        <div class="text-right space-y-3 min-w-[200px] shrink-0 md:self-center">
+            <div>
+                <p class="text-sm text-gray-500">Prix estimé</p>
+                <p class="text-xl font-extrabold text-gray-900">
+                    {{ $demande->prix_estime ?? 0 }} MAD
+                </p>
+            </div>
 
-                        <div class="flex gap-2 justify-end">
-                            <button wire:click="openModal({{ $demande->idDemande }})"
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Voir détails
-                            </button>
-
-                            @if($demande->statut === 'en_attente')
-                                <button wire:click="annulerDemande({{ $demande->idDemande }})"
-                                        class="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-full text-sm font-medium hover:bg-red-100 transition-colors duration-200 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                    Annuler
-                                </button>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            @endforeach
+            <div class="flex gap-2 justify-end">
+                <button wire:click="openModal({{ $demande->idDemande }})"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 whitespace-nowrap">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Voir détails
+                </button>
+            </div>
+        </div>
+    </div>
+@endforeach
 
             <!-- PAGINATION -->
             @if($demandes->hasPages())
@@ -362,9 +370,27 @@
                                 <p class="font-bold text-gray-900">{{ $animalDetails->nomAnimal }} ({{ $animalDetails->race }})</p>
                             </div>
                         @endif
-
+                        <!-- $this->parseAvailability($demande->note_speciales)['value'] as $slot -->
+                         <!-- $selectedDemande->note_speciales -->
                         <!-- Notes Spéciales / Description -->
-                        @if($selectedDemande->note_speciales)
+                        @if($this->parseAvailability($selectedDemande->note_speciales)['type'] === 'json')
+                            <div class="space-y-2">
+                                @foreach($this->parseAvailability($selectedDemande->note_speciales)['value'] as $slot)
+                                    <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-100">
+                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        <span class="font-medium whitespace-nowrap">
+                                            {{ \Carbon\Carbon::parse($slot['date'])->format('d M') }}
+                                        </span>
+                                        <span class="text-blue-600 whitespace-nowrap">
+                                            {{ $slot['heureDebut'] }}–{{ $slot['heureFin'] }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                        @else
                             <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
                                 <p class="text-xs text-gray-500 font-medium mb-1">Notes / Description</p>
                                 <p class="text-sm font-medium text-gray-800 leading-relaxed">{{ $selectedDemande->note_speciales }}</p>

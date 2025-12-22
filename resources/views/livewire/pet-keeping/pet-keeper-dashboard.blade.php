@@ -162,7 +162,7 @@
                         <div>
                             <p class="text-sm font-medium text-gray-500">Revenu total</p>
                             <p class="text-3xl font-bold text-gray-900 mt-2">
-                                {{ number_format($stats['revenu'], 2, ',', ' ') }} €
+                                {{ number_format($stats['revenu'], 2, ',', ' ') }} DH
                             </p>
                         </div>
                         <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
@@ -276,7 +276,7 @@
                                         </div>
                                         <div class="text-right">
                                             <p class="text-sm font-semibold text-gray-900">
-                                                {{ number_format($demande->montantTotal, 2, ',', ' ') }} €
+                                                {{ number_format($demande->montantTotal, 2, ',', ' ') }} DH
                                             </p>
                                             <p class="text-xs text-gray-500">Montant total</p>
                                         </div>
@@ -345,9 +345,12 @@
                                             Accepter
                                         </button>
                                         <button wire:click="openRefusalModal({{ $demande->idDemande }})" 
-                                                class="flex-1 px-4 py-2.5 bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+                                                class="flex-1 px-4 py-2.5 bg-red-700 text-white font-semibold rounded-lg border border-gray-300 hover:bg-red-900 transition-colors">
                                             Refuser
                                         </button>
+
+                                        <button wire:click="openCommentsOnClientModal({{ $demande->user_id }})" 
+                                                class="flex-1 px-4 py-2.5 bg-green-600 text-white font-semibold rounded-lg border border-gray-300 hover:bg-green-900 transition-colors">Voir les commentaires</button>
                                     </div>
                                 </div>
                                 @endforeach
@@ -394,7 +397,7 @@
                                     <div class="flex items-center justify-between text-sm">
                                         <span class="text-gray-500">{{ $demande->ville_client }}</span>
                                         <span class="font-semibold text-gray-900">
-                                            {{ number_format($demande->montantTotal, 2, ',', ' ') }} €
+                                            {{ number_format($demande->montantTotal, 2, ',', ' ') }} DH
                                         </span>
                                     </div>
                                 </div>
@@ -580,6 +583,82 @@
                 </div>
             </div>
         @endif
+
+        <!-- Comments on client Model -->
+
+        
+
+
+        @if($showCommentsOnClientModel)
+            <!-- Modal Overlay -->
+            <div class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 z-50">
+                <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden">
+                    
+                    <!-- Modal Header -->
+                    <div class="bg-gradient-to-r from-amber-800 to-amber-500 px-6 py-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                            </svg>
+                            <h2 class="text-xl font-bold text-white">
+                                Commentaires ({{ count($commentsOnClient) }})
+                            </h2>
+                        </div>
+                        <button wire:click="closeCommentsOnClientModal" class="text-white hover:text-gray-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Modal Content -->
+                    <div class="p-6 overflow-y-auto max-h-[60vh]">
+                        @if(count($commentsOnClient) > 0)
+                            <div class="space-y-4">
+                                @foreach($commentsOnClient as $index => $comment)
+                                    <!-- Simple Comment Box -->
+                                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                        <div class="flex items-start gap-3">
+                                            <!-- Number Badge -->
+                                            <div class="flex-shrink-0">
+                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                                    {{ $index + 1 }}
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Comment Text -->
+                                            <p class="text-gray-700">
+                                                {{ $comment->commentaire }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <!-- Empty State -->
+                            <div class="text-center py-12">
+                                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                                </svg>
+                                <p class="text-gray-500">Aucun commentaire disponible</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <!-- <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                        <button wire:click="closeCommentsOnClientModal" 
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                            Fermer
+                        </button>
+                    </div> -->
+                </div>
+            </div>
+        @endif
+
+
+
+
 
         <!-- Flash Messages -->
         @if(session()->has('success'))
