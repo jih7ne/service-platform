@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-[#F3F4F6] font-sans flex text-left">
+<div class="min-h-screen bg-[#F3F4F6] font-sans flex text-left" wire:poll.5s>
     @include('livewire.babysitter.babysitter-sidebar')
 
     <div class="ml-64 flex-1 flex flex-col min-h-screen">

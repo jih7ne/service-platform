@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gray-50 font-sans">
+<div class="min-h-screen bg-gray-50 font-sans" wire:poll.5s>
     <livewire:shared.header-babysitting />
     <!-- Header Section with Gradient -->
     <div class="relative bg-white overflow-hidden">
@@ -102,7 +102,7 @@
                     Carte des babysitters ({{ count($babysittersMap) }} profils)
                 </h3>
             </div>
-            <div id="babysitters-map" style="height: 600px; width: 100%;"></div>
+            <div id="babysitters-map" style="height: 600px; width: 100%;" wire:ignore></div>
         </div>
         
         <!-- LIST VIEW -->
@@ -323,15 +323,7 @@
 
             <!-- Results Grid -->
             <div class="flex-1 min-w-0">
-                <!-- Loading Overlay -->
-                <div wire:loading.flex class="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
-                    <div class="bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3">
-                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#B82E6E]"></div>
-                        <span class="font-medium text-gray-700">Mise à jour...</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" wire:loading.class="opacity-50 transition-opacity duration-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     @forelse($babysitters as $babysitter)
                     @php
                         $utilisateur = $babysitter->intervenant->utilisateur;

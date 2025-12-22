@@ -436,6 +436,13 @@ class BabysitterRegistration extends Component
         ];
     }
 
+    public function precedent()
+    {
+        if ($this->currentStep > 1) {
+            $this->currentStep--;
+        }
+    }
+
     public function suivant()
     {
         \Log::info('BabysitterRegistration - Method suivant() called');

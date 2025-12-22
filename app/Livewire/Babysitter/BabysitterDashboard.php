@@ -241,32 +241,37 @@ class BabysitterDashboard extends Component
     {
         $earnings = [];
         $currentYear = Carbon::now()->year;
+        $babysitterId = auth()->id();
+
+        // Fetch all relevant interventions for the year in one query
+        $interventions = DemandeIntervention::where('idIntervenant', $babysitterId)
+            ->whereIn('statut', ['validée', 'terminée', 'payée'])
+            ->whereYear('dateSouhaitee', $currentYear)
+            ->get();
 
         for ($month = 1; $month <= 12; $month++) {
-            $monthStart = Carbon::create($currentYear, $month, 1);
-            $monthEnd = $monthStart->copy()->endOfMonth();
+            $monthDate = Carbon::create($currentYear, $month, 1);
+            $monthName = $monthDate->format('M');
 
-            $monthlyTotal = DemandeIntervention::where('idIntervenant', auth()->id())
-                ->whereIn('statut', ['validée', 'terminée', 'payée']) // Added 'payée' just in case
-                ->whereBetween('dateSouhaitee', [$monthStart, $monthEnd])
-                ->get()
-                ->sum(function ($sitting) {
-                    if ($sitting->heureDebut && $sitting->heureFin) {
-                        $start = Carbon::parse($sitting->heureDebut);
-                        $end = Carbon::parse($sitting->heureFin);
+            $monthlyTotal = $interventions->filter(function ($intervention) use ($month) {
+                return Carbon::parse($intervention->dateSouhaitee)->month === $month;
+            })->sum(function ($intervention) {
+                if ($intervention->heureDebut && $intervention->heureFin) {
+                    $start = Carbon::parse($intervention->heureDebut);
+                    $end = Carbon::parse($intervention->heureFin);
 
-                        if ($end->lt($start)) {
-                            $end->addDay();
-                        }
-
-                        $hours = $start->diffInHours($end);
-                        return ($this->babysitter->prixHeure ?? 0) * abs($hours);
+                    if ($end->lt($start)) {
+                        $end->addDay();
                     }
-                    return 0;
-                });
+
+                    $hours = $start->diffInHours($end);
+                    return ($this->babysitter->prixHeure ?? 0) * abs($hours);
+                }
+                return 0;
+            });
 
             $earnings[] = [
-                'month' => $monthStart->format('M'),
+                'month' => $monthName,
                 'earnings' => $monthlyTotal
             ];
         }
