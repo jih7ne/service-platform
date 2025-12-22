@@ -692,11 +692,11 @@
                                     <!-- Prix de base -->
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                                            Prix de base (€) *
+                                            Prix de base (DH) *
                                         </label>
                                         <div class="relative">
                                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <span class="text-gray-500">€</span>
+                                                <span class="text-gray-500">DH</span>
                                             </div>
                                             <input type="number" wire:model="services.{{ $index }}.service_base_price" min="0" step="0.01"
                                                 class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition"
