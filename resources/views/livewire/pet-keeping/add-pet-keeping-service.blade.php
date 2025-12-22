@@ -237,11 +237,11 @@
                         <!-- Prix de base -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Prix de base (€) *
+                                Prix de base (DH) *
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">€</span>
+                                    <span class="text-gray-500">DH</span>
                                 </div>
                                 <input type="number" wire:model="service_base_price" min="0" step="0.01"
                                     class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition"
@@ -341,7 +341,7 @@
                                     @if($service_base_price)
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Prix :</span>
-                                            <span class="font-medium text-gray-900">{{ number_format($service_base_price, 2) }} €</span>
+                                            <span class="font-medium text-gray-900">{{ number_format($service_base_price, 2) }} DH</span>
                                         </div>
                                     @endif
                                     @if($service_payment_criteria)

@@ -203,7 +203,7 @@
                                 <label class="block font-medium text-gray-900 mb-2">Fourchette de prix</label>
                                 <div class="flex items-center gap-2">
                                     <div class="flex-1 relative">
-                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">$</span>
+                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">DH</span>
                                         <input type="number" wire:model.blur="minPrice" 
                                                placeholder="Min"
                                                class="w-full pl-8 pr-3 py-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200">
