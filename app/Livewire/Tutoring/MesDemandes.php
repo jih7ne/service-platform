@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\ReponseDemandeClient;
 use App\Mail\ConfirmationActionProf;
-use Livewire\Attributes\Computed; // Important pour la magie
+use Livewire\Attributes\Computed; 
 
 class MesDemandes extends Component
 {
@@ -33,10 +33,7 @@ class MesDemandes extends Component
     // -------------------------
 
     // Note : On retire "public $demandes" car on utilise la méthode calculée ci-dessous
-   public function goToHub()
-    {
-        return redirect()->route('intervenant.hub');
-    }
+
     public function mount()
     {
         $user = Auth::user();
@@ -208,7 +205,6 @@ class MesDemandes extends Component
                 'demandes_intervention.heureFin',
                 'demandes_intervention.statut',
                 'demandes_intervention.idService',
-                'demandes_intervention.lieu',
                 'utilisateurs.nom as client_nom',
                 'utilisateurs.prenom as client_prenom',
                 'utilisateurs.photo as client_photo',
