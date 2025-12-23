@@ -166,7 +166,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>📚 Nouvelle Demande de Réservation</h1>
+            <h1>Nouvelle Demande de Réservation</h1>
             <p>Un étudiant souhaite réserver un cours avec vous</p>
         </div>
 
@@ -180,7 +180,7 @@
 
             <!-- Student Information -->
             <div class="info-box">
-                <h3>👤 Informations de l'étudiant</h3>
+                <h3>Informations de l'étudiant</h3>
                 <div class="info-row">
                     <span class="info-label">Nom complet :</span>
                     <span class="info-value">{{ $client->prenom }} {{ $client->nom }}</span>
@@ -199,7 +199,7 @@
 
             <!-- Course Details -->
             <div class="info-box">
-                <h3>📖 Détails du cours</h3>
+                <h3>Détails du cours</h3>
                 <div class="info-row">
                     <span class="info-label">Matière :</span>
                     <span class="info-value"><strong>{{ $service->matiere->nom_matiere }}</strong></span>
@@ -212,9 +212,9 @@
                     <span class="info-label">Mode de cours :</span>
                     <span class="info-value">
                         @if($typeService === 'enligne')
-                            🖥️ En ligne (Visioconférence)
+                            En ligne (Visioconférence)
                         @else
-                            🏠 À domicile
+                            À domicile
                         @endif
                     </span>
                 </div>
@@ -234,7 +234,7 @@
 
             <!-- Schedule -->
             <div class="info-box">
-                <h3>📅 Créneaux demandés</h3>
+                <h3>Créneaux demandés</h3>
                 <div class="info-row">
                     <span class="info-label">Date :</span>
                     <span class="info-value"><strong>{{ \Carbon\Carbon::parse($selectedDate)->locale('fr')->isoFormat('dddd D MMMM YYYY') }}</strong></span>
@@ -243,7 +243,7 @@
                     <span class="info-label" style="display: block; margin-bottom: 10px;">Horaires :</span>
                     @foreach($demandes as $demande)
                         <div class="time-slot">
-                            🕐 {{ \Carbon\Carbon::parse($demande->heureDebut)->format('H:i') }} - {{ \Carbon\Carbon::parse($demande->heureFin)->format('H:i') }}
+                            {{ \Carbon\Carbon::parse($demande->heureDebut)->format('H:i') }} - {{ \Carbon\Carbon::parse($demande->heureFin)->format('H:i') }}
                         </div>
                     @endforeach
                 </div>
@@ -252,7 +252,7 @@
             <!-- Special Notes -->
             @if($noteSpeciales)
             <div class="note-box">
-                <strong>📝 Notes spéciales de l'étudiant :</strong>
+                <strong>Notes spéciales de l'étudiant :</strong>
                 <p style="margin: 10px 0 0;">{{ $noteSpeciales }}</p>
             </div>
             @endif
