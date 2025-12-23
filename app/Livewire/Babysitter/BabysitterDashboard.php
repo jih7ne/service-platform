@@ -67,7 +67,8 @@ class BabysitterDashboard extends Component
     private function calculateStatisticsForUser($userId)
     {
         // Average rating
-        $feedbacks = Feedback::where('idCible', $userId)->get();
+        $feedbacks = Feedback::where('idCible', $userId)->where('estVisible', true)->get();
+        $reviewCount = $feedbacks->count();
 
         $averageRating = $feedbacks->isEmpty() ? 0 : $feedbacks->avg(function ($feedback) {
             $ratings = array_filter([
@@ -104,6 +105,7 @@ class BabysitterDashboard extends Component
 
         return [
             'averageRating' => round($averageRating, 1),
+            'reviewCount' => $reviewCount,
             'completedSittings' => $completedSittings,
             'pendingRequests' => $pendingRequests,
             'totalEarnings' => max(0, $totalEarnings), // Ensure no negative earnings
@@ -171,7 +173,8 @@ class BabysitterDashboard extends Component
         $babysitterId = auth()->id();
 
         // Average rating
-        $feedbacks = Feedback::where('idCible', $babysitterId)->get();
+        $feedbacks = Feedback::where('idCible', $babysitterId)->where('estVisible', true)->get();
+        $reviewCount = $feedbacks->count();
 
         $averageRating = $feedbacks->isEmpty() ? 0 : $feedbacks->avg(function ($feedback) {
             $ratings = array_filter([
@@ -216,6 +219,7 @@ class BabysitterDashboard extends Component
 
         return [
             'averageRating' => round($averageRating, 1),
+            'reviewCount' => $reviewCount,
             'completedSittings' => $completedSittings,
             'pendingRequests' => $pendingRequests,
             'totalEarnings' => $totalEarnings,
@@ -284,7 +288,7 @@ class BabysitterDashboard extends Component
         $distribution = [];
         $babysitterId = auth()->id();
 
-        $feedbacks = Feedback::where('idCible', $babysitterId)->get();
+        $feedbacks = Feedback::where('idCible', $babysitterId)->where('estVisible', true)->get();
 
         for ($rating = 5; $rating >= 1; $rating--) {
             $count = $feedbacks->filter(function ($feedback) use ($rating) {

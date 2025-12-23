@@ -45,8 +45,10 @@
                         <div class="flex items-center space-x-4 mt-2">
                             <div class="flex items-center space-x-1">
                                 <span class="text-yellow-500">★</span>
-                                <span class="text-gray-700 font-medium">{{ number_format($utilisateur->note ?? 0, 1) }}</span>
+                                <span class="text-gray-700 font-medium">{{ number_format($statistics['averageRating'] ?? 0, 1) }}</span>
                             </div>
+                            <span class="text-gray-400">•</span>
+                            <span class="text-gray-600">{{ $statistics['reviewCount'] ?? 0 }} avis</span>
                             <span class="text-gray-400">•</span>
                             <span class="text-gray-600">{{ $statistics['completedSittings'] ?? 0 }} missions</span>
                             <span class="text-gray-400">•</span>

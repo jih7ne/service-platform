@@ -6,7 +6,7 @@
     {{-- CONTENU PRINCIPAL --}}
     <main class="flex-1 overflow-y-auto p-8">
         
-        <!-- Titre + Filtre -->
+       <!-- Titre + Filtre -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-extrabold text-gray-900">Gestion des demandes</h1>
@@ -23,25 +23,74 @@
                 </button>
 
                 @if($showFilters)
-                    <div class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50">
+                    <div class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50">
                         <div class="space-y-4">
+                            <!-- Trier par -->
                             <div>
                                 <p class="text-xs font-bold text-gray-400 uppercase mb-2">Trier par</p>
                                 <select wire:model.live="filterSort" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="recent">📅 Plus récent d'abord</option>
-                                    <option value="ancien">📅 Plus ancien d'abord</option>
-                                    <option value="prix_decroissant">💰 Prix décroissant</option>
-                                    <option value="prix_croissant">💰 Prix croissant</option>
+                                    <option value="recent"> Plus récent d'abord</option>
+                                    <option value="ancien"> Plus ancien d'abord</option>
+                                    <option value="date_proche"> Date proche</option>
+                                    <option value="prix_haut"> Prix décroissant</option>
+                                    <option value="prix_bas"> Prix croissant</option>
                                 </select>
                             </div>
-                            <div>
-                                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Type de cours</p>
-                                <div class="space-y-2">
-                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" wire:model.live="filterType" value="all" class="text-blue-600 focus:ring-blue-500"><span class="text-sm text-gray-700">Tout afficher</span></label>
-                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" wire:model.live="filterType" value="enligne" class="text-blue-600 focus:ring-blue-500"><span class="text-sm text-gray-700">En ligne (Visio)</span></label>
-                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" wire:model.live="filterType" value="domicile" class="text-blue-600 focus:ring-blue-500"><span class="text-sm text-gray-700">À Domicile</span></label>
+
+                            <!-- Divider -->
+                            <div class="border-t border-gray-200"></div>
+
+                            <!-- Filtres Avancés Toggle -->
+                            <button wire:click="toggleAdvancedFilters" class="w-full flex items-center justify-between text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                                <span>Filtres avancés</span>
+                                <svg class="w-4 h-4 transition-transform {{ $showAdvancedFilters ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+
+                            @if($showAdvancedFilters)
+                                <div class="space-y-4 pt-2">
+                                    <!-- Filtre Matière -->
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400 uppercase mb-2">Matière</p>
+                                        <select wire:model.live="filterMatiere" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="all">Toutes les matières</option>
+                                            <option value="Mathématiques">Mathématiques</option>
+                                            <option value="Physique-Chimie">Physique-Chimie</option>
+                                            <option value="Français">Français</option>
+                                            <option value="Anglais">Anglais</option>
+                                            <option value="Arabe">Arabe</option>
+                                            <option value="SVT">SVT</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Filtre Période -->
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400 uppercase mb-2">Période</p>
+                                        <select wire:model.live="datePeriod" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="all">Toutes les dates</option>
+                                            <option value="today">Aujourd'hui</option>
+                                            <option value="week">Cette semaine</option>
+                                            <option value="month">Ce mois</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Filtre Ville -->
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400 uppercase mb-2">Ville</p>
+                                        <input type="text" 
+                                               wire:model.live.debounce.300ms="cityFilter" 
+                                               placeholder="Filtrer par ville..."
+                                               class="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+
+                                    <!-- Bouton Reset -->
+                                    <button wire:click="$set('filterMatiere', 'all'); $set('datePeriod', 'all'); $set('cityFilter', ''); $set('filterSort', 'recent')" 
+                                            class="w-full py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-lg hover:bg-gray-200 transition-colors">
+                                        Réinitialiser les filtres
+                                    </button>
                                 </div>
-                            </div>
+                            @endif
                         </div>
                     </div>
                 @endif
