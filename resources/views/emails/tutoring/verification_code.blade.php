@@ -9,7 +9,7 @@
         .header h1 { margin: 0; font-size: 24px; }
         .content { padding: 40px 30px; text-align: center; }
         .code-container { background: #EFF6FF; border: 3px dashed #2B5AA8; border-radius: 12px; padding: 30px; margin: 30px 0; }
-        .code { font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #2B5AA8; font-family: 'Courier New', monospace; }
+        .code { font-size: 48px; font-weight: bold; letter-spacing: 15px; color: #2B5AA8; font-family: 'Courier New', monospace; }
         .warning { background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; margin: 20px 0; text-align: left; border-radius: 6px; }
         .footer { background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #888; }
     </style>
@@ -17,7 +17,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1> Code de Vérification</h1>
+            <h1>🔐 Code de Vérification</h1>
         </div>
         
         <div class="content">
@@ -38,7 +38,7 @@
 
             <div class="warning">
                 <p style="margin: 0; font-size: 14px; color: #92400E;">
-                    <strong> Important :</strong> Ne partagez jamais ce code avec qui que ce soit. 
+                    <strong>⚠️ Important :</strong> Ne partagez jamais ce code avec qui que ce soit. 
                     L'équipe Helpora ne vous demandera jamais ce code par téléphone ou email.
                 </p>
             </div>
@@ -49,7 +49,7 @@
         </div>
 
         <div class="footer">
-            © Helpora - Plateforme de soutien scolaire
+            © {{ date('Y') }} Helpora - Plateforme de soutien scolaire
         </div>
     </div>
 </body>

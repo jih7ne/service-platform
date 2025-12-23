@@ -21,7 +21,7 @@ class VerificationCodeEmail extends Mailable
 
     public function build()
     {
-        return $this->subject(" Code de vérification Helpora")
+        return $this->subject("Code de vérification Helpora")
                     ->view('emails.tutoring.verification_code');
     }
 }

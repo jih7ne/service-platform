@@ -27,17 +27,12 @@ class RegisterProfesseur extends Component
 {
     use WithFileUploads;
 
-    // Détection si utilisateur déjà connecté
     public $isExistingUser = false;
     public $existingIntervenant = null;
     public $canAddService = true;
     public $currentServicesCount = 0;
-
-    // Stepper
     public $currentStep = 1;
     public $registrationComplete = false;
-
-    // Étape 1 : Informations personnelles
     public $firstName = '';
     public $lastName = '';
     public $email = '';
@@ -45,26 +40,18 @@ class RegisterProfesseur extends Component
     public $telephone = '';
     public $dateNaissance = '';
     public $showPassword = false;
-
-    // Étape 1.5 : Vérification email
     public $verificationCode = '';
     public $generatedCode = '';
     public $codeVerified = false;
-
-    // Étape 2 : Localisation
-    public $ville = ''; // ← MODIFIÉ : Ajout du champ ville
+    public $ville = '';
     public $adresseComplete = '';
     public $latitude = null;
     public $longitude = null;
-
-    // Étape 3 : Matières et niveaux
     public $matieres = [];
     public $surnom = '';
     public $biographie = '';
     public $availableMatieres = [];
     public $availableNiveaux = [];
-
-    // Étape 4 : Documents
     public $cinDocument = null;
     public $diplome = null;
     public $photo = null;
@@ -72,53 +59,42 @@ class RegisterProfesseur extends Component
 
     public function mount()
     {
-        // Vérifier si l'utilisateur est déjà connecté
         if (Auth::check()) {
             $user = Auth::user();
-            
-            // Vérifier si c'est un intervenant
             $intervenant = Intervenant::where('IdIntervenant', $user->idUser)->first();
             
             if ($intervenant) {
                 $this->isExistingUser = true;
                 $this->existingIntervenant = $intervenant;
-                
-                // Compter les services actifs ou en attente
                 $this->currentServicesCount = OffreService::where('idIntervenant', $intervenant->IdIntervenant)
                     ->whereIn('statut', ['EN_ATTENTE', 'VALIDE'])
                     ->count();
                 
-                // Vérifier s'il peut ajouter un service
                 if ($this->currentServicesCount >= 2) {
                     $this->canAddService = false;
-                    session()->flash('error', 'Vous avez déjà atteint la limite de 2 services. Vous ne pouvez pas en ajouter d\'autres.');
+                    session()->flash('error', 'Vous avez déjà atteint la limite de 2 services.');
                     return redirect()->route('dashboard');
                 }
                 
-                // Pré-remplir les informations de l'utilisateur existant
                 $this->firstName = $user->prenom;
                 $this->lastName = $user->nom;
                 $this->email = $user->email;
                 $this->telephone = $user->telephone;
                 $this->dateNaissance = $user->dateNaissance;
                 
-                // Récupérer la localisation existante
                 $localisation = Localisation::where('idUser', $user->idUser)->first();
                 if ($localisation) {
-                    $this->ville = $localisation->ville; // ← MODIFIÉ
+                    $this->ville = $localisation->ville;
                     $this->adresseComplete = $localisation->adresse;
                     $this->latitude = $localisation->latitude;
                     $this->longitude = $localisation->longitude;
                 }
                 
-                // Sauter l'étape de vérification email
                 $this->codeVerified = true;
-                
                 session()->flash('info', "Bienvenue ! Vous pouvez ajouter un nouveau service ({$this->currentServicesCount}/2 services actuels).");
             }
         }
         
-        // Charger les matières et niveaux disponibles
         $this->availableMatieres = Matiere::all();
         $this->availableNiveaux = Niveau::all();
     }
@@ -128,7 +104,6 @@ class RegisterProfesseur extends Component
         $rules = [];
         
         if ($this->currentStep == 1) {
-            // Si utilisateur existant, pas besoin de valider ces champs
             if (!$this->isExistingUser) {
                 $rules = [
                     'firstName' => 'required|min:2|max:50',
@@ -142,12 +117,12 @@ class RegisterProfesseur extends Component
         } elseif ($this->currentStep == 1.5) {
             if (!$this->isExistingUser) {
                 $rules = [
-                    'verificationCode' => 'required|size:10',
+                    'verificationCode' => 'required|size:6',
                 ];
             }
         } elseif ($this->currentStep == 2) {
             $rules = [
-                'ville' => 'required|string', // ← MODIFIÉ : Validation de la ville
+                'ville' => 'required|string',
                 'adresseComplete' => 'required|string',
             ];
         } elseif ($this->currentStep == 3) {
@@ -174,9 +149,9 @@ class RegisterProfesseur extends Component
 
     protected $messages = [
         'verificationCode.required' => 'Le code de vérification est obligatoire',
-        'verificationCode.size' => 'Le code doit contenir exactement 10 caractères',
+        'verificationCode.size' => 'Le code doit contenir exactement 6 caractères',
         'cinDocument.required' => 'Le document CIN est obligatoire',
-        'ville.required' => 'La ville est obligatoire', // ← AJOUTÉ
+        'ville.required' => 'La ville est obligatoire',
     ];
 
     public function togglePassword()
@@ -184,7 +159,6 @@ class RegisterProfesseur extends Component
         $this->showPassword = !$this->showPassword;
     }
 
-    // ← AJOUTÉ : Méthode pour recevoir les données de géolocalisation
     public function setLocationData($latitude, $longitude, $ville, $adresse)
     {
         $this->latitude = $latitude;
@@ -193,7 +167,6 @@ class RegisterProfesseur extends Component
         $this->adresseComplete = $adresse;
     }
 
-    // ← AJOUTÉ : Méthode pour déclencher la géolocalisation
     public function getAutoLocation()
     {
         $this->dispatch('requestGeolocation');
@@ -201,15 +174,12 @@ class RegisterProfesseur extends Component
 
     public function checkEmailAvailability()
     {
-        // Vérifier si l'email existe
         $existingUser = Utilisateur::where('email', $this->email)->first();
         
         if ($existingUser) {
-            // Vérifier si c'est un intervenant
             $intervenant = Intervenant::where('IdIntervenant', $existingUser->idUser)->first();
             
             if ($intervenant) {
-                // Compter les services actifs ou en attente
                 $servicesCount = OffreService::where('idIntervenant', $intervenant->IdIntervenant)
                     ->whereIn('statut', ['EN_ATTENTE', 'VALIDE'])
                     ->count();
@@ -222,18 +192,16 @@ class RegisterProfesseur extends Component
                     return false;
                 }
             } else {
-                // Email existe mais pas en tant qu'intervenant
                 session()->flash('error', 'Cet email est déjà utilisé pour un autre type de compte.');
                 return false;
             }
         }
         
-        return true; // Email disponible
+        return true;
     }
 
     public function sendVerificationCode()
     {
-        // Si utilisateur existant, sauter cette étape
         if ($this->isExistingUser) {
             $this->currentStep = 2;
             return;
@@ -248,18 +216,15 @@ class RegisterProfesseur extends Component
             'dateNaissance' => 'required|date|before:today',
         ]);
         
-        // Vérifier la disponibilité de l'email
         if (!$this->checkEmailAvailability()) {
-            return; // Stopper si l'email n'est pas disponible
+            return;
         }
         
-        // Générer le code de vérification
-        $this->generatedCode = str_pad(random_int(0, 9999999999), 10, '0', STR_PAD_LEFT);
+        // ⭐ GÉNÉRATION CODE 6 CHIFFRES
+        $this->generatedCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         
-        // Stocker le code dans le cache pour 10 minutes
         Cache::put('verification_code_' . $this->email, $this->generatedCode, now()->addMinutes(10));
         
-        // Envoyer l'email avec le code
         try {
             Mail::to($this->email)->send(new VerificationCodeEmail(
                 $this->generatedCode,
@@ -267,7 +232,6 @@ class RegisterProfesseur extends Component
                 $this->lastName
             ));
             
-            // Passer à l'étape de vérification
             $this->currentStep = 1.5;
             session()->flash('success', 'Un code de vérification a été envoyé à votre email.');
             
@@ -284,7 +248,7 @@ class RegisterProfesseur extends Component
         }
         
         $this->validate([
-            'verificationCode' => 'required|size:10',
+            'verificationCode' => 'required|size:6',
         ]);
 
         $storedCode = Cache::get('verification_code_' . $this->email);
@@ -314,10 +278,8 @@ class RegisterProfesseur extends Component
     {
         if ($this->currentStep == 1) {
             if ($this->isExistingUser) {
-                // Utilisateur existant : passer directement à l'étape 2
                 $this->currentStep = 2;
             } else {
-                // Nouvel utilisateur : envoyer le code de vérification
                 $this->sendVerificationCode();
             }
             return;
@@ -365,19 +327,16 @@ class RegisterProfesseur extends Component
         try {
             DB::beginTransaction();
 
-            // Récupérer l'ID du service "Soutien Scolaire"
             $service = Service::where('nomService', 'Soutien Scolaire')->first();
             if (!$service) {
                 throw new \Exception('Service "Soutien Scolaire" introuvable');
             }
 
-            // Gérer utilisateur existant vs nouveau
             if ($this->isExistingUser) {
                 $user = Auth::user();
                 $intervenant = $this->existingIntervenant;
                 $admin = Admin::find($intervenant->idAdmin);
             } else {
-                // 1. Créer ou récupérer admin
                 $admin = Admin::first();
                 if (!$admin) {
                     $admin = Admin::create([
@@ -386,7 +345,6 @@ class RegisterProfesseur extends Component
                     ]);
                 }
 
-                // 2. Créer l'utilisateur
                 $user = Utilisateur::create([
                     'nom' => $this->lastName,
                     'prenom' => $this->firstName,
@@ -401,31 +359,27 @@ class RegisterProfesseur extends Component
                     'idAdmin' => $admin->idAdmin
                 ]);
 
-                // 3. Créer l'intervenant
                 $intervenant = Intervenant::create([
                     'IdIntervenant' => $user->idUser,
                     'statut' => 'EN_ATTENTE',
                     'idAdmin' => $admin->idAdmin,
                 ]);
 
-                // 4. Créer la localisation pour un nouvel utilisateur
                 Localisation::create([
                     'latitude' => $this->latitude ?? 0,
                     'longitude' => $this->longitude ?? 0,
-                    'ville' => $this->ville, // ← MODIFIÉ
+                    'ville' => $this->ville,
                     'adresse' => $this->adresseComplete,
                     'idUser' => $user->idUser,
                 ]);
             }
 
-            // Insérer dans offre_service
             OffreService::create([
                 'idIntervenant' => $intervenant->IdIntervenant,
                 'idService' => $service->idService,
                 'statut' => 'EN_ATTENTE',
             ]);
 
-            // 5. Upload des fichiers
             $cinDocumentPath = $this->cinDocument ? $this->cinDocument->store('cin_documents', 'public') : null;
             $diplomePath = $this->diplome ? $this->diplome->store('diplomes', 'public') : null;
             $photoPath = $this->photo ? $this->photo->store('photos', 'public') : null;
@@ -434,7 +388,6 @@ class RegisterProfesseur extends Component
                 $user->update(['photo' => $photoPath]);
             }
 
-            // 6. Créer le professeur
             $professeur = Professeur::create([
                 'CIN' => $cinDocumentPath,
                 'surnom' => $this->surnom,
@@ -444,7 +397,6 @@ class RegisterProfesseur extends Component
                 'intervenant_id' => $intervenant->IdIntervenant,
             ]);
 
-            // 7. Créer les services professeur
             $matieresData = [];
             foreach ($this->matieres as $matiere) {
                 $matiereId = $matiere['matiere_id'];
@@ -477,7 +429,6 @@ class RegisterProfesseur extends Component
                 ];
             }
 
-            // 8. Envoyer les emails
             $emailDataProf = [
                 'prenom' => $this->firstName,
                 'nom' => $this->lastName,
@@ -496,7 +447,7 @@ class RegisterProfesseur extends Component
                 'nom' => $this->lastName,
                 'email' => $this->email,
                 'telephone' => $this->telephone,
-                'ville' => $this->ville, // ← AJOUTÉ
+                'ville' => $this->ville,
                 'adresse' => $this->adresseComplete,
                 'niveau_etudes' => $this->niveauEtudes,
                 'date_naissance' => Carbon::parse($this->dateNaissance)->format('d/m/Y'),

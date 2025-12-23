@@ -237,7 +237,7 @@
     </div>
 @endif
 
-{{-- ÉTAPE 1.5 : VÉRIFICATION EMAIL - Masquer si utilisateur existant --}}
+{{-- ÉTAPE 1.5 : VÉRIFICATION EMAIL --}}
 @if($currentStep == 1.5 && !$isExistingUser)
     <div class="space-y-6">
         <div class="text-center">
@@ -255,14 +255,16 @@
 
         <div>
             <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold text-center">
-                Code de vérification (10 chiffres)
+                Code de vérification (6 chiffres)
             </label>
             <input
                 type="text"
-                wire:model="verificationCode"
-                maxlength="10"
-                class="w-full px-4 py-4 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-center text-2xl tracking-widest font-mono"
-                placeholder="0000000000"
+                wire:model.defer="verificationCode"
+                maxlength="6"
+                class="w-full px-4 py-4 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-center text-3xl tracking-[1em] font-mono font-bold"
+                placeholder="000000"
+                inputmode="numeric"
+                pattern="[0-9]*"
             />
             @error('verificationCode') 
                 <span class="text-red-500 text-sm mt-1 block text-center">{{ $message }}</span>
@@ -301,7 +303,7 @@
     </div>
 @endif
 
-{{-- ÉTAPE 2 : LOCALISATION --}}
+
 {{-- ÉTAPE 2 : LOCALISATION --}}
 @if($currentStep == 2)
     <div class="space-y-6">
