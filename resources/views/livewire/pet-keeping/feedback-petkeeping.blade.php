@@ -1,4 +1,5 @@
 <div class="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-amber-50 py-12 px-4 sm:px-6 lg:px-8">
+    
     <div class="max-w-4xl mx-auto">
         @if($feedbackSubmitted)
             {{-- Modal de récapitulatif --}}

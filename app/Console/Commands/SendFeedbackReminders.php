@@ -103,7 +103,7 @@ class SendFeedbackReminders extends Command
             return 'feedback.pet-keeping';
         }
 
-        return 'feedback.form'; // Fallback générique
+        return 'feedback.pet-keeping'; // Fallback générique
     }
 
     protected function sendReminderToClient($demande, $dateStr)

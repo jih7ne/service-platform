@@ -117,7 +117,7 @@ class FeedbackComponent extends Component
                     $this->typeService = 'petkeeping';
                     break;
                 default:
-                    $this->typeService = 'babysitter'; // Valeur par défaut
+                    $this->typeService = 'petkeeping'; // Valeur par défaut
                     break;
             }
             
