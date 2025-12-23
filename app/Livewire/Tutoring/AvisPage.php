@@ -9,16 +9,9 @@ class AvisPage extends Component
 {
     public $intervenantId;
     public $professeur;
-    public $prenom;
-    public $nom;
-    public $photo;
-
     public function mount()
     {
         $user = auth()->user();
-        $this->prenom = $user->prenom ?? '';
-        $this->nom = $user->nom ?? '';
-        $this->photo = $user->photo ?? null;
         $userId = $user->idUser;
 
         // Load professor record for sidebar/context (if available)
@@ -36,12 +29,5 @@ class AvisPage extends Component
     public function render()
     {
         return view('livewire.tutoring.avis');
-    }
-    public function logout()
-    {
-        auth()->logout();
-        session()->invalidate();
-        session()->regenerateToken();
-        return redirect('/');
     }
 }
