@@ -38,13 +38,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔔 Administration Helpora</h1>
+            <h1>Administration Helpora</h1>
             <p>Nouvelle demande d'inscription professeur</p>
         </div>
         
         <div class="content">
             <div style="text-align: center;">
-                <span class="alert-badge">⚠️ ACTION REQUISE</span>
+                <span class="alert-badge">ACTION REQUISE</span>
             </div>
 
             <p style="font-size: 16px; line-height: 1.6; color: #374151;">
@@ -64,7 +64,7 @@
 
                 <div class="details-grid">
                     <div class="detail-item">
-                        <div class="detail-label">📧 Email</div>
+                        <div class="detail-label">Email</div>
                         <div class="detail-value">{{ $data['email'] }}</div>
                     </div>
                     <div class="detail-item">
@@ -72,18 +72,18 @@
                         <div class="detail-value">{{ $data['telephone'] }}</div>
                     </div>
                     <div class="detail-item">
-                        <div class="detail-label">🎓 Niveau d'études</div>
+                        <div class="detail-label">Niveau d'études</div>
                         <div class="detail-value">{{ $data['niveau_etudes'] }}</div>
                     </div>
                     <div class="detail-item">
-                        <div class="detail-label">📅 Date de naissance</div>
+                        <div class="detail-label">Date de naissance</div>
                         <div class="detail-value">{{ $data['date_naissance'] }}</div>
                     </div>
                 </div>
             </div>
 
             <div class="matieres-section">
-                <h3>📚 Matières proposées ({{ $data['nombre_matieres'] }})</h3>
+                <h3>Matières proposées ({{ $data['nombre_matieres'] }})</h3>
                 @foreach($data['matieres'] as $matiere)
                     <span class="matiere-tag">
                         {{ $matiere['matiere'] }} - {{ $matiere['niveau'] }} ({{ $matiere['prix'] }} DH/h)
@@ -92,28 +92,28 @@
             </div>
 
             <div class="documents-list">
-                <h4>📎 Documents joints :</h4>
+                <h4>Documents joints :</h4>
                 <ul>
-                    <li>✅ Document CIN</li>
+                    <li>Document CIN</li>
                     @if($data['a_diplome'])
-                        <li>✅ Diplôme</li>
+                        <li>Diplôme</li>
                     @endif
                     @if($data['a_photo'])
-                        <li>✅ Photo de profil</li>
+                        <li>Photo de profil</li>
                     @endif
                 </ul>
             </div>
 
             <div style="background: #F3F4F6; padding: 15px; border-radius: 6px; margin: 20px 0;">
                 <p style="margin: 0; font-size: 14px; color: #4B5563;">
-                    <strong>📝 Biographie :</strong><br>
+                    <strong>Biographie :</strong><br>
                     {{ $data['biographie'] ?: 'Aucune biographie fournie' }}
                 </p>
             </div>
 
             <div class="action-section">
                 <p style="margin: 0 0 15px 0; font-size: 15px; color: #166534; font-weight: bold;">
-                    👉 Veuillez examiner cette demande et valider le profil
+                    Veuillez examiner cette demande et valider le profil
                 </p>
                 <a href="{{ $data['dashboard_url'] }}" class="action-button">
                     Accéder au tableau de bord
@@ -124,7 +124,7 @@
             </div>
 
             <div class="timestamp">
-                ⏰ Demande reçue le {{ $data['date_inscription'] }} à {{ $data['heure_inscription'] }}
+                Demande reçue le {{ $data['date_inscription'] }} à {{ $data['heure_inscription'] }}
             </div>
 
             <p style="font-size: 13px; color: #6B7280; margin-top: 25px; text-align: center;">
