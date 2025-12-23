@@ -48,8 +48,7 @@ class Dashboard extends Component
         $moyenne = DB::table('feedbacks')
     ->where('idCible', $userId)  
     ->avg('moyenne');            
-
-$this->note = $moyenne ? number_format($moyenne, 1) : '-';
+    $this->note = $moyenne ? number_format($moyenne, 1) : '-';
 
         // 1. KPI (Statistiques)
         $professeurId = DB::table('professeurs')

@@ -138,7 +138,6 @@
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="font-bold text-gray-800">Cours à venir</h3>
-                        <a href="{{ route('tutoring.courses') }}" class="text-xs font-bold text-blue-600 hover:underline">Voir calendrier</a>
                     </div>
 
                     <div class="relative pl-4 border-l-2 border-gray-100 space-y-6">
