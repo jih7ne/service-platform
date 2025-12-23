@@ -4,12 +4,12 @@
     $address = $user->localisations->first();
     $ville = $address ? $address->ville : 'Non spécifié';
     $quartier = ''; // Masquer l'adresse exacte pour la confidentialité
-    $rating = $user->note ?? 0;
-    $reviewCount = $user->nbrAvis ?? 0;
-    $photoUrl = $user->photo 
-        ? '/storage/' . $user->photo 
-        : ($babysitter->intervenant->photo 
-            ? '/storage/' . $babysitter->intervenant->photo 
+    $rating = $averageRating ?? 0;
+    $reviewCount = $reviewCount ?? 0;
+    $photoUrl = $user->photo
+        ? '/storage/' . $user->photo
+        : ($babysitter->intervenant->photo
+            ? '/storage/' . $babysitter->intervenant->photo
             : 'https://ui-avatars.com/api/?name=' . urlencode($user->prenom . ' ' . $user->nom));
 
 
@@ -45,9 +45,8 @@
                 <div class="relative flex-shrink-0">
                     <div class="w-40 h-40 rounded-3xl overflow-hidden border-4 border-white"
                         style="box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15)">
-                        <img src="{{ $photoUrl }}" 
-                            alt="{{ $user->prenom }} {{ $user->nom }}"
-                            class="w-full h-full object-cover" 
+                        <img src="{{ $photoUrl }}" alt="{{ $user->prenom }} {{ $user->nom }}"
+                            class="w-full h-full object-cover"
                             onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($user->prenom . ' ' . $user->nom) }}&size=160&background=B82E6E&color=fff'" />
                     </div>
                 </div>
@@ -84,23 +83,27 @@
                             </div>
                         </div>
                         @auth
-                        <a href="/babysitter-booking/{{ $babysitter->idBabysitter }}" wire:navigate
-                            class="px-8 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold"
-                            style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
-                            Demander un service
-                        </a>
+                            <a href="/babysitter-booking/{{ $babysitter->idBabysitter }}" wire:navigate
+                                class="px-8 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold"
+                                style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
+                                Demander un service
+                            </a>
                         @else
-                        <div class="px-8 py-3 bg-gray-300 text-gray-600 rounded-xl font-bold text-center cursor-not-allowed">
-                            <div class="flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                </svg>
-                                <span>Connectez-vous pour demander un service</span>
+                            <div
+                                class="px-8 py-3 bg-gray-300 text-gray-600 rounded-xl font-bold text-center cursor-not-allowed">
+                                <div class="flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                        </path>
+                                    </svg>
+                                    <span>Connectez-vous pour demander un service</span>
+                                </div>
                             </div>
-                        </div>
-                        <a href="/connexion" class="px-8 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center block mt-2">
-                            Se connecter
-                        </a>
+                            <a href="/connexion"
+                                class="px-8 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center block mt-2">
+                                Se connecter
+                            </a>
                         @endauth
                     </div>
 
@@ -205,16 +208,19 @@
                         </div>
                     </div>
                 @endif
-                
+
                 {{-- Maladies / Conditions médicales --}}
                 @if(!empty($maladies) && count($maladies) > 0)
-                    <div class="bg-white rounded-2xl p-8 border border-gray-100" style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06)">
+                    <div class="bg-white rounded-2xl p-8 border border-gray-100"
+                        style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06)">
                         <h2 class="text-2xl mb-4 text-black font-extrabold">Informations médicales</h2>
                         <div class="space-y-2">
                             @foreach($maladies as $maladie)
                                 <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
-                                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                     <span class="text-blue-900 font-medium">{{ $maladie }}</span>
                                 </div>
@@ -225,13 +231,16 @@
 
                 {{-- Expériences avec besoins spéciaux --}}
                 @if($experiencesBesoins->count() > 0)
-                    <div class="bg-white rounded-2xl p-8 border border-gray-100" style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06)">
+                    <div class="bg-white rounded-2xl p-8 border border-gray-100"
+                        style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06)">
                         <h2 class="text-2xl mb-6 text-black font-extrabold">Expérience avec besoins spéciaux</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             @foreach($experiencesBesoins as $exp)
                                 <div class="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
-                                    <svg class="w-6 h-6 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    <svg class="w-6 h-6 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                     <span class="text-purple-900 font-semibold">{{ $exp->experience }}</span>
                                 </div>
@@ -326,7 +335,8 @@
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between mb-2">
                                             <h4 class="text-black font-bold">{{ $review->auteur->prenom }}
-                                                {{ $review->auteur->nom }}</h4>
+                                                {{ $review->auteur->nom }}
+                                            </h4>
                                             <span
                                                 class="text-sm text-gray-500 font-medium">{{ \Carbon\Carbon::parse($review->dateCreation)->diffForHumans() }}</span>
                                         </div>
@@ -356,7 +366,8 @@
                 <div class="bg-white rounded-2xl p-6 border border-gray-100"
                     style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06)">
                     <h2 class="text-xl mb-4 text-black font-extrabold">Emplacement</h2>
-                    <div id="babysitter-profile-map" wire:ignore class="relative w-full h-64 rounded-xl overflow-hidden border-2 border-gray-100 mb-4"></div>
+                    <div id="babysitter-profile-map" wire:ignore
+                        class="relative w-full h-64 rounded-xl overflow-hidden border-2 border-gray-100 mb-4"></div>
                     <div class="flex items-start gap-3 p-3 bg-[#F7F7F7] rounded-xl">
                         <svg class="w-5 h-5 text-[#B82E6E] flex-shrink-0 mt-0.5" fill="currentColor"
                             viewBox="0 0 24 24">
@@ -415,19 +426,17 @@
         </div>
     </div>
 
-    
+
 
     @push('styles')
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-              integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
-              crossorigin=""/>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     @endpush
 
     @push('scripts')
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-                integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-                crossorigin=""></script>
-        
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
         <script>
             let profileMap = null;
 
@@ -449,26 +458,26 @@
                         profileMap.remove();
                         profileMap = null;
                     } else if (mapElement._leaflet_id) {
-                        mapElement.innerHTML = ''; 
+                        mapElement.innerHTML = '';
                     }
 
                     // Obtenir les données de localisation depuis le backend
                     const mapData = @json($this->getMapData());
-                    
+
                     if (!mapData || !mapData.latitude || !mapData.longitude) return;
 
                     // Centrer la carte sur les coordonnées de la babysitter
                     profileMap = L.map('babysitter-profile-map').setView([mapData.latitude, mapData.longitude], 13);
-                    
+
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '© OpenStreetMap contributors'
                     }).addTo(profileMap);
-                    
+
                     // Ajouter un marqueur pour la position de la babysitter
                     L.marker([mapData.latitude, mapData.longitude]).addTo(profileMap)
                         .bindPopup('<strong>{{ $babysitter->intervenant->utilisateur->prenom }} {{ $babysitter->intervenant->utilisateur->nom }}</strong><br><small>' + mapData.address + '</small>')
                         .openPopup();
-                    
+
                     // Ajuster la taille de la carte après le chargement
                     setTimeout(() => profileMap.invalidateSize(), 200);
                 });

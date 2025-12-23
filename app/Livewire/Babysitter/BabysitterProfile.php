@@ -187,7 +187,16 @@ class BabysitterProfile extends Component
             ->whereIn('statut', ['validée', 'terminée'])
             ->count();
 
-        $averageRating = $this->utilisateur->note ?? 0;
+        $feedbacks = $this->utilisateur->feedbacksRecus()->where('estVisible', true)->get();
+        $reviewCount = $feedbacks->count();
+        $averageRating = 0;
+
+        if ($reviewCount > 0) {
+            $totalRating = $feedbacks->sum(function ($feedback) {
+                return ($feedback->credibilite + $feedback->sympathie + $feedback->ponctualite + $feedback->proprete + $feedback->qualiteTravail) / 5;
+            });
+            $averageRating = round($totalRating / $reviewCount, 1);
+        }
 
         $pendingRequests = $this->babysitter->demandes()
             ->where('statut', 'en_attente')
@@ -203,6 +212,7 @@ class BabysitterProfile extends Component
         $this->statistics = [
             'completedSittings' => $completedSittings,
             'averageRating' => $averageRating,
+            'reviewCount' => $reviewCount,
             'pendingRequests' => $pendingRequests,
             'totalEarnings' => $totalEarnings,
             'responseRate' => 85, // Placeholder - calculate based on actual response data
@@ -377,7 +387,7 @@ class BabysitterProfile extends Component
 
     public function getIsExpertAttribute()
     {
-        return ($this->utilisateur->note ?? 0) >= 4.5 && $this->level >= 8;
+        return ($this->statistics['averageRating'] ?? 0) >= 4.5 && $this->level >= 8;
     }
 
     public function render()

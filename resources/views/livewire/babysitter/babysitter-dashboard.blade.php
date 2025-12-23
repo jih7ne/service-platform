@@ -60,7 +60,7 @@
                             <span class="text-2xl font-bold text-gray-800">{{ $statistics['averageRating'] }}</span>
                             <span class="text-yellow-500 ml-2">★</span>
                         </div>
-                        <p class="text-sm text-gray-600 mt-2">Basée sur {{ $babysitter?->utilisateur?->nbrAvis ?? 0 }}
+                        <p class="text-sm text-gray-600 mt-2">Basée sur {{ $statistics['reviewCount'] ?? 0 }}
                             avis</p>
                     </div>
 
@@ -124,7 +124,7 @@
                 <!-- Charts Section -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <!-- Monthly Earnings Chart -->
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100" >
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Revenus mensuels</h3>
                         <div class="h-64">
                             <canvas id="earningsChart"></canvas>
@@ -132,7 +132,7 @@
                     </div>
 
                     <!-- Rating Distribution Chart -->
-                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100" >
+                    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Distribution des notes</h3>
                         <div class="h-64">
                             <canvas id="ratingChart"></canvas>
