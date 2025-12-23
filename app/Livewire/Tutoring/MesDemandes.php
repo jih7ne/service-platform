@@ -13,8 +13,6 @@ use Livewire\Attributes\Computed;
 
 class MesDemandes extends Component
 {
-    public $prenom;
-    public $photo;
     
     // --- VARIABLES FILTRES ---
     public $showFilters = false; 
@@ -36,9 +34,6 @@ class MesDemandes extends Component
 
     public function mount()
     {
-        $user = Auth::user();
-        $this->prenom = $user->prenom;
-        $this->photo = $user->photo;
         
         // Collecter les infos de debug au chargement
         $this->collectDebugInfo();
@@ -300,13 +295,6 @@ class MesDemandes extends Component
 
         // Pas besoin de recharger manuellement, la propriété #[Computed] le fera toute seule au prochain affichage !
         session()->flash('success', "La demande a été " . $nouveauStatut . " avec succès. Emails envoyés !");
-    }
-
-    public function logout() {
-        Auth::logout();
-        session()->invalidate();
-        session()->regenerateToken();
-        return redirect('/');
     }
 
     public function render()

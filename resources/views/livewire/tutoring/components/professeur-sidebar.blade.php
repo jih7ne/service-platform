@@ -27,8 +27,8 @@
     {{-- Carte Profil --}}
     @if(!$isCollapsed)
         <div class="px-6 py-6 flex-shrink-0">
-            <button 
-                wire:click="navigate('tutoring-profile')"
+            <a 
+                href="{{ route('tutoring.profile') }}"
                 class="w-full bg-[#EFF6FF] rounded-2xl p-4 flex items-center gap-4 border border-blue-100 hover:bg-blue-50 transition-colors cursor-pointer"
             >
                 @if($photo)
@@ -42,12 +42,12 @@
                     <h3 class="font-bold text-gray-800 text-sm">{{ $prenom }}</h3>
                     <p class="text-xs text-blue-600 font-medium">Professeur</p>
                 </div>
-            </button>
+            </a>
         </div>
     @else
         <div class="px-3 py-6 flex justify-center flex-shrink-0">
-            <button 
-                wire:click="navigate('tutoring-profile')"
+            <a 
+                href="{{ route('tutoring.profile') }}"
                 class="relative"
                 title="{{ $prenom }}"
             >
@@ -58,7 +58,7 @@
                         {{ substr($prenom, 0, 1) }}
                     </div>
                 @endif
-            </button>
+            </a>
         </div>
     @endif
 
@@ -69,37 +69,38 @@
         @endif
         
         {{-- Bouton Hub Services --}}
-        <button 
-            wire:click="navigate('intervenant-hub')"
-            class="w-full flex items-center rounded-xl font-medium transition-all relative {{ $currentPage === 'intervenant-hub' ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
+        <a 
+            href="{{ route('intervenant.hub') }}"
+            class="w-full flex items-center rounded-xl font-medium transition-all relative {{ request()->routeIs('intervenant.hub') ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
             title="{{ $isCollapsed ? 'Hub Services' : '' }}"
-        >
-            <svg class="w-5 h-5 {{ $currentPage === 'intervenant-hub' ? '' : 'group-hover:text-blue-600' }} {{ $isCollapsed ? 'flex-shrink-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-            </svg>
-            @if(!$isCollapsed)
-                <span>Hub Services</span>
-            @endif
-        </button>
-        
-        {{-- Tableau de bord --}}
-        <button 
-            wire:click="navigate('tutoring-dashboard')"
-            class="w-full flex items-center rounded-xl font-medium transition-all relative {{ $currentPage === 'tutoring-dashboard' ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
-            title="{{ $isCollapsed ? 'Tableau de bord' : '' }}"
         >
             <svg class="w-5 h-5 {{ $isCollapsed ? 'flex-shrink-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
             </svg>
             @if(!$isCollapsed)
+                <span>Hub Services</span>
+            @endif
+        </a>
+        
+        {{-- Tableau de bord --}}
+        <a 
+            href="{{ route('tutoring.dashboard') }}"
+            class="w-full flex items-center rounded-xl font-medium transition-all relative {{ request()->routeIs('tutoring.dashboard') ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
+            title="{{ $isCollapsed ? 'Tableau de bord' : '' }}"
+        >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+            @if(!$isCollapsed)
                 <span>Tableau de bord</span>
             @endif
-        </button>
+        </a>
 
         {{-- Mes demandes --}}
-        <button 
-            wire:click="navigate('tutoring-requests')"
-            class="w-full flex items-center rounded-xl font-medium transition-all group relative {{ $currentPage === 'tutoring-requests' ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
+        <a 
+            href="{{ route('tutoring.requests') }}"
+            class="w-full flex items-center rounded-xl font-medium transition-all group relative {{ request()->routeIs('tutoring.requests') ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
             title="{{ $isCollapsed ? 'Mes demandes' : '' }}"
         >
             <svg class="w-5 h-5 group-hover:text-blue-600 {{ $isCollapsed ? 'flex-shrink-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,12 +116,12 @@
                     <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 @endif
             @endif
-        </button>
+        </a>
 
         {{-- Disponibilité --}}
-        <button 
-            wire:click="navigate('tutoring-disponibilites')"
-            class="w-full flex items-center rounded-xl font-medium transition-all relative {{ $currentPage === 'tutoring-disponibilites' ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
+        <a 
+            href="{{ route('tutoring.disponibilites') }}"
+            class="w-full flex items-center rounded-xl font-medium transition-all relative {{ request()->routeIs('tutoring.disponibilites') ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
             title="{{ $isCollapsed ? 'Disponibilité' : '' }}"
         >
             <svg class="w-5 h-5 {{ $isCollapsed ? 'flex-shrink-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,12 +130,12 @@
             @if(!$isCollapsed)
                 <span>Disponibilité</span>
             @endif
-        </button>
+        </a>
 
         {{-- Mes clients --}}
-        <button 
-            wire:click="navigate('tutoring-clients')"
-            class="w-full flex items-center rounded-xl font-medium transition-all group relative {{ $currentPage === 'tutoring-clients' ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
+        <a 
+            href="{{ route('tutoring.clients') }}"
+            class="w-full flex items-center rounded-xl font-medium transition-all group relative {{ request()->routeIs('tutoring.clients') ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
             title="{{ $isCollapsed ? 'Mes clients' : '' }}"
         >
             <svg class="w-5 h-5 group-hover:text-blue-600 {{ $isCollapsed ? 'flex-shrink-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,12 +144,12 @@
             @if(!$isCollapsed)
                 <span>Mes clients</span>
             @endif
-        </button>
+        </a>
 
         {{-- Mes cours --}}
-        <button 
-            wire:click="navigate('tutoring-courses')"
-            class="w-full flex items-center rounded-xl font-medium transition-all group relative {{ $currentPage === 'tutoring-courses' ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
+        <a 
+            href="{{ route('tutoring.courses') }}"
+            class="w-full flex items-center rounded-xl font-medium transition-all group relative {{ request()->routeIs('tutoring.courses') ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
             title="{{ $isCollapsed ? 'Mes cours' : '' }}"
         >
             <svg class="w-5 h-5 group-hover:text-blue-600 {{ $isCollapsed ? 'flex-shrink-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +158,21 @@
             @if(!$isCollapsed)
                 <span>Mes cours</span>
             @endif
-        </button>
+        </a>
+
+        {{-- Mes avis --}}
+        <a 
+            href="{{ route('tutoring.avis') }}"
+            class="w-full flex items-center rounded-xl font-medium transition-all group relative {{ request()->routeIs('tutoring.avis') ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
+            title="{{ $isCollapsed ? 'Mes avis' : '' }}"
+        >
+            <svg class="w-5 h-5 group-hover:text-blue-600 {{ $isCollapsed ? 'flex-shrink-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+            </svg>
+            @if(!$isCollapsed)
+                <span>Mes avis</span>
+            @endif
+        </a>
     </nav>
 
     {{-- Déconnexion --}}
