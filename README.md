@@ -1,60 +1,324 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏠 Service Platform - Plateforme Multi-Services
+<div align="center">
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![Livewire](https://img.shields.io/badge/Livewire-3.7-4E56A6?style=for-the-badge&logo=livewire&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.4+-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 
-## About Laravel
+![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)
+![Status](https://img.shields.io/badge/Status-Active-success.svg?style=flat-square)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+</div>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Une plateforme web moderne et complète permettant la gestion de plusieurs services professionnels : garde d'animaux, babysitting, et soutien scolaire.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 📋 Table des Matières
 
-## Learning Laravel
+- [À propos](#-à-propos)
+- [Fonctionnalités](#-fonctionnalités)
+- [Technologies](#-technologies)
+- [Prérequis](#-prérequis)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Utilisation](#-utilisation)
+- [Architecture](#-architecture)
+- [Tests](#-tests)
+- [License](#-license)
+- [Support](#-support)
+- [Équipe de développement](#-équipe-de-développement)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🎯 À propos
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Helpora** est une plateforme web moderne de services développée avec Laravel 12 et Livewire 3. Elle connecte des clients avec des professionnels qualifiés dans trois domaines essentiels : le soutien scolaire, le babysitting et la garde d'animaux.
 
-## Laravel Sponsors
+### 🌟 Notre Mission
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Faciliter l'accès à des services de qualité tout en offrant aux intervenants une plateforme simple pour gérer leur activité professionnelle.
 
-### Premium Partners
+### 🎓 Contexte du Projet
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Ce projet a été développé dans le cadre de module de Développement Web Avancé à ENSA de Tétouan par une équipe de 12 étudiants, organisée en 3 groupes spécialisés.
 
-## Contributing
+**Période** : Du début Novembre à la fin Décembre 2025
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-## Code of Conduct
+## ✨ Fonctionnalités
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Pour les Clients
+- ✅ Inscription et authentification sécurisée
+- 🔍 Recherche et réservation de services
+- 📅 Gestion de demandes d'intervention
+- 💬 Système de feedback et d'avis
+- 🔔 Notifications en temps réel par email
+- 📝 Gestion des réclamations
 
-## Security Vulnerabilities
+### Pour les Intervenants
+- 👤 Profil professionnel personnalisable
+- 📋 Tableau de bord des missions
+- 📅 Gestion des disponibilités
+- ✔️ Acceptation/refus de demandes
+- 📈 Suivi des interventions
+- ⭐ Gestion des avis clients
+- 💰 Calcul automatique des tarifs
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Pour les Administrateurs
+- 🎛️ Dashboard administrateur complet
+- 👥 Gestion des utilisateurs (clients, intervenants)
+- 📊 Statistiques détaillées
+- 🚨 Gestion des réclamations 
+- ✅ Validation des comptes intervenants
 
-## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-testing the rulestet
+### Fonctionnalités Techniques
+- 🔒 Authentification multi-rôles (client, intervenant, admin)
+- 💾 Système de stockage de fichiers
+- 📧 Notifications par email
+- 🔄 Mises à jour en temps réel avec Livewire
+- 📱 Interface responsive
+- 🎨 UI moderne et intuitive
+- 🔐 Sécurité renforcée (CSRF, validation, sanitization)
+
+## 🛠️ Technologies
+
+### Backend
+- **Framework** : Laravel 12.x
+- **PHP** : 8.4+
+- **Base de données** : MySQL
+- **ORM** : Eloquent
+
+### Frontend
+- **Framework UI** : Livewire 3.7
+- **Build Tool** : Vite
+- **Styling** : Tailwind CSS
+- **JavaScript** : Vanilla JS + intégration Livewire
+
+### Outils de Développement
+- **Testing** : PHPUnit 11.5
+- **Code Quality** : Laravel Pint
+- **Development Server** : Laravel Sail (optionnel)
+- **Queue Management** : Laravel Queue
+- **Logging** : Laravel Pail
+
+## 📦 Prérequis
+
+Avant de commencer, assurez-vous d'avoir installé :
+
+- PHP >= 8.4
+- Composer >= 2.x
+- Node.js >= 18.x et npm
+- MySQL >= 8.0
+- Serveur web (Apache/Nginx) et utiliser `php artisan serve`
+
+## 🚀 Installation
+
+### 1. Cloner le dépôt
+
+```bash
+git clone <repository-url> 
+cd <repository-name>
+```
+
+### 2. Installation automatique (Recommandé)
+
+```bash
+composer run setup
+```
+
+Cette commande exécutera automatiquement :
+- Installation des dépendances PHP
+- Copie du fichier `.env.example` vers `.env`
+- Génération de la clé d'application
+- Exécution des migrations
+- Installation des dépendances Node.js
+- Build des assets frontend
+
+### 3. Installation manuelle
+
+Si vous préférez une installation étape par étape :
+
+```bash
+# Installer les dépendances PHP
+composer install
+
+# Copier le fichier d'environnement
+cp .env.example .env
+
+# Générer la clé d'application
+php artisan key:generate
+
+# Configurer la base de données dans .env
+# Puis exécuter les migrations
+php artisan migrate
+
+# Installer les dépendances Node.js
+npm install
+
+# Compiler les assets
+npm run build
+```
+
+## ⚙️ Configuration
+
+### 1. Configuration de la base de données
+
+Éditez le fichier `.env` et configurez votre connexion à la base de données :
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=service_platform
+DB_USERNAME=votre_username
+DB_PASSWORD=votre_password
+```
+
+### 2. Configuration du Mail
+
+Pour les notifications par email :
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=votre_username
+MAIL_PASSWORD=votre_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@serviceplatform.com
+MAIL_FROM_NAME="Service Platform"
+```
+
+### 3. Seed des données de test (Optionnel)
+
+```bash
+php artisan db:seed
+```
+
+## 💻 Utilisation
+
+### Démarrage en mode développement
+
+Pour lancer l'application en développement avec tous les services :
+
+```bash
+composer run dev
+```
+
+Cette commande démarre :
+- 🌐 Serveur Laravel (`http://localhost:8000`)
+- ⚡ Queue worker
+- 📝 Log viewer (Pail)
+- 🔧 Vite dev server (Hot Module Replacement)
+
+### Démarrage manuel
+
+```bash
+# Terminal 1 - Serveur Laravel
+php artisan serve
+
+# Terminal 2 - Queue worker
+php artisan queue:listen
+
+# Terminal 3 - Vite dev server
+npm run dev
+```
+
+### Accès à l'application
+
+Une fois l'application démarrée, accédez à : `http://localhost:8000`
+
+## 🏗️ Architecture
+
+### Structure des dossiers
+
+```
+service-platform/
+├── app/
+│   ├── Http/
+│   │   └── Controllers/     # Contrôleurs HTTP et API
+│   ├── Livewire/            # Components Livewire
+│   │   ├── Babysitter/      # Gestion babysitting
+│   │   ├── Client/          # Interface client
+│   │   ├── PetKeeping/      # Garde d'animaux
+│   │   ├── Tutoring/        # Soutien scolaire
+│   │   └── Shared/          # Composants partagés
+│   ├── Models/              # Modèles Eloquent
+│   └── Observers/           # Observers pour les événements
+├── database/
+│   ├── migrations/          # Migrations de base de données
+│   ├── seeders/             # Seeders de données
+│   └── factories/           # Factories pour les tests
+├── resources/
+│   ├── views/               # Vues Blade
+│   │   └── livewire/        # Vues des composants Livewire
+│   └── css/                 # Fichiers CSS
+├── routes/
+│   ├── web.php              # Routes web
+│   └── api.php              # Routes API
+└── tests/                   # Tests automatisés
+    ├── Feature/             # Tests fonctionnels
+    └── Unit/                # Tests unitaires
+```
+
+### Modèles principaux
+
+- **Utilisateur** - Gestion des utilisateurs
+- **DemandeIntervention** - Demandes des services
+- **Feedback** - Avis et retours clients et intervenants
+- **Animal** - Informations sur les animaux (pour le service de garde d'animaux)
+- **ServiceProfessionnel** - Services proposés
+
+### Rôles utilisateurs
+
+1. **Client** - Réserve et consomme les services
+2. **Intervenant** - Fournit les services (babysitter, pet keeper, tuteur)
+3. **Super Admin** - Gestion complète de la plateforme
+
+## 🧪 Tests
+
+### Exécuter les tests
+
+```bash
+# Tous les tests
+composer run test
+
+# Tests avec couverture
+php artisan test --coverage
+
+# Tests spécifiques
+php artisan test --filter NomDuTest
+```
+
+## 📄 License
+
+Ce projet est sous licence MIT.
+---
+
+## 📞 Support
+
+Pour toute question ou problème :
+- Consultez la documentation Laravel : https://laravel.com/docs
+- Consultez la documentation Livewire : https://livewire.laravel.com
+
+---
+## 👥 Équipe de développement
+
+### 📚 Soutien Scolaire
+- **Chouhe Jihane** 
+- **Elmessaoudi Fatima** 
+- **Essaiey Aya** 
+- **Erraboun Nouha** 
+
+### 👶 Babysitting
+- **Aya Raissouni** 
+- **Douae Moeniss** 
+- **Oumaima Ameziane** 
+- **Raihana Mohito** 
+
+### 🐾 Garde d'Animaux
+- **Nyirenda Amos** 
+- **El Bouzidi Imane** 
+- **Wiam Benkrimen** 
+- **Wissal Khalid** 
