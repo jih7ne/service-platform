@@ -35,7 +35,6 @@ class MesDemandes extends Component
     public function updatedFiltreService() { $this->resetPage(); }
     public function updatedFiltreStatut() { $this->resetPage(); }
 
-
     private function parseAvailability($value): array
     {
         if (!is_string($value)) {
@@ -53,7 +52,6 @@ class MesDemandes extends Component
                 'value' => $decoded,
             ];
         }
-
         
         return [
             'type' => 'text',
@@ -61,12 +59,65 @@ class MesDemandes extends Component
         ];
     }
 
+    /**
+     * Calcule le prix de l'intervention selon le type de service
+     */
+    private function calculerPrixIntervention($demande)
+    {
+        // 1. Soutien Scolaire - récupérer depuis demandes_prof
+        if ($demande->idService == 1) {
+            $demandeProf = DB::table('demandes_prof')
+                ->where('demande_id', $demande->idDemande)
+                ->first();
+            
+            return $demandeProf ? $demandeProf->montant_total : 0;
+        }
+        
+        // 2. Babysitting - calculer avec prixHeure du babysitter
+        if ($demande->idService == 2) {
+            if (!$demande->heureDebut || !$demande->heureFin || !$demande->idIntervenant) {
+                return 0;
+            }
+            
+            try {
+                // Récupérer le prix horaire du babysitter
+                $babysitter = DB::table('babysitters')
+                    ->where('idBabysitter', $demande->idIntervenant)
+                    ->first();
+                
+                if (!$babysitter) {
+                    return 0;
+                }
+                
+                // Calculer le nombre d'heures
+                $debut = Carbon::parse($demande->heureDebut);
+                $fin = Carbon::parse($demande->heureFin);
+                $heures = $debut->diffInHours($fin);
+                
+                // Prix = heures × prix/heure
+                return $heures * $babysitter->prixHeure;
+                
+            } catch (\Exception $e) {
+                return 0;
+            }
+        }
+        
+        // 3. Pet Keeping - récupérer depuis factures
+        if ($demande->idService == 3) {
+            $facture = DB::table('factures')
+                ->where('idDemande', $demande->idDemande)
+                ->first();
+            
+            return $facture ? $facture->montantTotal : 0;
+        }
+        
+        return 0;
+    }
 
     public function openModal($id)
     {
         // 1. Récupération de la demande de base
         $this->selectedDemande = DB::table('demandes_intervention')
-            // MODIFICATION ICI : leftJoin au lieu de join pour éviter les erreurs si le service n'existe plus
             ->leftJoin('services', 'demandes_intervention.idService', '=', 'services.idService')
             ->leftJoin('utilisateurs', 'demandes_intervention.idIntervenant', '=', 'utilisateurs.idUser')
             ->select(
@@ -91,12 +142,9 @@ class MesDemandes extends Component
                 ->first();
         }
 
-        // Calcul du prix estimatif
+        // 3. Calcul du prix selon le type de service
         if ($this->selectedDemande) {
-            $this->selectedDemande->prix_estime = $this->calculerPrix(
-                $this->selectedDemande->heureDebut, 
-                $this->selectedDemande->heureFin
-            );
+            $this->selectedDemande->prix_estime = $this->calculerPrixIntervention($this->selectedDemande);
         }
 
         $this->showModal = true;
@@ -125,20 +173,6 @@ class MesDemandes extends Component
         session()->flash('message', 'La demande a été annulée.');
     }
 
-    private function calculerPrix($debut, $fin)
-    {
-        if (!$debut || !$fin) return 0;
-        try {
-            $h1 = Carbon::parse($debut);
-            $h2 = Carbon::parse($fin);
-            $heures = $h1->diffInHours($h2);
-            // Exemple : 50 MAD/heure par défaut
-            return max($heures * 50, 50); 
-        } catch (\Exception $e) { 
-            return 0; 
-        }
-    }
-
     public function render()
     {
         // Récupération sécurisée de l'ID utilisateur
@@ -164,7 +198,6 @@ class MesDemandes extends Component
 
         // Requête principale
         $query = DB::table('demandes_intervention')
-            // C'EST ICI LA CORRECTION PRINCIPALE : leftJoin
             ->leftJoin('services', 'demandes_intervention.idService', '=', 'services.idService')
             ->leftJoin('utilisateurs', 'demandes_intervention.idIntervenant', '=', 'utilisateurs.idUser')
             ->select(
@@ -189,9 +222,9 @@ class MesDemandes extends Component
         // Pagination
         $demandes = $query->orderBy('demandes_intervention.dateDemande', 'desc')->paginate(5);
 
-        // Calcul du prix pour chaque demande
+        // Calculer le prix pour chaque demande selon son type de service
         foreach ($demandes as $demande) {
-            $demande->prix_estime = $this->calculerPrix($demande->heureDebut, $demande->heureFin);
+            $demande->prix_estime = $this->calculerPrixIntervention($demande);
         }
 
         return view('livewire.client.mes-demandes', [
