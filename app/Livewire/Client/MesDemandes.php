@@ -64,54 +64,66 @@ class MesDemandes extends Component
      */
     private function calculerPrixIntervention($demande)
     {
-        // 1. Soutien Scolaire - récupérer depuis demandes_prof
-        if ($demande->idService == 1) {
-            $demandeProf = DB::table('demandes_prof')
-                ->where('demande_id', $demande->idDemande)
-                ->first();
-            
-            return $demandeProf ? $demandeProf->montant_total : 0;
+        // Vérifier si nomService existe dans l'objet demande (déjà récupéré via JOIN)
+        if (!isset($demande->nomService)) {
+            return 0;
         }
-        
-        // 2. Babysitting - calculer avec prixHeure du babysitter
-        if ($demande->idService == 2) {
-            if (!$demande->heureDebut || !$demande->heureFin || !$demande->idIntervenant) {
-                return 0;
-            }
-            
-            try {
-                // Récupérer le prix horaire du babysitter
-                $babysitter = DB::table('babysitters')
-                    ->where('idBabysitter', $demande->idIntervenant)
+
+        switch ($demande->nomService) {
+            case 'Soutien Scolaire':
+            case 'Soutien scolaire':
+                // Récupérer depuis demandes_prof
+                $demandeProf = DB::table('demandes_prof')
+                    ->where('demande_id', $demande->idDemande)
                     ->first();
-                
-                if (!$babysitter) {
+
+                return $demandeProf ? round($demandeProf->montant_total, 2) : 0;
+
+            case 'Babysitting':
+                // Calculer avec prixHeure du babysitter
+                if (!$demande->heureDebut || !$demande->heureFin || !$demande->idIntervenant) {
                     return 0;
                 }
-                
-                // Calculer le nombre d'heures
-                $debut = Carbon::parse($demande->heureDebut);
-                $fin = Carbon::parse($demande->heureFin);
-                $heures = $debut->diffInHours($fin);
-                
-                // Prix = heures × prix/heure
-                return $heures * $babysitter->prixHeure;
-                
-            } catch (\Exception $e) {
-                return 0;
-            }
+
+                try {
+                    // Récupérer le prix horaire du babysitter
+                    $babysitter = DB::table('babysitters')
+                        ->where('idBabysitter', $demande->idIntervenant)
+                        ->first();
+
+                    if (!$babysitter) {
+                        return 0;
+                    }
+
+                    // Calculer le nombre d'heures
+                    $debut = Carbon::parse($demande->heureDebut);
+                    $fin = Carbon::parse($demande->heureFin);
+                    $heures = $debut->diffInHours($fin);
+
+                    // Prix = heures × prix/heure
+                    return round($heures * $babysitter->prixHeure, 2);
+
+                } catch (\Exception $e) {
+                    return 0;
+                }
+
+            case 'Pet Keeping':
+            case 'Garde d\'animaux':
+                // Récupérer depuis factures
+                $facture = DB::table('factures')
+                    ->where('idDemande', $demande->idDemande)
+                    ->first();
+
+                return $facture ? round($facture->montantTotal, 2) : 0;
+
+            default:
+                // Pour tous les autres services, récupérer depuis factures
+                $facture = DB::table('factures')
+                    ->where('idDemande', $demande->idDemande)
+                    ->first();
+
+                return $facture ? round($facture->montantTotal, 2) : 0;
         }
-        
-        // 3. Pet Keeping - récupérer depuis factures
-        if ($demande->idService == 3) {
-            $facture = DB::table('factures')
-                ->where('idDemande', $demande->idDemande)
-                ->first();
-            
-            return $facture ? $facture->montantTotal : 0;
-        }
-        
-        return 0;
     }
 
     public function openModal($id)
