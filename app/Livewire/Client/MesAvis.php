@@ -7,7 +7,6 @@ use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
 class MesAvis extends Component
@@ -34,11 +33,14 @@ class MesAvis extends Component
     // User
     public $user;
 
-    // Règles de validation pour la réclamation
+    // Listeners pour Livewire 3
+    protected $listeners = ['reclamation-created' => '$refresh'];
+
+    // Règles de validation
     protected $rules = [
         'sujet' => 'required|min:5|max:255',
         'description' => 'required|min:10',
-        'priorite' => 'required|in:faible,moyenne,urgente',
+        'priorite' => 'required|in:faible,moyenne,haute',
         'preuves.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240'
     ];
 
@@ -49,7 +51,7 @@ class MesAvis extends Component
         'description.required' => 'La description est obligatoire',
         'description.min' => 'La description doit contenir au moins 10 caractères',
         'priorite.required' => 'Veuillez sélectionner une priorité',
-        'priorite.in' => 'La priorité doit être faible, moyenne ou urgente',
+        'priorite.in' => 'La priorité doit être faible, moyenne ou haute',
         'preuves.*.mimes' => 'Les fichiers doivent être des images (jpg, jpeg, png) ou des PDF',
         'preuves.*.max' => 'Chaque fichier ne doit pas dépasser 10 MB'
     ];
@@ -112,6 +114,7 @@ class MesAvis extends Component
                 'feedbacks.*',
                 'utilisateurs.prenom as auteur_prenom',
                 'utilisateurs.nom as auteur_nom',
+                'utilisateurs.photo as auteur_photo',
                 'services.nomService as nom_service',
                 DB::raw('ROUND((feedbacks.credibilite + feedbacks.sympathie + feedbacks.ponctualite + feedbacks.proprete + feedbacks.qualiteTravail) / 5, 1) as note_moyenne')
             )
@@ -125,6 +128,7 @@ class MesAvis extends Component
                 ->exists();
             
             $this->showAvisModal = true;
+            $this->dispatch('open-modal');
             Log::info("Avis modal opened successfully");
         } else {
             Log::error("Avis not found for ID: {$id}");
@@ -147,6 +151,7 @@ class MesAvis extends Component
         $this->priorite = 'moyenne';
         $this->resetValidation();
         $this->showReclamationModal = true;
+        $this->dispatch('open-reclamation-modal');
     }
 
     public function openReclamationModalFromDetails()
@@ -174,9 +179,6 @@ class MesAvis extends Component
     {
         Log::info('=== DEBUT CREATION RECLAMATION ===');
         Log::info('Feedback ID: ' . $this->selectedFeedbackId);
-        Log::info('Sujet: ' . $this->sujet);
-        Log::info('Description: ' . $this->description);
-        Log::info('Priorité: ' . $this->priorite);
         
         // Validation
         $this->validate();
@@ -216,7 +218,7 @@ class MesAvis extends Component
                 Log::info('Processing ' . count($this->preuves) . ' files');
                 $paths = [];
                 foreach ($this->preuves as $file) {
-                    $path = $file->store('reclamations/preuves', 'public');
+                    $path = $file->store('reclamations', 'public');
                     $paths[] = $path;
                     Log::info('File stored: ' . $path);
                 }
@@ -275,15 +277,15 @@ class MesAvis extends Component
         }
     }
 
-    // Calcul des statistiques
+    // ✅ CORRECTION : Calcul des statistiques avec > 3 et <= 3
     private function getStats()
     {
         $allAvis = $this->getBaseQuery()->get();
 
         return [
             'total_avis' => $allAvis->count(),
-            'avis_positifs' => $allAvis->where('note_moyenne', '>=', 4)->count(),
-            'avis_negatifs' => $allAvis->where('note_moyenne', '<', 3)->count(),
+            'avis_positifs' => $allAvis->where('note_moyenne', '>', 3)->count(),
+            'avis_negatifs' => $allAvis->where('note_moyenne', '<=', 3)->count(),
         ];
     }
 
@@ -319,22 +321,29 @@ class MesAvis extends Component
             $query->where('services.nomService', $this->filterService);
         }
 
-        // Filtre note
-        if (!empty($this->filterNote)) {
-            if ($this->filterNote === 'positive') {
-                $query->havingRaw('note_moyenne >= 4');
-            } elseif ($this->filterNote === 'negative') {
-                $query->havingRaw('note_moyenne < 3');
-            }
-        }
-
         return $query;
     }
 
+    // ✅ CORRECTION : Filtrage avec > 3 et <= 3
     public function render()
     {
         $query = $this->getBaseQuery();
-        $avis = $query->orderBy('feedbacks.dateCreation', 'desc')->paginate(5);
+
+        // Récupération des avis
+        $avis = $query->orderBy('feedbacks.dateCreation', 'desc')->get();
+
+        // Application du filtre sur la collection
+        if (!empty($this->filterNote)) {
+            if ($this->filterNote === 'positive') {
+                $avis = $avis->filter(function($item) {
+                    return $item->note_moyenne > 3;
+                });
+            } elseif ($this->filterNote === 'negative') {
+                $avis = $avis->filter(function($item) {
+                    return $item->note_moyenne <= 3;
+                });
+            }
+        }
 
         // Vérifier si chaque avis a déjà une réclamation
         foreach ($avis as $avis_item) {
@@ -343,6 +352,19 @@ class MesAvis extends Component
                 ->where('idAuteur', $this->user->idUser)
                 ->exists();
         }
+
+        // Pagination manuelle de la collection
+        $perPage = 5;
+        $currentPage = $this->getPage();
+        $offset = ($currentPage - 1) * $perPage;
+        
+        $avisPaginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $avis->slice($offset, $perPage)->values(),
+            $avis->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
 
         // Services disponibles pour le filtre
         $services = DB::table('feedbacks')
@@ -357,7 +379,7 @@ class MesAvis extends Component
         $stats = $this->getStats();
 
         return view('livewire.client.mes-avis', [
-            'avis' => $avis,
+            'avis' => $avisPaginated,
             'stats' => $stats,
             'services' => $services
         ])->layout('layouts.app');
