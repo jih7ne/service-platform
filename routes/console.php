@@ -8,8 +8,10 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Planification de la tâche d'annulation automatique des réservations babysitter (toutes les heures)
-// Assurez-vous que le cron est configuré sur le serveur (php artisan schedule:run)
 \Illuminate\Support\Facades\Schedule::command('babysitter:cancel-expired-bookings')->hourly();
+
+// 🆕 Planification de l'annulation automatique des réservations soutien scolaire (toutes les heures)
+\Illuminate\Support\Facades\Schedule::command('tutoring:cancel-expired-bookings')->hourly();
 
 // Rappels de feedback quotidiens (Client & Babysitter)
 \Illuminate\Support\Facades\Schedule::command('feedback:send-reminders')->dailyAt('11:19');

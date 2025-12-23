@@ -20,7 +20,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎓 Helpora</h1>
+            <h1>Helpora</h1>
         </div>
         
         <div class="content">
@@ -31,11 +31,11 @@
             </p>
 
             <div style="text-align: center;">
-                <span class="status-badge">⏳ En cours de traitement</span>
+                <span class="status-badge"> En cours de traitement</span>
             </div>
 
             <div class="info-card">
-                <h3>📋 Récapitulatif de votre demande :</h3>
+                <h3>Récapitulatif de votre demande :</h3>
                 <ul>
                     <li><strong>Nom :</strong> {{ $data['nom'] }} {{ $data['prenom'] }}</li>
                     <li><strong>Email :</strong> {{ $data['email'] }}</li>
@@ -47,12 +47,12 @@
 
             <div class="highlight">
                 <p style="margin: 0; font-size: 14px; color: #1E40AF;">
-                    <strong>⏱️ Délai de traitement :</strong> Votre dossier sera examiné sous 24 à 48 heures par notre équipe.
+                    <strong>Délai de traitement :</strong> Votre dossier sera examiné sous 24 à 48 heures par notre équipe.
                 </p>
             </div>
 
             <div class="info-card">
-                <h3>🔍 Prochaines étapes :</h3>
+                <h3>Prochaines étapes :</h3>
                 <ul>
                     <li>Vérification de vos documents (CIN, diplômes)</li>
                     <li>Validation de votre profil par notre équipe</li>
