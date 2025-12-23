@@ -81,11 +81,7 @@ use App\Livewire\PetKeeping\MyServices as MyPetKeepingServices;
 use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 use App\Livewire\PetKeeping\SingleService as SinglePetKeepingService;
 use App\Livewire\Babysitter\DisponibilitesPage as BabysitterDisponibilitesPage;
-
-
-
-
-
+use App\Livewire\PetKeeping\PetKeeperAvisPage;
 
 // Public Routes
 Route::get('/', LandingPage::class)->name('home');
@@ -171,6 +167,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('missions', PetKeeperMissions::class)->name('missions');
         Route::get('dashboard/services', MyPetKeepingServices::class)->name('services');
         Route::get('dashboard/service/{serviceId}', SinglePetKeepingService::class)->name('services.show');
+        Route::get('dashboard/feedbacks', PetKeeperAvisPage::class)->name('dashboard.feedbacks');
         Route::get('dashboard/disponibilites', DisponibilitesPetKeeper::class)->name('disponibilites');
         Route::get('dashboard/clients', PetKeeperClients::class)->name('clients');
         Route::get('dashboard/add-service', AddPetKeepingService::class)->name('addservice');
