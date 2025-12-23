@@ -19,7 +19,7 @@ class MesDemandes extends Component
     public $filterSort = 'recent'; 
     public $filterType = 'all';
     
-    // --- VARIABLES ONLETS ---
+    // --- VARIABLES ONGLETS ---
     public $selectedTab = 'en_attente';
     public $showAdvancedFilters = false;
     public $datePeriod = 'all';
@@ -28,14 +28,9 @@ class MesDemandes extends Component
     
     // --- DEBUG VARIABLES ---
     public $debugInfo = [];
-    // -------------------------
-
-    // Note : On retire "public $demandes" car on utilise la méthode calculée ci-dessous
 
     public function mount()
     {
-        
-        // Collecter les infos de debug au chargement
         $this->collectDebugInfo();
     }
 
@@ -47,10 +42,7 @@ class MesDemandes extends Component
     public function setTab($tab)
     {
         $this->selectedTab = $tab;
-        // Debug pour voir si l'onglet change
         \Log::info('Tab changed to: ' . $tab);
-        
-        // Collecter les infos de debug
         $this->collectDebugInfo();
     }
 
@@ -58,12 +50,10 @@ class MesDemandes extends Component
     {
         $userId = Auth::id();
         
-        // Vérifier toutes les demandes de l'utilisateur
         $allDemandes = DB::table('demandes_intervention')
             ->where('idIntervenant', $userId)
             ->get(['idDemande', 'statut', 'dateDemande', 'idClient', 'idService']);
             
-        // Compter par statut
         $byStatus = [];
         foreach($allDemandes as $demande) {
             $status = $demande->statut;
@@ -73,7 +63,6 @@ class MesDemandes extends Component
             $byStatus[$status]++;
         }
         
-        // Vérifier les services
         $services = DB::table('services')->get(['idService', 'nomService']);
         $tutoringService = DB::table('services')->where('nomService', 'Soutien Scolaire')->first();
         
@@ -94,7 +83,6 @@ class MesDemandes extends Component
     {
         $userId = Auth::id();
         
-        // Récupérer toutes les demandes de l'utilisateur
         $demandes = DB::table('demandes_intervention')
             ->where('idIntervenant', $userId)
             ->get(['idDemande', 'statut']);
@@ -104,16 +92,11 @@ class MesDemandes extends Component
         foreach($demandes as $demande) {
             \Log::info('Suppression demande ID: ' . $demande->idDemande . ' (statut: ' . $demande->statut . ')');
             
-            // Supprimer les enregistrements liés
             DB::table('demandes_prof')->where('demande_id', $demande->idDemande)->delete();
-            
-            // Supprimer la demande principale
             DB::table('demandes_intervention')->where('idDemande', $demande->idDemande)->delete();
         }
         
         \Log::info('Suppression terminée');
-        
-        // Rafraîchir les infos de debug
         $this->collectDebugInfo();
         
         session()->flash('success', 'Toutes les demandes de test ont été supprimées');
@@ -128,7 +111,6 @@ class MesDemandes extends Component
     {
         $userId = Auth::id();
         
-        // Debug pour vérifier les données dans la base (Soutien Scolaire uniquement)
         $enAttente = DB::table('demandes_intervention')->where('idIntervenant', $userId)->where('statut', 'en_attente')->where('idService', 1)->count();
         $validee = DB::table('demandes_intervention')->where('idIntervenant', $userId)->where('statut', 'validée')->where('idService', 1)->count();
         $archive = DB::table('demandes_intervention')->where('idIntervenant', $userId)->whereIn('statut', ['validée', 'terminée', 'completed', 'refusée', 'annulée'])->where('idService', 1)->count();
@@ -157,14 +139,12 @@ class MesDemandes extends Component
         ];
     }
 
-    // --- C'EST ICI LA MAGIE ---
-    // Cette fonction se relance automatiquement à chaque action !
+    // --- MÉTHODE CALCULÉE AVEC FILTRES ---
     #[Computed]
     public function demandes()
     {
         $user = Auth::user();
         
-        // Étape 1: Récupérer les demandes de base avec filtre simple
         $query = DB::table('demandes_intervention')
             ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
             ->leftJoin('demandes_prof', 'demandes_intervention.idDemande', '=', 'demandes_prof.demande_id')
@@ -173,7 +153,7 @@ class MesDemandes extends Component
             ->leftJoin('niveaux', 'services_prof.niveau_id', '=', 'niveaux.id_niveau')
             ->leftJoin('localisations', 'utilisateurs.idUser', '=', 'localisations.idUser')
             ->where('demandes_intervention.idIntervenant', $user->idUser)
-            ->where('demandes_intervention.idService', 1); // Filtrer pour Soutien Scolaire uniquement
+            ->where('demandes_intervention.idService', 1); // Soutien Scolaire uniquement
 
         // Filtrer selon l'onglet sélectionné
         switch ($this->selectedTab) {
@@ -188,6 +168,56 @@ class MesDemandes extends Component
                 break;
             default:
                 $query->where('demandes_intervention.statut', 'en_attente');
+                break;
+        }
+
+        // --- FILTRES AVANCÉS ---
+        
+        // Filtre par matière
+        if ($this->filterMatiere !== 'all') {
+            $query->where('matieres.nom_matiere', $this->filterMatiere);
+        }
+
+        // Filtre par ville
+        if (!empty($this->cityFilter)) {
+            $query->where('localisations.ville', 'like', '%' . $this->cityFilter . '%');
+        }
+
+        // Filtre par période de date
+        if ($this->datePeriod !== 'all') {
+            switch ($this->datePeriod) {
+                case 'today':
+                    $query->whereDate('demandes_intervention.dateSouhaitee', now()->toDateString());
+                    break;
+                case 'week':
+                    $query->whereBetween('demandes_intervention.dateSouhaitee', [
+                        now()->startOfWeek(),
+                        now()->endOfWeek()
+                    ]);
+                    break;
+                case 'month':
+                    $query->whereMonth('demandes_intervention.dateSouhaitee', now()->month)
+                          ->whereYear('demandes_intervention.dateSouhaitee', now()->year);
+                    break;
+            }
+        }
+
+        // --- TRI ---
+        switch ($this->filterSort) {
+            case 'recent':
+                $query->orderBy('demandes_intervention.dateDemande', 'desc');
+                break;
+            case 'ancien':
+                $query->orderBy('demandes_intervention.dateDemande', 'asc');
+                break;
+            case 'date_proche':
+                $query->orderBy('demandes_intervention.dateSouhaitee', 'asc');
+                break;
+            case 'prix_haut':
+                $query->orderBy('demandes_prof.montant_total', 'desc');
+                break;
+            case 'prix_bas':
+                $query->orderBy('demandes_prof.montant_total', 'asc');
                 break;
         }
 
@@ -211,32 +241,10 @@ class MesDemandes extends Component
                 'localisations.adresse as client_adresse',
                 'localisations.ville as client_ville'
             )
-            ->orderBy('demandes_intervention.dateDemande', 'desc')
             ->get();
 
-        // Debug pour voir les résultats
-        \Log::info('Tab: ' . $this->selectedTab . ' - Found ' . $results->count() . ' demandes (Soutien Scolaire only)');
+        \Log::info('Tab: ' . $this->selectedTab . ' - Found ' . $results->count() . ' demandes');
         
-        // Debug supplémentaire pour l'onglet archive
-        if ($this->selectedTab === 'archive') {
-            \Log::info('Archive tab debug - User ID: ' . $user->idUser);
-            
-            // Vérifier toutes les demandes de l'utilisateur
-            $allDemandes = DB::table('demandes_intervention')
-                ->where('idIntervenant', $user->idUser)
-                ->where('idService', 1)
-                ->get(['idDemande', 'statut']);
-            
-            \Log::info('All user demands (Soutien Scolaire):');
-            foreach($allDemandes as $demande) {
-                \Log::info('  - ID: ' . $demande->idDemande . ' | Statut: ' . $demande->statut);
-            }
-            
-            // Vérifier les statuts qui devraient être dans l'archive
-            $archiveStatuses = ['terminée', 'completed', 'refusée', 'annulée'];
-            \Log::info('Archive statuses: ' . implode(', ', $archiveStatuses));
-        }
-
         return $results;
     }
 
@@ -254,7 +262,6 @@ class MesDemandes extends Component
     {
         $prof = Auth::user();
         
-        // On cherche dans la liste actuelle ($this->demandes est maintenant une propriété magique)
         $demandeInfo = $this->demandes()->firstWhere('idDemande', $idDemande);
 
         if (!$demandeInfo) return;
@@ -293,7 +300,6 @@ class MesDemandes extends Component
             try { Mail::to($prof->email)->send(new ConfirmationActionProf($mailData)); } catch (\Exception $e) {}
         }
 
-        // Pas besoin de recharger manuellement, la propriété #[Computed] le fera toute seule au prochain affichage !
         session()->flash('success', "La demande a été " . $nouveauStatut . " avec succès. Emails envoyés !");
     }
 
