@@ -45,12 +45,12 @@ class PetKeepingSeeder extends Seeder
     private function createServices()
     {
         $services = [
-            ['nomService' => 'Pet Boarding', 'description' => 'Overnight care', 'statut' => 'ACTIVE'],
-            ['nomService' => 'Pet Sitting', 'description' => 'In-home care', 'statut' => 'ACTIVE'],
-            ['nomService' => 'Dog Walking', 'description' => 'Daily walks', 'statut' => 'ACTIVE'],
-            ['nomService' => 'Pet Grooming', 'description' => 'Bathing & grooming', 'statut' => 'ACTIVE'],
-            ['nomService' => 'Training', 'description' => 'Obedience training', 'statut' => 'ACTIVE'],
-            ['nomService' => 'Drop-in Visits', 'description' => 'Short check-ins', 'statut' => 'ACTIVE'],
+            ['nomService' => 'Pet Boarding', 'description' => 'Overnight care'],
+            ['nomService' => 'Pet Sitting', 'description' => 'In-home care'],
+            ['nomService' => 'Dog Walking', 'description' => 'Daily walks'],
+            ['nomService' => 'Pet Grooming', 'description' => 'Bathing & grooming'],
+            ['nomService' => 'Training', 'description' => 'Obedience training'],
+            ['nomService' => 'Drop-in Visits', 'description' => 'Short check-ins'],
         ];
         
         foreach ($services as $service) {
@@ -217,7 +217,6 @@ class PetKeepingSeeder extends Seeder
                         'pet_type' => $mapping['pets'],
                         'payment_criteria' => 'PER_HOUR',
                         'base_price' => $this->randomDouble(), 
-                        'statut' => 'ACTIVE',
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];

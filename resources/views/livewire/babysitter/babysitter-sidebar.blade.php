@@ -1,5 +1,12 @@
 @php
-    $babysitterName = $babysitter?->utilisateur?->prenom . ' ' . $babysitter?->utilisateur?->nom ?? 'Babysitter';
+    // Ensure $babysitter is always defined to avoid undefined variable errors in views
+    $babysitter = $babysitter ?? null;
+
+    // Build a safe display name
+    $given = $babysitter?->utilisateur?->prenom ?? '';
+    $family = $babysitter?->utilisateur?->nom ?? '';
+    $babysitterName = trim(sprintf('%s %s', $given, $family)) ?: 'Babysitter';
+
     $babysitterRating = $babysitter?->utilisateur?->note ?? 0;
     $babysitterPhoto = $babysitter?->utilisateur?->photo ?? null;
     $pendingRequestsCount = \App\Models\Babysitting\DemandeIntervention::where('idIntervenant', auth()->id())
@@ -49,9 +56,21 @@
 
     <!-- Navigation -->
     <nav class="p-4">
+        <!-- Return Button -->
+        <div class="mb-4">
+            <a href="{{ route('intervenant.hub') }}"
+                class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Retour à l'espace intervenant</span>
+            </a>
+        </div>
+
         <ul class="space-y-2">
             <li>
-                <a href="{{ route('babysitter.dashboard') }}"
+                <a href="{{ route('babysitter.dashboard') }}" wire:navigate
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
                           {{ request()->routeIs('babysitter.dashboard') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,9 +82,9 @@
             </li>
 
             <li>
-                <a href="#"
+                <a href="{{ route('babysitter.demandes') }}" wire:navigate
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
-                          {{ request()->routeIs('babysitter.requests') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                          {{ request()->routeIs('babysitter.demandes') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -80,19 +99,7 @@
             </li>
 
             <li>
-                <a href="#"
-                    class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
-                          {{ request()->routeIs('babysitter.calendar') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>Calendrier</span>
-                </a>
-            </li>
-
-            <li>
-                <a href="{{ route('babysitter.disponibilites') }}"
+                <a href="{{ route('babysitter.disponibilites') }}" wire:navigate
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
                           {{ request()->routeIs('babysitter.disponibilites') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,9 +112,9 @@
                 </a>
             </li>
 
-            
+
             <li>
-                <a href="{{ route('babysitter.avis') }}"
+                <a href="{{ route('babysitter.avis') }}" wire:navigate
                     class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
                           {{ request()->routeIs('babysitter.avis') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,18 +122,6 @@
                             d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                     </svg>
                     <span>Avis</span>
-                </a>
-            </li>
-
-            <li>
-                <a href="#"
-                    class="w-full text-left px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors
-                          {{ request()->routeIs('babysitter.feedback') ? 'bg-pink-50 text-pink-600 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                    </svg>
-                    <span>Feedback</span>
                 </a>
             </li>
 

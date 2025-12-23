@@ -3,7 +3,7 @@
     $babysitterPhoto = $babysitter?->utilisateur?->photo ?? null;
 @endphp
 
-<div>
+<div wire:init="loadDisponibilites">
     <div class="min-h-screen bg-gray-50 flex">
         <!-- Include Sidebar -->
         @include('livewire.babysitter.babysitter-sidebar', ['babysitter' => $babysitter])
@@ -109,11 +109,21 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="text-xs font-semibold text-gray-500 uppercase">Début</label>
-                                    <input type="time" wire:model="heureDebut" class="mt-1 w-full rounded-lg border-gray-200 text-sm focus:border-pink-500 focus:ring-pink-500 bg-gray-50 border-0">
+                                    <select wire:model="heureDebut" class="mt-1 w-full rounded-lg border-gray-200 text-sm focus:border-pink-500 focus:ring-pink-500 bg-gray-50 border-0">
+                                        <option value="">Sélectionner</option>
+                                        @foreach($this->heures as $heure)
+                                            <option value="{{ $heure }}">{{ $heure }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="text-xs font-semibold text-gray-500 uppercase">Fin</label>
-                                    <input type="time" wire:model="heureFin" class="mt-1 w-full rounded-lg border-gray-200 text-sm focus:border-pink-500 focus:ring-pink-500 bg-gray-50 border-0">
+                                    <select wire:model="heureFin" class="mt-1 w-full rounded-lg border-gray-200 text-sm focus:border-pink-500 focus:ring-pink-500 bg-gray-50 border-0">
+                                        <option value="">Sélectionner</option>
+                                        @foreach($this->heures as $heure)
+                                            <option value="{{ $heure }}">{{ $heure }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
                             

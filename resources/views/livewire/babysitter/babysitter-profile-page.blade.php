@@ -24,7 +24,8 @@
     ];
 @endphp
 
-<div class="min-h-screen bg-[#F7F7F7]">
+<div class="min-h-screen bg-[#F7F7F7]" wire:poll.6s>
+    <livewire:shared.header-babysitting />
     <div class="bg-white border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <a href="/liste-babysitter" wire:navigate
@@ -82,11 +83,25 @@
                                 <span class="text-gray-500 font-semibold">({{ $reviewCount }} avis)</span>
                             </div>
                         </div>
+                        @auth
                         <a href="/babysitter-booking/{{ $babysitter->idBabysitter }}" wire:navigate
                             class="px-8 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold"
                             style="box-shadow: 0 4px 20px rgba(184, 46, 110, 0.3)">
                             Demander un service
                         </a>
+                        @else
+                        <div class="px-8 py-3 bg-gray-300 text-gray-600 rounded-xl font-bold text-center cursor-not-allowed">
+                            <div class="flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <span>Connectez-vous pour demander un service</span>
+                            </div>
+                        </div>
+                        <a href="/connexion" class="px-8 py-3 bg-[#B82E6E] text-white rounded-xl hover:bg-[#A02860] transition-all font-bold text-center block mt-2">
+                            Se connecter
+                        </a>
+                        @endauth
                     </div>
 
                     <div class="grid grid-cols-3 gap-4">
@@ -341,7 +356,7 @@
                 <div class="bg-white rounded-2xl p-6 border border-gray-100"
                     style="box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06)">
                     <h2 class="text-xl mb-4 text-black font-extrabold">Emplacement</h2>
-                    <div id="babysitter-profile-map" class="relative w-full h-64 rounded-xl overflow-hidden border-2 border-gray-100 mb-4"></div>
+                    <div id="babysitter-profile-map" wire:ignore class="relative w-full h-64 rounded-xl overflow-hidden border-2 border-gray-100 mb-4"></div>
                     <div class="flex items-start gap-3 p-3 bg-[#F7F7F7] rounded-xl">
                         <svg class="w-5 h-5 text-[#B82E6E] flex-shrink-0 mt-0.5" fill="currentColor"
                             viewBox="0 0 24 24">
@@ -414,25 +429,53 @@
                 crossorigin=""></script>
         
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Obtenir les données de localisation depuis le backend
-                const mapData = @json($this->getMapData());
-                
-                // Centrer la carte sur les coordonnées de la babysitter
-                const map = L.map('babysitter-profile-map').setView([mapData.latitude, mapData.longitude], 13);
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
-                }).addTo(map);
-                
-                // Ajouter un marqueur pour la position de la babysitter
-                L.marker([mapData.latitude, mapData.longitude]).addTo(map)
-                    .bindPopup('<strong>{{ $babysitter->prenom }} {{ $babysitter->nom }}</strong><br><small>' + mapData.address + '</small>')
-                    .openPopup();
-                
-                // Ajuster la taille de la carte après le chargement
-                setTimeout(() => map.invalidateSize(), 200);
-            });
+            let profileMap = null;
+
+            function waitForLeaflet(callback) {
+                if (typeof L !== 'undefined') {
+                    callback();
+                } else {
+                    setTimeout(() => waitForLeaflet(callback), 100);
+                }
+            }
+
+            function initProfileMap() {
+                waitForLeaflet(() => {
+                    const mapElement = document.getElementById('babysitter-profile-map');
+                    if (!mapElement) return;
+
+                    // Si une carte existe déjà, la détruire proprement
+                    if (profileMap) {
+                        profileMap.remove();
+                        profileMap = null;
+                    } else if (mapElement._leaflet_id) {
+                        mapElement.innerHTML = ''; 
+                    }
+
+                    // Obtenir les données de localisation depuis le backend
+                    const mapData = @json($this->getMapData());
+                    
+                    if (!mapData || !mapData.latitude || !mapData.longitude) return;
+
+                    // Centrer la carte sur les coordonnées de la babysitter
+                    profileMap = L.map('babysitter-profile-map').setView([mapData.latitude, mapData.longitude], 13);
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(profileMap);
+                    
+                    // Ajouter un marqueur pour la position de la babysitter
+                    L.marker([mapData.latitude, mapData.longitude]).addTo(profileMap)
+                        .bindPopup('<strong>{{ $babysitter->intervenant->utilisateur->prenom }} {{ $babysitter->intervenant->utilisateur->nom }}</strong><br><small>' + mapData.address + '</small>')
+                        .openPopup();
+                    
+                    // Ajuster la taille de la carte après le chargement
+                    setTimeout(() => profileMap.invalidateSize(), 200);
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', initProfileMap);
+            document.addEventListener('livewire:navigated', initProfileMap);
         </script>
     @endpush
 </div>

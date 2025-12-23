@@ -12,7 +12,6 @@ use App\Mail\BabysitterRegistrationMail;
 use App\Models\shared\Intervenant;
 use App\Models\shared\Utilisateur;
 use App\Models\Babysitting\Babysitter;
-use App\Models\Babysitting\PreferenceDomicil;
 use App\Models\Babysitting\CategorieEnfant;
 use App\Models\Shared\Disponibilite;
 use App\Models\Babysitting\ExperienceBesoinSpeciaux;
@@ -20,6 +19,7 @@ use App\Models\Babysitting\Formation;
 use App\Models\Babysitting\Superpouvoir;
 use App\Models\shared\Localisation;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 
 class BabysitterRegistration extends Component
 {
@@ -87,31 +87,191 @@ class BabysitterRegistration extends Component
         "Déficience visuelle",
     ];
 
-    public $superpouvoirs_list = [
-        ['name' => 'Dessin', 'icon' => '🎨'],
-        ['name' => 'Travaux manuels', 'icon' => '✂️'],
-        ['name' => 'Langues', 'icon' => '🌍'],
-        ['name' => 'Faire la lecture', 'icon' => '📚'],
-        ['name' => 'Jeux', 'icon' => '🎲'],
-        ['name' => 'Musique', 'icon' => '🎵'],
-    ];
+    public $superpouvoirs_list = [];
 
     public $langues_list = ['Français', 'Anglais', 'Arabe', 'Espagnol', 'Allemand'];
-    
+
     public $categories_enfants_list = ['Nouveau-né (0-6 mois)', 'Bébé (6-18 mois)', 'Tout-petit (18-36 mois)', 'Enfant (3-6 ans)', 'Enfant plus âgé (6-12 ans)'];
-    
+
     public $preferences_domicile_list = [
         ['label' => 'Chez moi', 'value' => 'domicile_babysitter', 'icon' => '🏠'],
         ['label' => 'Chez la famille', 'value' => 'domicile_client', 'icon' => '🚗'],
     ];
-    
+
     public $certifications_list = ['Premiers secours', 'Sauvetage aquatique', 'Garde d\'enfants', 'Assistant maternel', 'Éducation spécialisée'];
 
     public function mount()
     {
+        // Pré-remplir les données si l'utilisateur est déjà connecté comme intervenant
+        if (Auth::check() && Auth::user()->role === 'intervenant') {
+            $this->prepopulateFromExistingUser();
+            // Rester à l'étape 1 - PAS de saut automatique
+        }
+
+        // Charger dynamiquement tous les superpouvoirs depuis la base
+        $this->superpouvoirs_list = Superpouvoir::all()->map(function($sp) {
+            // Associer une icône selon le nom
+            $icon = match(true) {
+                str_contains($sp->superpouvoir, 'Dessin') => '🎨',
+                str_contains($sp->superpouvoir, 'Travaux manuels') => '✂️',
+                str_contains($sp->superpouvoir, 'Langues') => '🌍',
+                str_contains($sp->superpouvoir, 'lecture') => '📚',
+                str_contains($sp->superpouvoir, 'Jeux') => '🎲',
+                str_contains($sp->superpouvoir, 'Musique') => '🎵',
+                str_contains($sp->superpouvoir, 'Tâches ménagères') => '🧹',
+                str_contains($sp->superpouvoir, 'Cuisine') => '🍳',
+                str_contains($sp->superpouvoir, 'animaux') => '🐶',
+                str_contains($sp->superpouvoir, 'Aide aux devoirs') => '📝',
+                default => '✨',
+            };
+            return [
+                'name' => $sp->superpouvoir,
+                'icon' => $icon
+            ];
+        })->toArray();
+
         $jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
         foreach ($jours as $jour) {
             $this->disponibilites[$jour] = [];
+        }
+    }
+
+    private function prepopulateFromExistingUser()
+    {
+        $user = Auth::user();
+        $intervenant = Intervenant::where('IdIntervenant', $user->idUser)->first();
+        
+        if (!$intervenant) {
+            return;
+        }
+
+        // Pré-remplir les informations utilisateur de base pour l'étape 1 (mais éditables)
+        $this->prenom = $user->prenom;
+        $this->nom = $user->nom;
+        $this->email = $user->email;
+        $this->date_naissance = $user->dateNaissance;
+        // Pré-remplir le mot de passe (hashed)
+        $this->mot_de_passe = 'password123'; // Temporaire, à changer
+        
+        // Pré-remplir l'étape 2 (contact/localisation) - sera sautée
+        $this->telephone = $user->telephone;
+        
+        // Pré-remplir la localisation si disponible
+        if ($user->localisations && count($user->localisations) > 0) {
+            $localisation = $user->localisations->first();
+            if ($localisation) {
+                $this->adresse = $localisation->adresse;
+                $this->ville = $localisation->ville;
+                $this->latitude = $localisation->latitude;
+                $this->longitude = $localisation->longitude;
+            }
+        }
+        
+        // Pré-remplir les informations babysitter pour l'étape 3 et suivantes
+        $babysitter = Babysitter::where('idBabysitter', $intervenant->IdIntervenant)->first();
+        if ($babysitter) {
+            $this->prix_horaire = $babysitter->prixHeure;
+            $this->annees_experience = $babysitter->expAnnee;
+            $this->niveau_etudes = $babysitter->niveauEtudes;
+            $this->description = $babysitter->description;
+            $this->autre_formation = $babysitter->autreFormation;
+            $this->langues = $babysitter->langues;
+            
+            // Préférences
+            $this->je_fume = $babysitter->estFumeur;
+            $this->jai_enfants = $babysitter->possedeEnfant;
+            $this->permis_conduire = $babysitter->permisConduire;
+            $this->jai_voiture = $babysitter->mobilite;
+            
+            // Préférences de domicile : désactivé car modèle inexistant
+            $this->preferences_domicile = [];
+            
+            // Catégories d'enfants
+            $categories = DB::table('choisir_categories')
+                ->join('categorie_enfants', 'choisir_categories.idCategorie', '=', 'categorie_enfants.idCategorie')
+                ->where('choisir_categories.idBabysitter', $babysitter->idBabysitter)
+                ->pluck('categorie_enfants.categorie')
+                ->toArray();
+            $this->categories_enfants = $categories;
+            
+            // Formations
+            $formations = Formation::where('idBabysitter', $babysitter->idBabysitter)->get();
+            $this->formations = $formations->pluck('nom_formation')->toArray();
+            
+            // Superpouvoirs
+            $superpouvoirs = Superpouvoir::where('idBabysitter', $babysitter->idBabysitter)->get();
+            $this->superpouvoirs = $superpouvoirs->pluck('nom_superpouvoir')->toArray();
+            
+            // Expériences besoins spéciaux
+            $expSpeciaux = ExperienceBesoinSpeciaux::where('idBabysitter', $babysitter->idBabysitter)->get();
+            $this->experiences_speciaux = $expSpeciaux->pluck('nom_besoin')->toArray();
+            
+            // Disponibilités
+            $dispos = Disponibilite::where('idIntervenant', $intervenant->IdIntervenant)->get();
+            foreach ($dispos as $dispo) {
+                $jour = strtolower($dispo->jour);
+                if (isset($this->disponibilites[$jour])) {
+                    $this->disponibilites[$jour][] = [
+                        'debut' => $dispo->heureDebut,
+                        'fin' => $dispo->heureFin
+                    ];
+                }
+            }
+        }
+        
+        // Pré-remplir les informations babysitter pour l'étape 3 et suivantes
+        $babysitter = Babysitter::where('idBabysitter', $intervenant->IdIntervenant)->first();
+        if ($babysitter) {
+            $this->prix_horaire = $babysitter->prixHeure;
+            $this->annees_experience = $babysitter->expAnnee;
+            $this->niveau_etudes = $babysitter->niveauEtudes;
+            $this->description = $babysitter->description;
+            $this->autre_formation = $babysitter->autreFormation;
+            $this->langues = $babysitter->langues;
+            
+            // Préférences
+            $this->je_fume = $babysitter->estFumeur;
+            $this->jai_enfants = $babysitter->possedeEnfant;
+            $this->permis_conduire = $babysitter->permisConduire;
+            $this->jai_voiture = $babysitter->mobilite;
+            
+            // Préférences de domicile
+            $preferences = PreferenceDomicil::where('idBabysitter', $babysitter->idBabysitter)->get();
+            foreach ($preferences as $pref) {
+                $this->preferences_domicile[] = $pref->lieu_preference;
+            }
+            
+            // Catégories d'enfants
+            $categories = DB::table('choisir_categories')
+                ->join('categorie_enfants', 'choisir_categories.idCategorie', '=', 'categorie_enfants.idCategorie')
+                ->where('choisir_categories.idBabysitter', $babysitter->idBabysitter)
+                ->pluck('categorie_enfants.categorie')
+                ->toArray();
+            $this->categories_enfants = $categories;
+            
+            // Formations
+            $formations = Formation::where('idBabysitter', $babysitter->idBabysitter)->get();
+            $this->formations = $formations->pluck('nom_formation')->toArray();
+            
+            // Superpouvoirs
+            $superpouvoirs = Superpouvoir::where('idBabysitter', $babysitter->idBabysitter)->get();
+            $this->superpouvoirs = $superpouvoirs->pluck('nom_superpouvoir')->toArray();
+            
+            // Expériences besoins spéciaux
+            $expSpeciaux = ExperienceBesoinSpeciaux::where('idBabysitter', $babysitter->idBabysitter)->get();
+            $this->experiences_speciaux = $expSpeciaux->pluck('nom_besoin')->toArray();
+            
+            // Disponibilités
+            $dispos = Disponibilite::where('idIntervenant', $intervenant->IdIntervenant)->get();
+            foreach ($dispos as $dispo) {
+                $jour = strtolower($dispo->jour);
+                if (isset($this->disponibilites[$jour])) {
+                    $this->disponibilites[$jour][] = [
+                        'debut' => $dispo->heureDebut,
+                        'fin' => $dispo->heureFin
+                    ];
+                }
+            }
         }
     }
 
@@ -123,12 +283,15 @@ class BabysitterRegistration extends Component
         }
     }
 
-    public function setLocation($latitude, $longitude, $ville)
+    public function setLocation($latitude, $longitude, $ville, $adresse = '')
     {
         $this->latitude = $latitude;
         $this->longitude = $longitude;
         $this->ville = $ville;
+        $this->adresse = $adresse;
     }
+
+    public $emailExistsAsIntervenant = false;
 
     public function rules()
     {
@@ -141,19 +304,28 @@ class BabysitterRegistration extends Component
                 'email' => [
                     'required',
                     'email',
-                    'unique:utilisateurs,email',
                     function ($attribute, $value, $fail) {
-                        // Vérifier si l'email est valide avec un service externe
+                        // Vérifier si l'email est valide
                         if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
                             $fail('L\'adresse email n\'est pas valide.');
                             return;
                         }
                         
-                        // Vérifier si le domaine a des enregistrements MX
-                        $domain = substr(strrchr($value, "@"), 1);
-                        if (!checkdnsrr($domain, "MX") && !checkdnsrr($domain, "A")) {
-                            $fail('Le domaine de cet email n\'existe pas ou n\'accepte pas les emails.');
-                            return;
+                        // Si l'utilisateur est déjà connecté comme intervenant, ne pas vérifier l'unicité
+                        if (Auth::check() && Auth::user()->role === 'intervenant' && Auth::user()->email === $value) {
+                            return; // Email OK, c'est le sien
+                        }
+                        
+                        // Vérifier si l'email existe déjà
+                        $user = \App\Models\Shared\Utilisateur::where('email', $value)->first();
+                        if ($user) {
+                            // Vérifier si c'est un intervenant
+                            if ($user->role === 'intervenant') {
+                                $this->emailExistsAsIntervenant = true;
+                                $fail('Cet email est déjà enregistré comme intervenant.');
+                            } else {
+                                $fail('Cet email est déjà utilisé.');
+                            }
                         }
                     }
                 ],
@@ -167,7 +339,7 @@ class BabysitterRegistration extends Component
                 'telephone' => 'required|string|max:20',
                 'photo_profil' => 'nullable|image|max:5120',
             ];
-            
+
             // L'adresse n'est requise que si la géolocalisation automatique n'est pas activée
             if (!$this->auto_localisation) {
                 $rules['adresse'] = 'required|string|max:500';
@@ -180,7 +352,7 @@ class BabysitterRegistration extends Component
                 'adresse' => 'required|string|max:500',
                 'photo_profil' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             ];
-            
+
             // Si géolocalisation automatique, l'adresse n'est pas obligatoire
             if ($this->auto_localisation) {
                 unset($rules['adresse']);
@@ -198,12 +370,12 @@ class BabysitterRegistration extends Component
                 'preferences_domicile' => 'required|string|in:domicile_babysitter,domicile_client,les_deux',
                 'a_maladies' => 'required|string|in:oui,non',
             ];
-            
+
             // Si "Autre formation" est sélectionné, le champ autre_formation est requis
             if ($this->niveau_etudes === 'Autre formation') {
                 $rules['autre_formation'] = 'required|string|max:500';
             }
-            
+
             // Si "Oui" pour maladies, au moins une maladie doit être sélectionnée
             if ($this->a_maladies === 'oui') {
                 $rules['maladies_selectionnees'] = 'nullable|array';
@@ -264,17 +436,24 @@ class BabysitterRegistration extends Component
         ];
     }
 
+    public function precedent()
+    {
+        if ($this->currentStep > 1) {
+            $this->currentStep--;
+        }
+    }
+
     public function suivant()
     {
         \Log::info('BabysitterRegistration - Method suivant() called');
         \Log::info('Current step: ' . $this->currentStep . ' / Total steps: ' . $this->totalSteps);
-        
+
         // Si on est à l'étape 1, envoyer le code et passer à l'étape 2
         if ($this->currentStep == 1) {
             \Log::info('Step 1 - validating and sending verification code');
             $rules = $this->rules();
             \Log::info('Rules retrieved: ' . (empty($rules) ? 'no rules' : 'has rules'));
-            
+
             if (!empty($rules)) {
                 \Log::info('Validating form data...');
                 try {
@@ -285,22 +464,27 @@ class BabysitterRegistration extends Component
                     throw $e;
                 }
             }
-            
+
             $this->sendVerificationCode();
             return;
         }
-        
+
         // Si on est à l'étape 2, vérifier le code
         if ($this->currentStep == 2) {
             \Log::info('Step 2 - verifying email code');
             $this->verifyEmailCode();
+            // Si l'utilisateur est un intervenant connecté, sauter directement à l'étape 3
+            if (Auth::check() && Auth::user()->role === 'intervenant') {
+                $this->currentStep = 3;
+                \Log::info('Intervenant connected - skipping step 2, going to step 3');
+            }
             return;
         }
-        
+
         // Pour les autres étapes, validation normale
         $rules = $this->rules();
         \Log::info('Rules retrieved: ' . (empty($rules) ? 'no rules' : 'has rules'));
-        
+
         if (!empty($rules)) {
             \Log::info('Validating form data...');
             try {
@@ -311,7 +495,7 @@ class BabysitterRegistration extends Component
                 throw $e;
             }
         }
-        
+
         if ($this->currentStep < $this->totalSteps) {
             $oldStep = $this->currentStep;
             $this->currentStep++;
@@ -319,7 +503,7 @@ class BabysitterRegistration extends Component
         } else {
             \Log::info('Cannot advance - already at maximum step');
         }
-        
+
         \Log::info('suivant() method completed');
     }
 
@@ -327,56 +511,56 @@ class BabysitterRegistration extends Component
     {
         try {
             \Log::info('Sending verification code to email: ' . $this->email);
-            
+
             // Générer un code à 5 chiffres
             $code = str_pad(random_int(0, 99999), 5, '0', STR_PAD_LEFT);
             \Log::info('Generated code: ' . $code);
-            
+
             // Stocker dans le cache pendant 30 minutes
             Cache::put("email_verification_{$this->email}", $code, now()->addMinutes(30));
             \Log::info('Code stored in cache for 30 minutes');
-            
+
             // Envoyer l'email avec le code
             \Log::info('Attempting to send email...');
-            \Mail::raw("Votre code de vérification est : {$code}", function($message) {
+            \Mail::raw("Votre code de vérification est : {$code}", function ($message) {
                 $message->to($this->email)
                     ->subject('Code de vérification - Inscription Babysitter');
             });
             \Log::info('Email sent successfully');
-            
+
             $this->verification_sent = true;
             $this->currentStep = 2; // Passer à l'étape de vérification
-            
+
             session()->flash('success', 'Un code de vérification à 5 chiffres a été envoyé à votre email.');
             \Log::info('Verification code process completed successfully');
-            
+
         } catch (\Exception $e) {
             \Log::error('Error sending verification code: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
             session()->flash('error', 'Erreur lors de l\'envoi du code de vérification.');
         }
     }
-    
+
     public function verifyEmailCode()
     {
         \Log::info('Verifying email code: ' . $this->verification_code . ' for email: ' . $this->email);
-        
+
         $this->validate([
             'verification_code' => 'required|digits:5'
         ], [
             'verification_code.required' => 'Le code de vérification est obligatoire',
             'verification_code.digits' => 'Le code doit contenir exactement 5 chiffres'
         ]);
-        
+
         // Vérifier le code dans le cache
         $storedCode = Cache::get("email_verification_{$this->email}");
         \Log::info('Stored code in cache: ' . ($storedCode ?? 'null'));
-        
+
         if ($storedCode && $storedCode === $this->verification_code) {
             \Log::info('Code verification successful');
             // Supprimer le code du cache après vérification
             Cache::forget("email_verification_{$this->email}");
-            
+
             $this->email_verified = true;
             $this->currentStep = 3; // Passer à l'étape suivante
             session()->flash('success', 'Email vérifié avec succès !');
@@ -385,7 +569,7 @@ class BabysitterRegistration extends Component
             session()->flash('error', 'Code invalide ou expiré. Veuillez réessayer.');
         }
     }
-    
+
     public function resendCode()
     {
         $this->verification_sent = false;
@@ -395,7 +579,7 @@ class BabysitterRegistration extends Component
     public function ajouterDisponibilite($jour)
     {
         $this->disponibilites[$jour][] = [
-            'debut' => '', 
+            'debut' => '',
             'fin' => '',
             'est_reccurent' => true
         ];
@@ -416,13 +600,13 @@ class BabysitterRegistration extends Component
     {
         \Log::info('Babysitter registration started');
         \Log::info('Current step: ' . $this->currentStep);
-        
+
         // Vérifier que l'email est bien vérifié
         if (!$this->email_verified) {
             session()->flash('error', 'Veuillez vérifier votre email avant de finaliser l\'inscription.');
             return;
         }
-        
+
         $this->validate();
         \Log::info('Validation passed');
 
@@ -430,17 +614,37 @@ class BabysitterRegistration extends Component
         \Log::info('Database transaction started');
 
         try {
-            // 1. Upload photo profil
-            $photoPath = null;
-            if ($this->photo_profil) {
-                \Log::info('Uploading profile photo');
-                $photoPath = $this->photo_profil->store('images', 'public');
-                \Log::info('Photo uploaded: ' . $photoPath);
-            }
+            // Vérifier si l'utilisateur existe déjà comme intervenant
+            $existingUser = Utilisateur::where('email', $this->email)->first();
+            $isExistingIntervenant = $existingUser && $existingUser->role === 'intervenant';
+            
+            if ($isExistingIntervenant) {
+                \Log::info('Existing intervenant found, checking service limit');
+                $utilisateur = $existingUser;
+                $intervenant = Intervenant::where('IdIntervenant', $utilisateur->idUser)->first();
+                
+                // Vérifier le nombre de services actifs
+                $activeServicesCount = DB::table('offres_services')
+                    ->where('idintervenant', $intervenant->IdIntervenant)
+                    ->whereIn('statut', ['ACTIVE', 'EN_ATTENTE'])
+                    ->count();
+                    
+                if ($activeServicesCount >= 2) {
+                    session()->flash('error', 'Vous avez atteint la limite de 2 services actifs. Veuillez archiver un service existant avant d\'en ajouter un nouveau.');
+                    return;
+                }
+            } else {
+                // 1. Upload photo profil
+                $photoPath = null;
+                if ($this->photo_profil) {
+                    \Log::info('Uploading profile photo');
+                    $photoPath = $this->photo_profil->store('images', 'public');
+                    \Log::info('Photo uploaded: ' . $photoPath);
+                }
 
-            // 2. Créer l'utilisateur
-            \Log::info('Creating user with email: ' . $this->email);
-            $utilisateur = Utilisateur::create([
+                // 2. Créer l'utilisateur
+                \Log::info('Creating new user with email: ' . $this->email);
+                $utilisateur = Utilisateur::create([
                 'nom' => $this->nom,
                 'prenom' => $this->prenom,
                 'email' => $this->email,
@@ -471,29 +675,40 @@ class BabysitterRegistration extends Component
             $intervenant->statut = 'EN_ATTENTE';
             $intervenant->save();
             \Log::info('Intervenant created');
+            }
+            
+            // À partir d'ici, logique commune pour nouveau et existant intervenant
 
             // 5. Upload des documents
-            $procedeJuridique = $this->casier_judiciaire ? 
+            $procedeJuridique = $this->casier_judiciaire ?
                 $this->casier_judiciaire->store('babysitters/documents', 'public') : null;
-            $coprocultureSelles = $this->coproculture_selles ? 
+            $coprocultureSelles = $this->coproculture_selles ?
                 $this->coproculture_selles->store('babysitters/documents', 'public') : null;
-            $certifAptitude = $this->certificat_aptitude ? 
+            $certifAptitude = $this->certificat_aptitude ?
                 $this->certificat_aptitude->store('babysitters/documents', 'public') : null;
-            $radiographieThorax = $this->radiographie_thorax ? 
+            $radiographieThorax = $this->radiographie_thorax ?
                 $this->radiographie_thorax->store('babysitters/documents', 'public') : null;
 
             // 6. Convertir années d'expérience
             $expAnneeInt = 0;
-            switch($this->annees_experience) {
-                case '0-1': $expAnneeInt = 0; break;
-                case '1-3': $expAnneeInt = 2; break;
-                case '3-5': $expAnneeInt = 4; break;
-                case '5+': $expAnneeInt = 5; break;
+            switch ($this->annees_experience) {
+                case '0-1':
+                    $expAnneeInt = 0;
+                    break;
+                case '1-3':
+                    $expAnneeInt = 2;
+                    break;
+                case '3-5':
+                    $expAnneeInt = 4;
+                    break;
+                case '5+':
+                    $expAnneeInt = 5;
+                    break;
             }
 
             // 7. Déterminer preference_domicil
             $preferenceDomicil = $this->preferences_domicile;
-            
+
             // Mapper les valeurs du formulaire vers les valeurs de la base de données
             if ($preferenceDomicil == 'domicile_babysitter') {
                 $preferenceDomicil = 'domicil_babysitter';
@@ -532,6 +747,22 @@ class BabysitterRegistration extends Component
             \Log::info('Babysitter profile saved successfully');
 
             $idBabysitter = $intervenant->IdIntervenant;
+            
+            // Créer l'offre de service dans offres_services
+            $babysittingService = \App\Models\Shared\Service::where('nomService', 'Babysitting')->first();
+            if ($babysittingService) {
+                DB::table('offres_services')->updateOrInsert(
+                    [
+                        'idintervenant' => $intervenant->IdIntervenant,
+                        'idService' => $babysittingService->idService
+                    ],
+                    [
+                        'statut' => 'EN_ATTENTE'
+                    ]
+                );
+                \Log::info('Service offer created/updated in offres_services with status EN_ATTENTE');
+            }
+
 
             // 9. Associer les catégories d'enfants
             if (!empty($this->categories_enfants)) {
@@ -620,28 +851,45 @@ class BabysitterRegistration extends Component
             // Envoyer l'email de confirmation
             try {
                 \Log::info('Tentative envoi email à: ' . $this->email);
-                
+
                 // Envoyer à l'email du babysitter
                 Mail::to($this->email)->send(new BabysitterRegistrationMail($this->nom, $this->prenom));
-                
+
                 \Log::info('Email envoyé avec succès à: ' . $this->email);
             } catch (\Exception $e) {
                 // Continue même si l'email échoue
                 \Log::error('Erreur envoi email babysitter: ' . $e->getMessage());
             }
 
-            \Log::info('Redirecting to success page');
+            \Log::info('Redirecting to appropriate page');
+            
+            // Si l'utilisateur était connecté comme intervenant, rediriger vers le hub
+            if ($isExistingIntervenant) {
+                return redirect()->route('intervenant.hub')
+                    ->with('success', 'Vous avez ajouté un nouveau service à votre compte ! Statut : En attente de validation (2/2 services maximum)');
+            }
+            
+            // Sinon, rediriger vers la page de succès normale
             return redirect()->route('babysitter-registration-success');
 
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error in babysitter registration: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             session()->flash('error', 'Une erreur est survenue lors de l\'inscription: ' . $e->getMessage());
-            
+
             return;
         }
+    }
+
+    public function getHeuresProperty()
+    {
+        $heures = [];
+        for ($i = 0; $i < 24; $i++) { // Generate hours from 00:00 to 23:00
+            $heures[] = sprintf('%02d:00', $i);
+        }
+        return $heures;
     }
 
     public function render()

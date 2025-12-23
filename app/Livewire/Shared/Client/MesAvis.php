@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Shared;
+namespace App\Livewire\Shared\Client;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;

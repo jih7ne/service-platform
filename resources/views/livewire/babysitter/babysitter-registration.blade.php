@@ -3,19 +3,15 @@
     <div class="relative bg-white overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-[#B82E6E]/5 to-[#B82E6E]/10 pointer-events-none"></div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
-            <!-- Breadcrumb -->
-            <nav class="flex items-center gap-2 mb-8 text-sm font-medium text-gray-500">
-                <a href="/" wire:navigate class="hover:text-[#B82E6E] transition-colors flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    Accueil
+            <!-- Return Button -->
+            <div class="mb-8">
+                <a href="/services" wire:navigate class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 font-semibold shadow-sm hover:bg-gray-50 hover:border-[#B82E6E] hover:text-[#B82E6E] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Retour
                 </a>
-                <span class="text-gray-300">/</span>
-                <a href="/services" wire:navigate class="hover:text-[#B82E6E] transition-colors">
-                    Services
-                </a>
-                <span class="text-gray-300">/</span>
-                <span class="text-[#B82E6E] font-bold">Devenir Babysitter</span>
-            </nav>
+            </div>
 
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                 <div>
@@ -53,7 +49,8 @@
                                     @elseif($i == 2) Contact
                                     @elseif($i == 3) Pro
                                     @elseif($i == 4) Compétences
-                                    @else Documents
+                                    @elseif($i == 5)DISPONIBILITÉS
+                                    @else documents
                                     @endif
                                 </span>
                             </div>
@@ -107,7 +104,34 @@
                         <input type="email" wire:model="email"
                             class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                             placeholder="votre.email@exemple.com">
-                        @error('email') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        @error('email') 
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                            
+                            @if($emailExistsAsIntervenant)
+                                <div class="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-start gap-3">
+                                        <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-blue-900 mb-2">
+                                                Vous avez déjà un compte intervenant !
+                                            </p>
+                                            <p class="text-xs text-blue-700 mb-3">
+                                                Cet email est déjà enregistré comme intervenant. Accédez à votre espace pour gérer vos services.
+                                            </p>
+                                            <a href="{{ route('intervenant.hub') }}" 
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                                </svg>
+                                                Accéder à mon espace intervenant
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @enderror
                     </div>
 
                     <div>
@@ -307,7 +331,7 @@
                 </div>
             @endif
 
-            <!-- ÉTAPE 4 - PROFESSIONNEL -->
+            <!-- ÉTAPE 4 - TALENTS ET QUALITÉS -->
             @if ($currentStep == 4)
                 <div class="space-y-4">
                     <div class="bg-teal-50 rounded-lg p-3 flex items-center">
@@ -514,6 +538,7 @@
                                 </label>
                             @endforeach
                         </div>
+                        </div>
                     </div>
 
                     <!-- Besoins spéciaux -->
@@ -535,7 +560,7 @@
                 </div>
             @endif
 
-            <!-- ÉTAPE 5 - EXPÉRIENCE -->
+            <!-- ÉTAPE 5 - COMPÉTENCES ET DISPONIBILITÉS -->
             @if ($currentStep == 5)
                 <div class="space-y-4">
                     <div class="bg-purple-50 rounded-lg p-3 flex items-center">
@@ -603,11 +628,21 @@
                                         @foreach($disponibilites[$jour] as $index => $creneau)
                                         <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                                             <div class="flex items-center gap-2 flex-1">
-                                                <input type="time" wire:model="disponibilites.{{ $jour }}.{{ $index }}.debut"
+                                                <select wire:model="disponibilites.{{ $jour }}.{{ $index }}.debut"
                                                     class="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                                    <option value="">Début</option>
+                                                    @foreach($this->heures as $heure)
+                                                        <option value="{{ $heure }}">{{ $heure }}</option>
+                                                    @endforeach
+                                                </select>
                                                 <span class="text-xs text-gray-400 font-medium">→</span>
-                                                <input type="time" wire:model="disponibilites.{{ $jour }}.{{ $index }}.fin"
+                                                <select wire:model="disponibilites.{{ $jour }}.{{ $index }}.fin"
                                                     class="px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent">
+                                                    <option value="">Fin</option>
+                                                    @foreach($this->heures as $heure)
+                                                        <option value="{{ $heure }}">{{ $heure }}</option>
+                                                    @endforeach
+                                                </select>
                                             </div>
                                             
                                             <div class="flex items-center gap-2">
@@ -752,20 +787,19 @@
                             .then(data => {
                                 console.log('Données de géocodage:', data);
                                 const ville = data.address?.city || data.address?.town || data.address?.village || '';
+                                // Récupérer le quartier, le faubourg ou la route pour l'adresse
+                                const quartier = data.address?.neighbourhood || data.address?.suburb || data.address?.road || '';
                                 console.log('Ville détectée:', ville);
+                                console.log('Adresse/Quartier détecté:', quartier);
                                 
                                 // Appeler la méthode PHP pour mettre à jour les coordonnées
-                                @this.set('latitude', lat);
-                                @this.set('longitude', lng);
-                                @this.set('ville', ville);
+                                @this.call('setLocation', lat, lng, ville, quartier);
                                 
                                 console.log('Coordonnées envoyées à Livewire');
                             })
                             .catch(error => {
                                 console.error('Erreur de géocodage:', error);
-                                @this.set('latitude', lat);
-                                @this.set('longitude', lng);
-                                @this.set('ville', '');
+                                @this.call('setLocation', lat, lng, '', '');
                             });
                     },
                     (error) => {

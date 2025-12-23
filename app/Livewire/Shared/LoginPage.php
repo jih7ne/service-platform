@@ -34,9 +34,13 @@ class LoginPage extends Component
 
     public function login()
     {
-        $this->validate();
+        // Validation simple sans validate() pour éviter les erreurs
+        if (empty($this->email) || empty($this->password)) {
+            session()->flash('error', 'Email et mot de passe sont requis.');
+            return;
+        }
 
-        // Vérifier si c'est un admin d'abord
+        // Vérifier si c'est un admin
         $admin = Admin::where('emailAdmin', $this->email)->first();
         
         if ($admin && Hash::check($this->password, $admin->passwordAdmin)) {
@@ -45,70 +49,45 @@ class LoginPage extends Component
             session()->put('admin_email', $admin->emailAdmin);
             session()->put('is_admin', true);
             
+            // Debug pour confirmer la connexion
+            \Log::info('LoginPage: Connexion admin réussie', [
+                'admin_id' => $admin->idAdmin,
+                'admin_email' => $admin->emailAdmin,
+                'session_complete' => session()->all()
+            ]);
+            
             session()->flash('success', 'Bienvenue Admin !');
-            return redirect()->route('admin.dashboard');
+            
+            // Sauvegarder la session explicitement
+            session()->save();
+            
+            // Dispatch l'événement pour la redirection
+            $this->dispatch('redirect-admin', url: route('admin.dashboard'));
         }
 
         // Vérifier l'utilisateur normal
         $user = Utilisateur::where('email', $this->email)->first();
 
-        if (!$user) {
-            $this->addError('email', 'Email ou mot de passe incorrect.');
-            return;
-        }
-
-        if (!Hash::check($this->password, $user->password)) {
-            $this->addError('email', 'Email ou mot de passe incorrect.');
+        if (!$user || !Hash::check($this->password, $user->password)) {
+            session()->flash('error', 'Email ou mot de passe incorrect.');
             return;
         }
 
         if ($user->statut !== 'actif') {
-            $this->suspendedMessage = 'Votre compte est suspendu. Veuillez consulter votre email pour connaître la raison de la désactivation.';
+            $this->suspendedMessage = 'Votre compte est suspendu.';
             return;
         }
 
         // Connecter l'utilisateur
         Auth::login($user);
         session()->regenerate();
+        session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
 
-        // Logique de redirection utilisateur
+        // Redirection simple
         if ($user->role === 'intervenant') {
-            session()->flash('success', 'Bienvenue ' . $user->prenom . ' !');
-
-            $intervenant = \App\Models\Shared\Intervenant::where('IdIntervenant', $user->idUser)->first();
-
-            if ($intervenant) {
-                $services = $intervenant->services; 
-                $count = $services->count();
-
-                if ($count > 1 || $count === 0) {
-                    return redirect()->route('intervenant.hub');
-                }
-                
-                if ($count === 1) {
-                    $serviceName = strtolower($services->first()->nomService);
-
-                    if (str_contains($serviceName, 'soutien') || str_contains($serviceName, 'scolaire')) {
-                        return redirect()->route('tutoring.dashboard');
-                    }
-                    
-                    if (str_contains($serviceName, 'baby')) {
-                        return redirect()->route('intervenant.hub');
-                    }
-
-                    if (str_contains($serviceName, 'pet')) {
-                        return redirect()->route('intervenant.hub');
-                    }
-                }
-            }
-            
-            return redirect()->route('intervenant.hub');
+            return redirect('/intervenant/hub');
         }
-
-        if ($user->role === 'client') {
-            return redirect('/');
-        }
-
+        
         return redirect('/');
     }
 

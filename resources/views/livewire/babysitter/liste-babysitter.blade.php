@@ -1,21 +1,18 @@
-<div class="min-h-screen bg-gray-50 font-sans">
+<div class="min-h-screen bg-gray-50 font-sans" wire:poll.5s>
+    <livewire:shared.header-babysitting />
     <!-- Header Section with Gradient -->
     <div class="relative bg-white overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-[#B82E6E]/5 to-[#B82E6E]/10 pointer-events-none"></div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
-            <!-- Breadcrumb -->
-            <nav class="flex items-center gap-2 mb-8 text-sm font-medium text-gray-500">
-                <a href="/" wire:navigate class="hover:text-[#B82E6E] transition-colors flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    Accueil
+            <!-- Return Button -->
+            <div class="mb-8">
+                <a href="/services" wire:navigate class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-gray-700 font-semibold shadow-sm hover:bg-gray-50 hover:border-[#B82E6E] hover:text-[#B82E6E] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Retour aux services
                 </a>
-                <span class="text-gray-300">/</span>
-                <a href="/services" wire:navigate class="hover:text-[#B82E6E] transition-colors">
-                    Services
-                </a>
-                <span class="text-gray-300">/</span>
-                <span class="text-[#B82E6E] font-bold">Babysitting</span>
-            </nav>
+            </div>
 
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                 <div>
@@ -24,7 +21,7 @@
                     </h1>
                     <p class="text-lg text-gray-600 max-w-2xl leading-relaxed">
                         Des professionnels de confiance pour prendre soin de vos enfants. 
-                        <span class="font-semibold text-[#B82E6E]">{{ $totalBabysitters }} profils vérifiés</span> disponibles maintenant.
+                     
                     </p>
                 </div>
                 
@@ -105,7 +102,7 @@
                     Carte des babysitters ({{ count($babysittersMap) }} profils)
                 </h3>
             </div>
-            <div id="babysitters-map" style="height: 600px; width: 100%;"></div>
+            <div id="babysitters-map" style="height: 600px; width: 100%;" wire:ignore></div>
         </div>
         
         <!-- LIST VIEW -->
@@ -326,15 +323,7 @@
 
             <!-- Results Grid -->
             <div class="flex-1 min-w-0">
-                <!-- Loading Overlay -->
-                <div wire:loading.flex class="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
-                    <div class="bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3">
-                        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#B82E6E]"></div>
-                        <span class="font-medium text-gray-700">Mise à jour...</span>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" wire:loading.class="opacity-50 transition-opacity duration-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     @forelse($babysitters as $babysitter)
                     @php
                         $utilisateur = $babysitter->intervenant->utilisateur;
@@ -480,83 +469,101 @@
             }
         }
 
+        function waitForLeaflet(callback) {
+            if (typeof L !== 'undefined') {
+                callback();
+            } else {
+                setTimeout(() => waitForLeaflet(callback), 100);
+            }
+        }
+
         function initializeMap(babysitters) {
-            console.log('initializeMap appelé avec:', babysitters.length, 'babysitters');
-            console.log('Données babysitters:', babysitters);
-            
-            const mapElement = document.getElementById('babysitters-map');
-            if (!mapElement) {
-                console.log('Élément map non trouvé');
-                return;
-            }
-
-            if (babysitters.length === 0) {
-                console.log('Aucun babysitter à afficher');
-                mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 600px; color: #666;">Aucun babysitter avec localisation</div>';
-                return;
-            }
-
-            destroyMap();
-
-            // Utiliser Casablanca comme centre par défaut
-            mapInstance = L.map('babysitters-map').setView([33.5731, -7.5898], 10);
-            console.log('Carte initialisée');
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
-            }).addTo(mapInstance);
-
-            // Ajouter les marqueurs
-            babysitters.forEach((babysitter, index) => {
-                console.log(`Création marqueur ${index + 1}:`, babysitter);
+            waitForLeaflet(() => {
+                console.log('initializeMap appelé avec:', babysitters.length, 'babysitters');
+                console.log('Données babysitters:', babysitters);
                 
-                // Marqueur simple sans icône personnalisée
-                const marker = L.marker([babysitter.latitude, babysitter.longitude]).addTo(mapInstance);
+                const mapElement = document.getElementById('babysitters-map');
+                if (!mapElement) {
+                    console.log('Élément map non trouvé');
+                    return;
+                }
+
+                if (babysitters.length === 0) {
+                    console.log('Aucun babysitter à afficher');
+                    mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 600px; color: #666;">Aucun babysitter avec localisation</div>';
+                    return;
+                }
+
+                destroyMap();
+
+                // Utiliser Casablanca comme centre par défaut
+                mapInstance = L.map('babysitters-map').setView([33.5731, -7.5898], 10);
+                console.log('Carte initialisée');
                 
-                console.log(`Marqueur ${index + 1} ajouté à [${babysitter.latitude}, ${babysitter.longitude}]`);
-                
-                const popupContent = `
-                    <div style="padding: 8px; text-align: center; min-width: 150px;">
-                        <h4 style="margin: 0 0 4px 0;">${babysitter.prenom} ${babysitter.nom}</h4>
-                        <p style="margin: 2px 0; color: #666; font-size: 12px;">${babysitter.ville}</p>
-                        <p style="margin: 4px 0; font-weight: bold; color: #B82E6E;">${babysitter.prixHeure} DH/h</p>
-                        <a href="/babysitter-profile/${babysitter.idBabysitter}" style="color: #B82E6E; text-decoration: none; font-size: 12px;">Voir profil</a>
-                    </div>`;
-                
-                marker.bindPopup(popupContent);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(mapInstance);
+
+                // Ajouter les marqueurs
+                babysitters.forEach((babysitter, index) => {
+                    // Marqueur simple sans icône personnalisée
+                    const marker = L.marker([babysitter.latitude, babysitter.longitude]).addTo(mapInstance);
+                    
+                    const popupContent = `
+                        <div style="padding: 8px; text-align: center; min-width: 150px;">
+                            <h4 style="margin: 0 0 4px 0;">${babysitter.prenom} ${babysitter.nom}</h4>
+                            <p style="margin: 2px 0; color: #666; font-size: 12px;">${babysitter.ville}</p>
+                            <p style="margin: 4px 0; font-weight: bold; color: #B82E6E;">${babysitter.prixHeure} DH/h</p>
+                            <a href="/babysitter-profile/${babysitter.idBabysitter}" style="color: #B82E6E; text-decoration: none; font-size: 12px;">Voir profil</a>
+                        </div>`;
+                    
+                    marker.bindPopup(popupContent);
+                });
+
+                console.log('Tous les marqueurs ajoutés');
             });
-
-            console.log('Tous les marqueurs ajoutés');
         }
 
         // Initialiser la carte si en mode carte au chargement
         document.addEventListener('DOMContentLoaded', function() {
+            initMapIfPresent();
+        });
+
+        // Initialiser la carte lors de la navigation Livewire
+        document.addEventListener('livewire:navigated', function() {
+            initMapIfPresent();
+        });
+
+        function initMapIfPresent() {
             if (document.getElementById('babysitters-map')) {
                 const babysittersData = @json($babysittersMap);
-                console.log('Initialisation au chargement - données:', babysittersData);
+                console.log('Initialisation de la carte - données:', babysittersData);
                 if (babysittersData && babysittersData.length > 0) {
                     initializeMap(babysittersData);
                 }
             }
-        });
+        }
 
         // Réinitialiser la carte lors du toggle
         document.addEventListener('livewire:init', () => {
             Livewire.on('map-toggled', () => {
-                const mapElement = document.getElementById('babysitters-map');
-                if (mapElement) {
-                    const babysittersData = @json($babysittersMap);
-                    console.log('Toggle map - données:', babysittersData);
-                    if (babysittersData && babysittersData.length > 0) {
-                        initializeMap(babysittersData);
+                // Petit délai pour laisser le temps au DOM de se mettre à jour
+                setTimeout(() => {
+                    const mapElement = document.getElementById('babysitters-map');
+                    if (mapElement) {
+                        const babysittersData = @json($babysittersMap);
+                        console.log('Toggle map - données:', babysittersData);
+                        if (babysittersData && babysittersData.length > 0) {
+                            initializeMap(babysittersData);
+                        } else {
+                            console.log('Aucune donnée de babysitters disponible');
+                            mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 600px; color: #666;">Aucun babysitter avec localisation disponible</div>';
+                        }
                     } else {
-                        console.log('Aucune donnée de babysitters disponible');
-                        mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 600px; color: #666;">Aucun babysitter avec localisation disponible</div>';
+                        destroyMap();
                     }
-                } else {
-                    destroyMap();
-                }
+                }, 100);
             });
         });
 

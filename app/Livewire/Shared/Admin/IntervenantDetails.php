@@ -72,9 +72,16 @@ class IntervenantDetails extends Component
             return redirect()->route('admin.intervenants');
         }
 
-        // Si l'intervenant est encore en attente, forcer l'affichage en attente même si l'offre est déjà ACTIVE
-        if ($this->intervenant->statut === 'EN_ATTENTE' && $this->offre) {
-            $this->offre->statut = 'EN_ATTENTE';
+        // Prioriser le statut de l'offre si elle existe et est EN_ATTENTE (cas d'ajout d'un 2ème service)
+        // Sinon si l'intervenant est encore en attente, forcer l'affichage en attente
+        if ($this->offre) {
+            if ($this->offre->statut === 'EN_ATTENTE') {
+                // L'offre est en attente (2ème service), garder EN_ATTENTE
+                $this->offre->statut = 'EN_ATTENTE';
+            } elseif ($this->intervenant->statut === 'EN_ATTENTE') {
+                // L'intervenant est en attente, forcer l'offre aussi
+                $this->offre->statut = 'EN_ATTENTE';
+            }
         }
 
         // Si aucune offre n'existe, créer un stub minimal pour l'affichage
@@ -140,6 +147,32 @@ class IntervenantDetails extends Component
                 } else {
                     $this->babysitterData->langues = [];
                 }
+
+                // Champs supplémentaires : niveau d'études, préférence du lieu de travail, maladies, expériences besoins spéciaux
+                $this->babysitterData->niveau_etudes = $babysitter->niveauEtudes ?? null;
+
+                $prefMap = [
+                    'domicil_babysitter' => 'Chez le/la babysitter',
+                    'domicil_client' => 'Au domicile du client',
+                    'les_deux' => 'Les deux (flexible)'
+                ];
+                $this->babysitterData->preference_domicil_human = $prefMap[$babysitter->preference_domicil ?? ''] ?? null;
+
+                if (!empty($babysitter->maladies)) {
+                    $this->babysitterData->maladies_list = collect(preg_split('/[,;\n]+/', $babysitter->maladies))
+                        ->map(fn ($s) => trim($s))
+                        ->filter()
+                        ->values()
+                        ->toArray();
+                } else {
+                    $this->babysitterData->maladies_list = [];
+                }
+
+                $this->babysitterData->experiences_speciaux = DB::table('choisir_experiences')
+                    ->join('experience_besoins_speciaux', 'choisir_experiences.idExperience', '=', 'experience_besoins_speciaux.idExperience')
+                    ->where('choisir_experiences.idBabysitter', $idIntervenant)
+                    ->pluck('experience_besoins_speciaux.experience')
+                    ->toArray();
                 
                 $this->babysitterData->superpouvoirs = DB::table('choisir_superpourvoirs')
                     ->join('superpouvoirs', 'choisir_superpourvoirs.idSuperpouvoir', '=', 'superpouvoirs.idSuperpouvoir')

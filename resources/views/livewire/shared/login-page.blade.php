@@ -32,7 +32,9 @@
                 </div>
 
                 <!-- Form -->
-                <form wire:submit.prevent="login" class="space-y-5">
+                <!-- Form -->
+                <form action="{{ route('login.store') }}" method="POST" class="space-y-5">
+                    @csrf
                     <!-- Email -->
                     <div>
                         <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
@@ -44,7 +46,8 @@
                             </svg>
                             <input
                                 type="email"
-                                wire:model="email"
+                                name="email"
+                                value="{{ old('email') }}"
                                 class="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a]"
                                 placeholder="jean.dupont@email.com"
                                 required
@@ -56,7 +59,7 @@
                     </div>
 
                     <!-- Password -->
-                    <div>
+                    <div x-data="{ show: false }">
                         <label class="block text-sm mb-2 text-[#2a2a2a] font-semibold">
                             Mot de passe
                         </label>
@@ -65,12 +68,16 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                             </svg>
                             <input
-                                type="{{ $showPassword ? 'text' : 'password' }}"
-                                wire:model="password"
-                                class="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a]"
+                                :type="show ? 'text' : 'password'"
+                                name="password"
+                                class="w-full pl-10 pr-12 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2B5AA8] focus:border-transparent transition-all text-[#0a0a0a]"
                                 placeholder="••••••••"
                                 required
                             />
+                            <button type="button" @click="show = !show" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                <svg x-show="!show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <svg x-show="show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.059 10.059 0 013.999-5.42m3.71-1.287A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.051 10.051 0 01-2.936 4.672M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.051 10.051 0 01-1.55 2.72l4.136 4.136 1.29-1.29"/></svg>
+                            </button>
                         </div>
                         @error('password') 
                             <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span>
@@ -82,7 +89,7 @@
                         <input
                             type="checkbox"
                             id="remember"
-                            wire:model="remember"
+                            name="remember"
                             class="w-4 h-4 text-[#2B5AA8] border-gray-300 rounded focus:ring-[#2B5AA8]"
                         />
                         <label for="remember" class="text-sm text-[#3a3a3a] font-medium">
@@ -116,4 +123,14 @@
     </div>
 
     <livewire:shared.footer />
+
+    <!-- JavaScript pour redirection admin -->
+    <!-- Script de redirection sécurisé -->
+    @script
+    <script>
+        $wire.on('redirect-admin', (event) => {
+            window.location.href = event.url;
+        });
+    </script>
+    @endscript
 </div>

@@ -170,7 +170,11 @@ class ListeBabysitter extends Component
             'formations',
             'categoriesEnfants',
             'experiencesBesoinsSpeciaux'
-        ])->valide();
+        ])->valide()
+        ->whereHas('intervenant.services', function ($q) {
+            $q->where('offres_services.statut', 'ACTIVE')
+              ->where('services.nomService', 'Babysitting');
+        });
       
     
 
@@ -265,36 +269,34 @@ class ListeBabysitter extends Component
             });
         }
 
-        // Debug: Vérifier la requête avant exécution
-        \Log::info('Requête babysitters: ' . $query->toSql());
-        \Log::info('Bindings: ' . json_encode($query->getBindings()));
+       
         
         $babysitters = $query->paginate(15);
         
-        // Debug: Vérifier les résultats
-        \Log::info('Nombre de babysitters paginés: ' . $babysitters->count());
-        \Log::info('Total babysitters: ' . $babysitters->total());
+      
 
         // Récupérer les babysitters avec localisation pour la carte
         $locationData = DB::table('babysitters')
             ->join('intervenants', 'babysitters.idBabysitter', '=', 'intervenants.IdIntervenant')
             ->join('utilisateurs', 'intervenants.IdIntervenant', '=', 'utilisateurs.idUser')
+            ->join('offres_services', 'intervenants.IdIntervenant', '=', 'offres_services.idIntervenant')
+            ->join('services', 'offres_services.idService', '=', 'services.idService')
             ->leftJoin('localisations', 'utilisateurs.idUser', '=', 'localisations.idUser')
             ->where('intervenants.statut', 'VALIDE')
+            ->where('offres_services.statut', 'ACTIVE')
+            ->where('services.nomService', 'Babysitting')
             ->select('babysitters.idBabysitter', 'utilisateurs.prenom', 'utilisateurs.nom', 
                      'localisations.latitude', 'localisations.longitude', 'localisations.ville', 
                      'babysitters.prixHeure', 'utilisateurs.photo', 'utilisateurs.note')
             ->get();
 
-        // Debug: Afficher le nombre total de babysitters récupérés
-        \Log::info('Total babysitters récupérés pour carte: ' . $locationData->count());
+
 
         $this->babysittersWithLocation = $locationData->filter(function($babysitter) {
             return $babysitter->latitude && $babysitter->longitude;
         });
 
-        // Debug: Vérifier combien ont des coordonnées
-        \Log::info('Babysitters avec coordonnées: ' . $this->babysittersWithLocation->count());
+
 
         // Récupérer tous les services pour le filtre
         $allServices = Superpouvoir::all();
@@ -302,8 +304,15 @@ class ListeBabysitter extends Component
         $allCategories = CategorieEnfant::all();
         $allExperiences = ExperienceBesoinSpeciaux::all();
 
-        // Villes disponibles
-        $villes = ['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fes', 'Agadir'];
+        // Villes disponibles depuis la base de données
+        $villes = DB::table('localisations')
+            ->select('ville')
+            ->whereNotNull('ville')
+            ->where('ville', '!=', '')
+            ->distinct()
+            ->orderBy('ville')
+            ->pluck('ville')
+            ->toArray();
 
         // Préparer les données pour la carte avec coordonnées par défaut
 $defaultCoords = [
@@ -335,11 +344,15 @@ $babysittersMap = $limitedLocationData->map(function($babysitter) use ($defaultC
     ];
 })->toArray();
 
-// Debug: Afficher les données de la carte
-\Log::info('Babysitters pour carte:', $babysittersMap);
+
 
 // Compter le nombre total de babysitters disponibles
-$totalBabysitters = Babysitter::valide()->count();
+$totalBabysitters = Babysitter::valide()
+    ->whereHas('intervenant.services', function ($q) {
+        $q->where('offres_services.statut', 'ACTIVE')
+          ->where('services.nomService', 'Babysitting');
+    })
+    ->count();
 
 return view('livewire.babysitter.liste-babysitter', [
     'babysitters' => $babysitters,

@@ -27,7 +27,7 @@ class TestUsersSeeder extends Seeder
                 'telephone' => '0612345' . str_pad($i, 3, '0', STR_PAD_LEFT),
                 'role' => 'client',
                 'statut' => 'actif',
-                'ville' => 'Casablanca',
+                'dateNaissance' => '1990-01-01',
             ]);
         }
 
@@ -41,7 +41,7 @@ class TestUsersSeeder extends Seeder
                 'telephone' => '0622345' . str_pad($i, 3, '0', STR_PAD_LEFT),
                 'role' => 'intervenant',
                 'statut' => 'actif',
-                'ville' => 'Rabat',
+                'dateNaissance' => '1985-05-15',
             ]);
 
             $intervenant = Intervenant::create([
@@ -67,7 +67,7 @@ class TestUsersSeeder extends Seeder
                 'telephone' => '0632345' . str_pad($i, 3, '0', STR_PAD_LEFT),
                 'role' => 'intervenant',
                 'statut' => 'actif',
-                'ville' => 'Marrakech',
+                'dateNaissance' => '1978-03-20',
             ]);
 
             $intervenant = Intervenant::create([
@@ -80,6 +80,7 @@ class TestUsersSeeder extends Seeder
                 'surnom' => 'Prof' . $i,
                 'niveau_etudes' => 'Master',
                 'biographie' => 'Professeur expérimenté',
+                'CIN' => 'AB123456',
             ]);
         }
 
@@ -93,7 +94,7 @@ class TestUsersSeeder extends Seeder
                 'telephone' => '0642345' . str_pad($i, 3, '0', STR_PAD_LEFT),
                 'role' => 'intervenant',
                 'statut' => 'actif',
-                'ville' => 'Tanger',
+                'dateNaissance' => '1975-07-10',
             ]);
 
             $intervenant = Intervenant::create([
@@ -116,8 +117,8 @@ class TestUsersSeeder extends Seeder
             'password' => Hash::make('password'),
             'telephone' => '0699999999',
             'role' => 'client',
-            'statut' => 'suspendu',
-            'ville' => 'Fès',
+            'statut' => 'suspendue',
+            'dateNaissance' => '1988-12-25',
         ]);
 
         $this->command->info('✅ Utilisateurs de test créés avec succès !');

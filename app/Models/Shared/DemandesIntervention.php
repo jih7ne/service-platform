@@ -25,7 +25,12 @@ class DemandesIntervention extends Model
         'idClient',
         'idService'
     ];
-
+    protected $casts = [
+        'dateDemande' => 'datetime',
+        'dateSouhaitee' => 'date',
+        'heureDebut' => 'datetime:H:i',
+        'heureFin' => 'datetime:H:i',
+    ];
     public function client()
     {
         return $this->belongsTo(Utilisateur::class, 'idClient', 'idUser');

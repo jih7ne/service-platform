@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Shared\Utilisateur;
 
 class Feedback extends Model
 {
@@ -16,6 +17,6 @@ class Feedback extends Model
 
     public function auteur()
     {
-        return $this->belongsTo(User::class, 'idAuteur', 'idUser');
+        return $this->belongsTo(Utilisateur::class, 'idAuteur', 'idUser');
     }
 }

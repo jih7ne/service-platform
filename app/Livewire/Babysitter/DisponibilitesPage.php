@@ -289,11 +289,9 @@ class DisponibilitesPage extends Component
     public function getHeuresProperty()
     {
         $heures = [];
-        for ($i = 6; $i < 24; $i++) { // Start from 6am to be more relevant
+        for ($i = 0; $i < 24; $i++) { // Generate hours from 00:00 to 23:00
             $heures[] = sprintf('%02d:00', $i);
-            $heures[] = sprintf('%02d:30', $i);
         }
-        // Add late night / early morning if needed, but 06-23:30 is standard for babysitters
         return $heures;
     }
 

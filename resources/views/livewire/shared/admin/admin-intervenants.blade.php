@@ -107,6 +107,29 @@
                             <option value="refuse">Refusés</option>
                         </select>
                     </div>
+
+                    {{-- Date Filter --}}
+                    <div class="w-full md:w-48">
+                        <select 
+                            wire:model.live="dateFilter"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="plus_recent">Plus récent</option>
+                            <option value="plus_ancien">Plus ancien</option>
+                            <option value="date_specifique">Date spécifique</option>
+                        </select>
+                    </div>
+
+                    {{-- Date Input (shown when date_specifique is selected) --}}
+                    @if($dateFilter === 'date_specifique')
+                        <div class="w-full md:w-56">
+                            <input 
+                                type="date" 
+                                wire:model.live="dateSpecifique"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                        </div>
+                    @endif
                 </div>
             </div>
 
