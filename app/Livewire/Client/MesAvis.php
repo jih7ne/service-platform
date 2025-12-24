@@ -297,6 +297,7 @@ class MesAvis extends Component
             ->leftJoin('services', 'demandes_intervention.idService', '=', 'services.idService')
             ->select(
                 'feedbacks.*',
+                'demandes_intervention.*',
                 'utilisateurs.prenom as auteur_prenom',
                 'utilisateurs.nom as auteur_nom',
                 'services.nomService as nom_service',
@@ -324,15 +325,56 @@ class MesAvis extends Component
         return $query;
     }
 
-    // ✅ CORRECTION : Filtrage avec > 3 et <= 3
+
+    private function canDisplayFeedback($feedback)
+    {
+        // Si pas de demande associée, on autorise l'affichage (compatibilité)
+        if (!$feedback->idDemande) {
+            return true;
+        }
+
+        // Condition 1: Les deux feedbacks (client et intervenant) existent
+        $intervenantionFeedbackExists = DB::table('feedbacks')
+            ->where('idDemande', $feedback->idDemande)
+            ->where('typeAuteur', 'client')
+            ->where('idAuteur', $this->user->idUser) // Le client a note l'intervenant
+            ->exists();
+
+        if ($intervenantionFeedbackExists) {
+            return true;
+        }
+
+        // Condition 2: Une semaine s'est écoulée depuis la fin de l'intervention
+        // On considère que la date souhaitée est la date de fin de l'intervention
+        if ($feedback->dateSouhaitee) {
+            $oneWeekLater = \Carbon\Carbon::parse($feedback->dateSouhaitee)->addWeek();
+            $now = \Carbon\Carbon::now();
+
+            return $now->greaterThanOrEqualTo($oneWeekLater);
+        }
+
+        // Si aucune condition n'est remplie, on n'affiche pas
+        return false;
+    }
+
     public function render()
     {
         $query = $this->getBaseQuery();
 
+
         // Récupération des avis
         $avis = $query->orderBy('feedbacks.dateCreation', 'desc')->get();
 
-        // Application du filtre sur la collection
+        
+
+        // ✅ APPLY THE canDisplayFeedback FILTER HERE
+        $avis = $avis->filter(function($feedback) {
+            return $this->canDisplayFeedback($feedback);
+        });
+
+        
+
+        // Application du filtre sur la collection (pour les notes)
         if (!empty($this->filterNote)) {
             if ($this->filterNote === 'positive') {
                 $avis = $avis->filter(function($item) {
