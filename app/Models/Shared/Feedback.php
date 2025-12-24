@@ -20,6 +20,7 @@ class Feedback extends Model
         'sympathie',
         'ponctualite',
         'proprete',
+        'moyenne',
         'qualiteTravail',
         'estVisible',
         'dateAffichage',

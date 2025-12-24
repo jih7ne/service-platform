@@ -111,6 +111,8 @@ Route::prefix('pet-keeping')->group(function () {
     Route::get('book/{IdService}', PetkeepingServiceBooking::class)->name('pet-keeper.book');
 });
 
+Route::get('/pet-keeper/inscription', PetKeeperRegistration::class)->name('petkeeper.inscription');
+
 // ============================================================================
 // AUTH ROUTES
 // ============================================================================
@@ -163,7 +165,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Pet Keeper Routes (Provider)
     Route::prefix('pet-keeper')->name('petkeeper.')->group(function () {
-        Route::get('inscription', PetKeeperRegistration::class)->name('inscription');
+        
         Route::get('profile', PetKeeperProfile::class)->name('profile');
         Route::get('dashboard', PetKeeperDashboard::class)->name('dashboard');
         Route::get('mission/{id}', PetKeeperMissionDetails::class)->name('mission.show');
