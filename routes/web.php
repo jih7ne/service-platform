@@ -82,6 +82,7 @@ use App\Livewire\PetKeeping\SearchService as PetKeepingService;
 use App\Livewire\PetKeeping\SingleService as SinglePetKeepingService;
 use App\Livewire\Babysitter\DisponibilitesPage as BabysitterDisponibilitesPage;
 use App\Livewire\PetKeeping\PetKeeperAvisPage;
+use App\Livewire\PetKeeping\PetKeeperProfileClientView;
 
 // Public Routes
 Route::get('/', LandingPage::class)->name('home');
@@ -103,11 +104,14 @@ Route::get('/babysitter-booking/{id}', BabysitterBooking::class)->name('babysitt
 // Public Tutoring Routes
 Route::get('/services/professors-list', ProfessorsList::class)->name('professors-list');
 Route::get('/professeurs/{id}', TutorDetails::class)->name('professeurs.details');
+
 Route::get('/reservation/{service}', BookingProcess::class)->name('reservation.create');
 
 // Public Pet Keeping Routes
+
 Route::prefix('pet-keeping')->group(function () {
     Route::get('search-service', PetKeepingService::class)->name('pet-keeping.search-service');
+    Route::get('pet-keeper/{idPetKeeper}/{idService}', PetKeeperProfileClientView::class)->name('pet-keeper.about');
     Route::get('book/{IdService}', PetkeepingServiceBooking::class)->name('pet-keeper.book');
 });
 
