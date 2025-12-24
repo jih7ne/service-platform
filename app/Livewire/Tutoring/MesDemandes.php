@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\ReponseDemandeClient;
 use App\Mail\ConfirmationActionProf;
-use Livewire\Attributes\Computed; 
+use Livewire\Attributes\Computed;
+use Carbon\Carbon;
 
 class MesDemandes extends Component
 {
@@ -31,6 +32,9 @@ class MesDemandes extends Component
 
     public function mount()
     {
+        // Configurer Carbon en français
+        Carbon::setLocale('fr');
+        
         $this->collectDebugInfo();
     }
 
@@ -105,6 +109,14 @@ class MesDemandes extends Component
     public function toggleAdvancedFilters()
     {
         $this->showAdvancedFilters = !$this->showAdvancedFilters;
+    }
+
+    public function resetFilters()
+    {
+        $this->filterMatiere = 'all';
+        $this->filterNiveau = 'all';
+        $this->datePeriod = 'all';
+        $this->filterSort = 'recent';
     }
 
     public function getStatsProperty()
@@ -308,7 +320,7 @@ class MesDemandes extends Component
         // 2. Données Mail
         $mailData = [
             'statut'       => $nouveauStatut,
-            'date'         => \Carbon\Carbon::parse($demandeInfo->dateSouhaitee)->format('d/m/Y'),
+            'date'         => Carbon::parse($demandeInfo->dateSouhaitee)->format('d/m/Y'),
             'heure_debut'  => substr($demandeInfo->heureDebut, 0, 5),
             'heure_fin'    => substr($demandeInfo->heureFin, 0, 5),
             'matiere'      => $demandeInfo->nom_matiere ?? 'Soutien Scolaire',

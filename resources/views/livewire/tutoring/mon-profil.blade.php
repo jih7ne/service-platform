@@ -29,14 +29,17 @@
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                         <span class="font-bold text-gray-800">{{ number_format($note, 1) }}</span>
                     </div>
-                    <span class="hidden sm:inline">•</span>
-                    <span>{{ $nbMissions }} Missions réalisées</span>
                 </div>
             </div>
 
             <div class="text-center md:text-right w-full md:w-auto mt-3 md:mt-0">
-                <p class="text-2xl sm:text-3xl font-extrabold text-[#1E40AF]">150 <span class="text-xs sm:text-sm font-medium text-gray-400">DH/heure</span></p>
-                <p class="text-[10px] sm:text-xs text-gray-400 uppercase font-bold mt-1">Tarif Moyen</p>
+                @if($tarifMoyen > 0)
+                    <p class="text-2xl sm:text-3xl font-extrabold text-[#1E40AF]">{{ number_format($tarifMoyen, 0) }} <span class="text-xs sm:text-sm font-medium text-gray-400">DH/heure</span></p>
+                    <p class="text-[10px] sm:text-xs text-gray-400 uppercase font-bold mt-1">Tarif Moyen</p>
+                @else
+                    <p class="text-lg sm:text-xl font-semibold text-gray-400">Aucun tarif défini</p>
+                    <p class="text-[10px] sm:text-xs text-gray-400 uppercase font-bold mt-1">Tarif Moyen</p>
+                @endif
             </div>
         </div>
 

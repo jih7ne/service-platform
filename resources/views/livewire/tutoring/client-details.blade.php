@@ -26,21 +26,44 @@
             </div>
             <div class="text-center md:text-left flex-1">
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">{{ $client->prenom }} {{ $client->nom }}</h1>
+                @if($moyenne > 0)
+                    @php
+                        $rounded = round($moyenne * 2) / 2;
+                        $full = floor($rounded);
+                        $hasHalf = ($rounded - $full) == 0.5;
+                    @endphp
+                    <div class="flex items-center justify-center md:justify-start gap-2 mt-2">
+                        <div class="flex items-center">
+                            @for($i = 1; $i <= 5; $i++)
+                                @if($i <= $full)
+                                    <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                    </svg>
+                                @elseif($hasHalf && $i == $full + 1)
+                                    <svg class="w-4 h-4 text-yellow-400" viewBox="0 0 20 20">
+                                        <defs>
+                                            <linearGradient id="half-cd-{{ $i }}">
+                                                <stop offset="50%" stop-color="#FBBF24"/>
+                                                <stop offset="50%" stop-color="#D1D5DB"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <path fill="url(#half-cd-{{ $i }})" d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                    </svg>
+                                @else
+                                    <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
+                                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                    </svg>
+                                @endif
+                            @endfor
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700">{{ number_format($moyenne, 1) }}</span>
+                    </div>
+                @endif
                 <p class="text-sm sm:text-base text-gray-500 flex items-center justify-center md:justify-start gap-2 mt-1">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     {{ $client->ville ?? 'Ville non renseignée' }}
                 </p>
-                <div class="flex flex-wrap justify-center md:justify-start gap-2 sm:gap-3 mt-3 sm:mt-4">
-                    @if($coursTerminesCount > 0)
-                        <span class="px-2.5 sm:px-3 py-1 bg-yellow-50 text-yellow-700 text-[10px] sm:text-xs font-bold rounded-lg border border-yellow-100">
-                            {{ $coursTerminesCount }} Cours terminés
-                        </span>
-                    @else
-                        <span class="px-2.5 sm:px-3 py-1 bg-gray-50 text-gray-500 text-[10px] sm:text-xs font-bold rounded-lg border border-gray-200">
-                            Nouveau client
-                        </span>
-                    @endif
-                </div>
+                
             </div>
             
             <!-- Actions Rapides -->
@@ -100,24 +123,46 @@
 
                     <div class="overflow-hidden">
                         @forelse($coursHistorique as $cours)
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded-lg gap-3">
+                            <div class="flex flex-col sm:flex-row sm:items-start justify-between p-3 sm:p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors rounded-lg gap-3">
                                 <div class="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
                                     <div class="bg-blue-100 text-blue-600 font-bold px-2 sm:px-3 py-1 rounded text-[10px] sm:text-xs uppercase flex-shrink-0">
                                         {{ $cours->nom_matiere }}
                                     </div>
-                                    <div class="min-w-0">
+                                    <div class="min-w-0 flex-1">
                                         <p class="text-xs sm:text-sm font-bold text-gray-800">
                                             {{ \Carbon\Carbon::parse($cours->dateSouhaitee)->format('d M Y') }}
                                         </p>
-                                        <p class="text-[10px] sm:text-xs text-gray-500 truncate">{{ substr($cours->heureDebut, 0, 5) }} - {{ substr($cours->heureFin, 0, 5) }} • {{ $cours->type_service }}</p>
+                                        <p class="text-[10px] sm:text-xs text-gray-500">
+                                            {{ substr($cours->heureDebut, 0, 5) }} - {{ substr($cours->heureFin, 0, 5) }}
+                                            @if($cours->nom_niveau)
+                                                • {{ $cours->nom_niveau }}
+                                            @endif
+                                            @if($cours->lieu)
+                                                • 
+                                                @if(str_contains(strtolower($cours->lieu), 'ligne'))
+                                                     En ligne
+                                                @elseif(str_contains(strtolower($cours->lieu), 'domicile'))
+                                                     À domicile
+                                                @else
+                                                     {{ $cours->lieu }}
+                                                @endif
+                                            @endif
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="text-right flex-shrink-0 ml-auto sm:ml-0">
                                     <span class="block font-bold text-gray-900 text-sm sm:text-base">{{ $cours->montant_total }} DH</span>
-                                    @if($cours->statut == 'validée')
-                                        <span class="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full inline-block">À venir</span>
-                                    @else
+                                    @php
+                                        $courseDate = \Carbon\Carbon::parse($cours->dateSouhaitee);
+                                        $today = \Carbon\Carbon::today();
+                                        $now = \Carbon\Carbon::now();
+                                    @endphp
+                                    @if($courseDate->isBefore($today))
                                         <span class="text-[10px] text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full inline-block">Terminé</span>
+                                    @elseif($courseDate->isToday())
+                                        <span class="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full inline-block">Aujourd'hui</span>
+                                    @else
+                                        <span class="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full inline-block">À venir</span>
                                     @endif
                                 </div>
                             </div>
@@ -146,11 +191,32 @@
                                     </div>
                                     <span class="text-[10px] sm:text-xs text-gray-400">{{ \Carbon\Carbon::parse($fb->dateCreation)->diffForHumans() }}</span>
                                 </div>
-                                <!-- Etoiles -->
-                                <div class="flex text-yellow-400 text-xs mb-2">
-                                    @for($i=0; $i<5; $i++)
-                                        <svg class="w-3 h-3 {{ $i < ($fb->sympathie ?? 5) ? 'fill-current' : 'text-gray-200' }}" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                <!-- Etoiles (basées sur la moyenne) -->
+                                @php
+                                    $note = $fb->moyenne ?? 0;
+                                    $rounded = round($note * 2) / 2;
+                                    $full = floor($rounded);
+                                    $hasHalf = ($rounded - $full) == 0.5;
+                                @endphp
+                                <div class="flex items-center gap-0.5 text-xs mb-2">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= $full)
+                                            <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                        @elseif($hasHalf && $i == $full + 1)
+                                            <svg class="w-3 h-3 text-yellow-400" viewBox="0 0 20 20">
+                                                <defs>
+                                                    <linearGradient id="half-fb-{{ $fb->idFeedBack }}-{{ $i }}">
+                                                        <stop offset="50%" stop-color="#FBBF24"/>
+                                                        <stop offset="50%" stop-color="#D1D5DB"/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <path fill="url(#half-fb-{{ $fb->idFeedBack }}-{{ $i }})" d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                            </svg>
+                                        @else
+                                            <svg class="w-3 h-3 text-gray-200 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                        @endif
                                     @endfor
+                                    <span class="ml-1 text-[11px] font-semibold text-gray-700">{{ number_format($note, 1) }}</span>
                                 </div>
                                 <p class="text-xs sm:text-sm text-gray-600 italic break-words">"{{ $fb->commentaire }}"</p>
                             </div>

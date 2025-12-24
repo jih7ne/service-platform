@@ -27,7 +27,7 @@ class TutorDetails extends Component
     private function loadProfesseurDetails()
     {
         // Charger les données du professeur avec relations
-        $this->professeur = DB::table('professeurs')
+        $professeurBase = DB::table('professeurs')
             ->join('intervenants', 'professeurs.intervenant_id', '=', 'intervenants.IdIntervenant')
             ->join('utilisateurs', 'intervenants.IdIntervenant', '=', 'utilisateurs.idUser')
             ->leftJoin('localisations', 'utilisateurs.idUser', '=', 'localisations.idUser')
@@ -38,8 +38,7 @@ class TutorDetails extends Component
                 'utilisateurs.email',
                 'utilisateurs.telephone',
                 'utilisateurs.photo',
-                'utilisateurs.note',
-                'utilisateurs.nbrAvis',
+                'utilisateurs.idUser',
                 'localisations.ville',
                 'localisations.adresse',
                 'localisations.latitude',
@@ -50,9 +49,21 @@ class TutorDetails extends Component
             ->where('intervenants.statut', 'VALIDE')
             ->first();
 
-        if (!$this->professeur) {
+        if (!$professeurBase) {
             abort(404, 'Professeur non trouvé');
         }
+
+        // ✅ CORRECTION : idCible = le professeur qui REÇOIT l'avis
+        $avisData = DB::table('feedbacks')
+            ->where('idCible', $professeurBase->idUser)
+            ->where('estVisible', 1)
+            ->selectRaw('AVG(moyenne) as note_moyenne, COUNT(*) as nombre_avis')
+            ->first();
+
+        // Ajouter les données d'avis au professeur
+        $this->professeur = $professeurBase;
+        $this->professeur->note = $avisData->note_moyenne ? round($avisData->note_moyenne, 2) : 0;
+        $this->professeur->nbrAvis = $avisData->nombre_avis ?? 0;
 
         // Charger les services du professeur
         $this->services = DB::table('services_prof')
@@ -69,17 +80,14 @@ class TutorDetails extends Component
             ->get()
             ->groupBy('nom_matiere');
 
-        // Charger les disponibilités - essayons différentes approches
+        // Charger les disponibilités
         $intervenantId = $this->professeur->intervenant_id_real ?? $this->professeur->intervenant_id;
 
-        // Charger toutes les disponibilités
         $disponibilitesData = DB::table('disponibilites')
             ->where('idIntervenant', $intervenantId)
             ->get();
 
-        // Si on a des disponibilités, les filtrer et grouper
         if ($disponibilitesData->isNotEmpty()) {
-            // Filtrer les récurrentes ou futures
             $disponibilitesData = $disponibilitesData->filter(function($dispo) {
                 return $dispo->est_reccurent == true || 
                        ($dispo->date_specifique && $dispo->date_specifique >= now()->format('Y-m-d'));
@@ -90,15 +98,11 @@ class TutorDetails extends Component
             $this->disponibilites = collect([]);
         }
 
-        // Charger les feedbacks
-        $userId = DB::table('intervenants')
-            ->where('IdIntervenant', $intervenantId)
-            ->value('IdIntervenant');
-
+        // ✅ CORRECTION : JOIN sur idAuteur (celui qui donne l'avis), WHERE sur idCible (le professeur)
         $this->feedbacks = DB::table('feedbacks')
             ->join('utilisateurs', 'feedbacks.idAuteur', '=', 'utilisateurs.idUser')
-            ->where('feedbacks.idCible', $userId)
-            ->where('feedbacks.estVisible', true)
+            ->where('feedbacks.idCible', $professeurBase->idUser)
+            ->where('feedbacks.estVisible', 1)
             ->select(
                 'feedbacks.*',
                 'utilisateurs.nom as auteur_nom',
@@ -129,7 +133,8 @@ class TutorDetails extends Component
                 'moyenne_ponctualite' => 0,
                 'moyenne_proprete' => 0,
                 'moyenne_qualite' => 0,
-                'total_avis' => 0
+                'total_avis' => 0,
+                'moyenne_generale' => 0
             ];
             return;
         }
@@ -140,14 +145,14 @@ class TutorDetails extends Component
             'moyenne_ponctualite' => round($this->feedbacks->avg('ponctualite'), 1),
             'moyenne_proprete' => round($this->feedbacks->avg('proprete'), 1),
             'moyenne_qualite' => round($this->feedbacks->avg('qualiteTravail'), 1),
-            'total_avis' => $this->feedbacks->count()
+            'total_avis' => $this->feedbacks->count(),
+            'moyenne_generale' => round($this->feedbacks->avg('moyenne'), 1)
         ];
     }
 
     public function reserverCours($serviceId)
     {
         // Logique de réservation à implémenter
-        // Par exemple : rediriger vers une page de réservation avec l'ID du service
         return redirect()->route('reservation.create', [
             'professeur' => $this->professeurId,
             'service' => $serviceId

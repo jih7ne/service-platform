@@ -147,6 +147,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('disponibilites', TutoringDisponibilitesPage::class)->name('disponibilites');
         Route::get('avis', TutoringAvisPage::class)->name('avis');
     });
+
+    Route::get('/tutoring/mes-reclamations', \App\Livewire\Tutoring\MesReclamations::class)
+    ->name('tutoring.mes-reclamations');
     
     // Babysitter Routes
     Route::prefix('babysitter')->name('babysitter.')->group(function () {

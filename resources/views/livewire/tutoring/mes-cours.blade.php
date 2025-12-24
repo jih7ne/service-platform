@@ -52,6 +52,12 @@
                             </div>
                         </div>
 
+                        <!-- Nombre d'élèves -->
+                        <div class="bg-blue-50 border border-blue-100 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-4 sm:mb-6 flex items-center gap-2">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            <p class="text-xs sm:text-sm font-bold text-blue-800">{{ $cours->nbr_eleves ?? 0 }} élève(s)</p>
+                        </div>
+
                         <!-- Public cible -->
                         <div class="bg-white border border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 mb-4 sm:mb-6">
                             <p class="text-[10px] sm:text-xs text-gray-400 font-bold uppercase mb-1">Public cible</p>
@@ -60,11 +66,7 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="grid grid-cols-3 gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-100">
-                        <button wire:click="showDetails({{ $cours->id_service }})" class="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-2.5 bg-[#EFF6FF] text-[#1E40AF] rounded-lg text-[10px] sm:text-xs font-bold hover:bg-blue-100 transition-colors">
-                            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                            <span class="hidden sm:inline">Stats</span>
-                        </button>
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-100">
                         <button wire:click="edit({{ $cours->id_service }})" class="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-2 py-2 sm:py-2.5 bg-[#FFF7ED] text-[#EA580C] rounded-lg text-[10px] sm:text-xs font-bold hover:bg-orange-100 transition-colors">
                             <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             <span class="hidden sm:inline">Modifier</span>
@@ -134,20 +136,7 @@
                             @error('newPrix') <span class="text-red-500 text-[10px] sm:text-xs">{{ $message }}</span> @enderror
                         </div>
 
-                        <!-- Type de cours (Radio Buttons) -->
-                        <div>
-                            <label class="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-2">Type de cours</label>
-                            <div class="flex flex-col sm:flex-row gap-3 sm:gap-6">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" wire:model="newType" value="enligne" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-                                    <span class="text-sm sm:text-base text-gray-700">En ligne</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" wire:model="newType" value="domicile" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-                                    <span class="text-sm sm:text-base text-gray-700">À domicile</span>
-                                </label>
-                            </div>
-                        </div>
+
                     </div>
 
                     <div class="flex justify-end mt-6 sm:mt-8">
@@ -175,18 +164,9 @@
                                 @foreach($niveauxDispo as $niv) <option value="{{ $niv->id_niveau }}">{{ $niv->nom_niveau }}</option> @endforeach
                             </select>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1">Prix (DH/h)</label>
-                                <input type="number" wire:model="prix" class="w-full border border-gray-300 rounded-lg sm:rounded-xl p-2.5 sm:p-3 outline-none font-bold text-sm sm:text-base">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1">Type</label>
-                                <select wire:model="type" class="w-full border border-gray-300 rounded-lg sm:rounded-xl p-2.5 sm:p-3 outline-none text-sm sm:text-base">
-                                    <option value="enligne">En ligne</option>
-                                    <option value="domicile">Domicile</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label class="block text-[10px] sm:text-xs font-bold text-gray-500 uppercase mb-1">Prix (DH/h)</label>
+                            <input type="number" wire:model="prix" class="w-full border border-gray-300 rounded-lg sm:rounded-xl p-2.5 sm:p-3 outline-none font-bold text-sm sm:text-base">
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3 mt-6">
@@ -201,27 +181,7 @@
             </div>
         @endif
 
-        {{-- MODAL STATS --}}
-        @if($showDetailModal && $detailCours)
-            <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                <div class="bg-white rounded-xl sm:rounded-2xl w-full max-w-sm p-6 sm:p-8 shadow-2xl text-center">
-                    <h3 class="text-lg sm:text-xl font-extrabold text-gray-900 mb-5 sm:mb-6">{{ $detailCours->nom_matiere }}</h3>
-                    <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6">
-                        <div class="bg-[#F8F9FD] p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-100">
-                            <p class="text-2xl sm:text-3xl font-black text-blue-900 mb-1">{{ $statsClients }}</p>
-                            <p class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase">Élèves</p>
-                        </div>
-                        <div class="bg-[#F8F9FD] p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-gray-100">
-                            <p class="text-2xl sm:text-3xl font-black text-blue-900 mb-1">{{ $statsHeures }}<span class="text-base sm:text-lg">h</span></p>
-                            <p class="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase">Enseignées</p>
-                        </div>
-                    </div>
-                    <button wire:click="closeModal" class="w-full py-2.5 sm:py-3 bg-gray-100 text-gray-700 font-bold rounded-lg sm:rounded-xl hover:bg-gray-200 text-sm sm:text-base">
-                        Fermer
-                    </button>
-                </div>
-            </div>
-        @endif
+
 
     </main>
 </div>

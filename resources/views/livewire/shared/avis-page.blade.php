@@ -129,16 +129,31 @@
                             <div class="user-info">
                                 <h3>{{ $feedback->client_prenom }} {{ $feedback->client_nom }}</h3>
                                 <div class="meta-row">
-                                    <div class="rating">
-                                        @php $averageNote = $feedback->moyenne; @endphp
+                                    <div class="rating" style="display:flex; align-items:center; gap:4px;">
+                                        @php 
+                                            $averageNote = $feedback->moyenne ?? 0; 
+                                            $rounded = round($averageNote * 2) / 2; 
+                                            $full = floor($rounded); 
+                                            $hasHalf = ($rounded - $full) == 0.5; 
+                                        @endphp
                                         @for($i = 1; $i <= 5; $i++)
-                                            @if($i <= $averageNote)
-                                                <span style="color:#f59e0b;">★</span>
+                                            @if($i <= $full)
+                                                <svg width="14" height="14" viewBox="0 0 20 20" class="fill-current" style="color:#f59e0b"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                            @elseif($hasHalf && $i == $full + 1)
+                                                <svg width="14" height="14" viewBox="0 0 20 20">
+                                                    <defs>
+                                                        <linearGradient id="half-shared-{{ $feedback->idFeedBack }}-{{ $i }}">
+                                                            <stop offset="50%" stop-color="#F59E0B"/>
+                                                            <stop offset="50%" stop-color="#E5E7EB"/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <path fill="url(#half-shared-{{ $feedback->idFeedBack }}-{{ $i }})" d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                                </svg>
                                             @else
-                                                <span style="color:#e5e7eb;">★</span>
+                                                <svg width="14" height="14" viewBox="0 0 20 20" class="fill-current" style="color:#e5e7eb"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
                                             @endif
                                         @endfor
-                                        <span style="margin-left:8px; font-weight:600; color:#ea580c;">{{ $averageNote }}/5</span>
+                                        <span style="margin-left:8px; font-weight:600; color:#ea580c;">{{ number_format($averageNote, 1) }}/5</span>
                                     </div>
                                     <span class="date-pill">{{ \Carbon\Carbon::parse($feedback->dateCreation)->format('d/m/Y') }}</span>
                                 </div>

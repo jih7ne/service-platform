@@ -14,6 +14,7 @@ class ClientDetails extends Component
     public $prenom_prof;
     public $photo_prof;
     public $enAttente = 0;
+    public $moyenne = 0;
     
     public $coursTerminesCount = 0; 
 
@@ -39,17 +40,19 @@ class ClientDetails extends Component
             return redirect()->route('tutoring.requests');
         }
 
-        // 2. Historique des cours (Reste inchangé)
+        // 2. Historique des cours avec matière, niveau et lieu
         $this->coursHistorique = DB::table('demandes_intervention')
             ->join('demandes_prof', 'demandes_intervention.idDemande', '=', 'demandes_prof.demande_id')
             ->join('services_prof', 'demandes_prof.service_prof_id', '=', 'services_prof.id_service')
             ->join('matieres', 'services_prof.matiere_id', '=', 'matieres.id_matiere')
+            ->leftJoin('niveaux', 'services_prof.niveau_id', '=', 'niveaux.id_niveau')
             ->where('demandes_intervention.idClient', $id)
             ->where('demandes_intervention.idIntervenant', $profId)
             ->whereIn('demandes_intervention.statut', ['validée', 'terminée'])
             ->select(
                 'demandes_intervention.*', 
                 'matieres.nom_matiere',
+                'niveaux.nom_niveau',
                 'demandes_prof.montant_total',
                 'services_prof.type_service'
             )
@@ -69,6 +72,11 @@ class ClientDetails extends Component
             ->select('feedbacks.*', 'utilisateurs.prenom as auteur_prenom', 'utilisateurs.nom as auteur_nom')
             ->orderBy('dateCreation', 'desc')
             ->get();
+
+        // 4. Moyenne du client
+        $this->moyenne = DB::table('feedbacks')
+            ->where('idCible', $id)
+            ->avg('moyenne');
     }
 
     public function refreshPendingRequests(): void

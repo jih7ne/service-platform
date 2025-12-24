@@ -83,15 +83,15 @@
                     
                     <!-- Avatar -->
                     <div class="relative mb-4">
-                        @if($client->photo)
-                            <img src="{{ asset('storage/'.$client->photo) }}" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md">
+                        @if($client['photo'])
+                            <img src="{{ asset('storage/'.$client['photo']) }}" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md">
                         @else
                             <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl sm:text-2xl font-bold border-4 border-white shadow-md">
-                                {{ substr($client->prenom, 0, 1) }}
+                                {{ substr($client['prenom'], 0, 1) }}
                             </div>
                         @endif
                         <!-- Status Badge -->
-                        @if($client->statut === 'validée')
+                        @if($client['statut'] === 'validée')
                             <div class="absolute bottom-0 right-0 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-100 text-green-700 text-[9px] sm:text-[10px] font-bold rounded-full border-2 border-white">En cours</div>
                         @else
                             <div class="absolute bottom-0 right-0 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-100 text-gray-600 text-[9px] sm:text-[10px] font-bold rounded-full border-2 border-white">Terminé</div>
@@ -99,26 +99,26 @@
                     </div>
 
                     <!-- Infos -->
-                    <h3 class="text-base sm:text-lg font-bold text-gray-900 truncate w-full px-2">{{ $client->prenom }} {{ $client->nom }}</h3>
-                    <p class="text-[10px] sm:text-xs text-gray-400 mb-4">Client depuis le {{ \Carbon\Carbon::parse($client->dateSouhaitee)->format('d M Y') }}</p>
+                    <h3 class="text-base sm:text-lg font-bold text-gray-900 truncate w-full px-2">{{ $client['prenom'] }} {{ $client['nom'] }}</h3>
+                    <p class="text-[10px] sm:text-xs text-gray-400 mb-4">Client depuis le {{ \Carbon\Carbon::parse($client['firstCourseDate'])->format('d M Y') }}</p>
 
                     <div class="w-full space-y-2 mb-5 sm:mb-6">
-                        <div class="flex justify-between items-center text-xs sm:text-sm">
-                            <span class="text-gray-500">Matière</span>
-                            <span class="font-bold text-gray-800 truncate ml-2">{{ $client->nom_matiere }}</span>
-                        </div>
-                        <div class="flex justify-between items-center text-xs sm:text-sm">
-                            <span class="text-gray-500">Niveau</span>
-                            <span class="font-bold text-gray-800 truncate ml-2">{{ $client->nom_niveau }}</span>
-                        </div>
-                        <div class="flex justify-between items-center text-xs sm:text-sm">
-                            <span class="text-gray-500">Tarif</span>
-                            <span class="font-bold text-blue-600">{{ $client->montant_total }} DH</span>
-                        </div>
+                        @forelse($client['courses'] as $course)
+                            <div class="bg-gray-50 rounded-lg p-2.5 sm:p-3">
+                                <p class="text-xs text-gray-600 mb-1">
+                                    <span class="font-semibold text-gray-700">{{ $course['nom_matiere'] }}</span>
+                                    @if($course['nom_niveau'])
+                                        <span class="text-gray-500"> - {{ $course['nom_niveau'] }}</span>
+                                    @endif
+                                </p>
+                            </div>
+                        @empty
+                            <p class="text-xs text-gray-400 italic">Pas de cours assigné</p>
+                        @endforelse
                     </div>
 
                     <!-- Bouton Détails -->
-                    <a href="{{ route('tutoring.client.details', $client->client_id) }}" class="w-full py-2 sm:py-2.5 bg-[#1E40AF] text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm hover:bg-blue-800 transition-colors shadow-blue-100 shadow-lg">
+                    <a href="{{ route('tutoring.client.details', $client['client_id']) }}" class="w-full py-2 sm:py-2.5 bg-[#1E40AF] text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm hover:bg-blue-800 transition-colors shadow-blue-100 shadow-lg">
                         Voir détails
                     </a>
                 </div>

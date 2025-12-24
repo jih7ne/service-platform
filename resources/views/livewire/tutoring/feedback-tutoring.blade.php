@@ -100,14 +100,14 @@
                         </div>
                         
                         <!-- Note moyenne -->
-                        <div class="mt-4 pt-4 border-t border-blue-200">
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-700 font-medium">Note moyenne:</span>
-                                <span class="text-2xl font-bold text-blue-600">
-                                    {{ $moyenne ?? 0 }}/5
-                                </span>
-                            </div>
-                        </div>
+<div class="mt-4 pt-4 border-t border-blue-200">
+    <div class="flex justify-between items-center">
+        <span class="text-gray-700 font-medium">Note moyenne:</span>
+        <span class="text-2xl font-bold text-blue-600">
+            {{ $this->getAverageRating() }}/5
+        </span>
+    </div>
+</div>
                     </div>
                     
                     <!-- Commentaire si présent -->

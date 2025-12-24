@@ -84,7 +84,7 @@
                                     </div>
 
                                     <!-- Bouton Reset -->
-                                    <button wire:click="$set('filterMatiere','all'); $set('filterNiveau','all'); $set('datePeriod','all'); $set('filterSort','recent')" class="w-full py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-lg hover:bg-gray-200 transition-colors">
+                                    <button wire:click="resetFilters" class="w-full py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-lg hover:bg-gray-200 transition-colors">
                                         Réinitialiser les filtres
                                     </button>
                                 </div>
@@ -170,9 +170,13 @@
                                 </a>
                             </h3>
 
-                            <div class="flex items-center text-xs text-gray-500 mb-3 mt-1">
+                            <div class="flex items-center text-xs text-gray-500 mb-1 mt-1">
                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                {{ \Carbon\Carbon::parse($demande->dateDemande)->format('d M Y') }} • {{ \Carbon\Carbon::parse($demande->heureDebut)->format('H:i') }}-{{ \Carbon\Carbon::parse($demande->heureFin)->format('H:i') }}
+                                {{ \Carbon\Carbon::parse($demande->dateDemande)->isoFormat('D MMM YYYY') }}
+                            </div>
+                            <div class="flex items-center text-[11px] text-gray-600 mb-3">
+                                <span class="text-[10px] text-gray-400 font-bold uppercase mr-2">Date souhaitée</span>
+                               {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->isoFormat('D MMM YYYY') }} • {{ substr($demande->heureDebut, 0, 5) }}-{{ substr($demande->heureFin, 0, 5) }}
                             </div>
                             
                             <!-- Détails Service -->
@@ -194,39 +198,37 @@
 
                     <!-- Colonne Milieu : Détails Pratiques -->
                     <div class="w-full lg:w-1/3 space-y-3 border-l border-r border-gray-50 px-0 lg:px-6">
-                        <div class="flex items-start gap-3">
-                            <div class="text-gray-400 mt-0.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
-                            <div>
-                                <p class="text-xs text-gray-400 font-bold uppercase mb-0.5">Horaire souhaité</p>
-                                <p class="text-sm font-semibold text-gray-800">
-                                    {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->format('l d M') }}, 
-                                    {{ substr($demande->heureDebut, 0, 5) }} - {{ substr($demande->heureFin, 0, 5) }}
-                                </p>
-                            </div>
-                        </div>
+                    
+                        
                         <div class="flex items-start gap-3">
                             <div class="text-gray-400 mt-0.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-1.414 0l-5.648-5.648a1 1 0 01-.174-.223L4.343 8.343A2 2 0 012 6.586V4a2 2 0 012-2h14a2 2 0 012 2v2.586a2 2 0 01-.343 1.657l-4.835 4.835a1 1 0 01-.174.223z"></path></svg></div>
                             <div>
-                                <p class="text-xs text-gray-400 font-bold uppercase mb-0.5">Mode du cours</p>
+                                <p class="text-xs text-gray-400 font-bold uppercase mb-0.5">Mode de cours</p>
                                 <p class="text-sm font-semibold text-gray-800 break-words">
                                     @if($demande->lieu === 'En ligne')
                                         En ligne
                                     @else
-                                        A Domicil <br>
-                                        <p class="text-xs text-gray-400 font-bold uppercase mb-0.5">Lieu </p>
+                                        À domicile <br>
+                                        <p class="text-xs text-gray-400 font-bold uppercase mb-0.5">Lieu</p>
                                         {{ $demande->lieu }}
                                     @endif
                                 </p>
                             </div>
                         </div>
+                        @if($demande->montant_total > 0)
+                        <div class="flex items-start gap-3">
+                            <div class="text-gray-400 mt-0.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            <div>
+                                <p class="text-xs text-gray-400 font-bold uppercase mb-0.5">Prix</p>
+                                <p class="text-lg font-extrabold text-[#1E40AF]">{{ number_format($demande->montant_total, 2, ',', ' ') }} DH</p>
+                            </div>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Colonne Droite : Prix & Actions -->
                     <div class="w-full lg:w-1/4 flex flex-col justify-between h-full min-h-[140px]">
-                        <div>
-                            <p class="text-xs text-gray-400 font-bold uppercase">Budget proposé</p>
-                            <p class="text-2xl font-extrabold text-[#1E40AF] mt-1">{{ $demande->montant_total }} <span class="text-sm text-gray-500">DH/h</span></p>
-                        </div>
+                        <div class="text-center"></div>
 
                         <div class="space-y-3 mt-4">
                             @php
@@ -350,12 +352,16 @@
                                 </a>
                             </h3>
 
-                            <div class="flex items-center text-xs text-gray-500 mb-3 mt-1">
+                            <div class="flex items-center text-xs text-gray-500 mb-1 mt-1">
                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                {{ \Carbon\Carbon::parse($demande->dateDemande)->format('d M Y') }} • {{ \Carbon\Carbon::parse($demande->heureDebut)->format('H:i') }}-{{ \Carbon\Carbon::parse($demande->heureFin)->format('H:i') }}
+                                {{ \Carbon\Carbon::parse($demande->dateDemande)->format('d M Y') }}
+                            </div>
+                            <div class="flex items-center text-[11px] text-gray-600 mb-3">
+                                <span class="text-[10px] text-gray-400 font-bold uppercase mr-2">Date souhaitée</span>
+                                {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->format('d M Y') }} • {{ substr($demande->heureDebut, 0, 5) }}-{{ substr($demande->heureFin, 0, 5) }}
                             </div>
                             
-                            <!-- Détails Service -->
+                            <!-- Détails Service (chips) -->
                             <div class="space-y-2">
                                 <div class="flex items-center gap-2">
                                     <span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded-full font-medium">
@@ -368,24 +374,30 @@
                                         {{ $demande->nom_niveau ?? 'Lycée' }}
                                     </span>
                                 </div>
-                                
-                                <div class="text-xs text-gray-600 space-y-1">
-                                    @if($demande->client_adresse)
-                                        <div class="flex items-center gap-1">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                            {{ $demande->client_adresse }}, {{ $demande->client_ville }}
-                                        </div>
-                                    @endif
-                                    
-                                    @if($demande->montant_total > 0)
-                                        <div class="flex items-center gap-1">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg>
-                                            {{ number_format($demande->montant_total, 2, ',', ' ') }} €
-                                        </div>
-                                    @endif
-                                </div>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Colonne Centre : Mode + Prix -->
+                    <div class="w-full lg:w-1/3 flex flex-col items-center text-center gap-2 mt-8">
+                    
+                        <div>
+                            <p class="text-xs text-gray-400 font-bold uppercase mb-0.5">Mode de cours</p>
+                            <p class="text-sm font-semibold text-gray-800 break-words">
+                                @if($demande->lieu === 'En ligne')
+                                    En ligne
+                                @else
+                                    À domicile
+                                    <span class="block text-xs text-gray-500">{{ $demande->lieu }}</span>
+                                @endif
+                            </p>
+                        </div>
+                        @if($demande->montant_total > 0)
+                            <div class="flex items-center gap-2 justify-center">
+                                <span class="text-xs text-gray-400 font-bold uppercase">Prix</span>
+                                <span class="text-lg font-extrabold text-[#1E40AF]">{{ number_format($demande->montant_total, 2, ',', ' ') }} DH</span>
+                            </div>
+                        @endif
                     </div>
                     
                     <!-- Colonne Droite : Actions -->
@@ -399,11 +411,6 @@
                         
                         <!-- Actions -->
                         <div class="flex flex-col gap-3 w-full lg:w-48">
-                            <a href="{{ route('tutoring.request.details', $demande->idDemande) }}" 
-                               class="w-full py-2 bg-gray-100 text-gray-700 font-bold text-sm rounded-lg hover:bg-gray-200 transition-colors flex justify-center items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Voir les détails
-                            </a>
                             
                             @if($demande->statut === 'validée' && \Carbon\Carbon::parse($demande->dateSouhaitee)->isPast())
                                 @php
@@ -475,12 +482,16 @@
                                 </a>
                             </h3>
 
-                            <div class="flex items-center text-xs text-gray-500 mb-3 mt-1">
+                            <div class="flex items-center text-xs text-gray-500 mb-1 mt-1">
                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                {{ \Carbon\Carbon::parse($demande->dateDemande)->format('d M Y') }} • {{ \Carbon\Carbon::parse($demande->heureDebut)->format('H:i') }}-{{ \Carbon\Carbon::parse($demande->heureFin)->format('H:i') }}
+                                {{ \Carbon\Carbon::parse($demande->dateDemande)->format('d M Y') }}
+                            </div>
+                            <div class="flex items-center text-[11px] text-gray-600 mb-3">
+                                <span class="text-[10px] text-gray-400 font-bold uppercase mr-2">Date souhaitée</span>
+                                {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->format('d M Y') }} • {{ substr($demande->heureDebut, 0, 5) }}-{{ substr($demande->heureFin, 0, 5) }}
                             </div>
                             
-                            <!-- Détails Service -->
+                            <!-- Détails Service (chips) -->
                             <div class="space-y-2">
                                 <div class="flex items-center gap-2">
                                     <span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded-full font-medium">
@@ -493,24 +504,29 @@
                                         {{ $demande->nom_niveau ?? 'Lycée' }}
                                     </span>
                                 </div>
-                                
-                                <div class="text-xs text-gray-600 space-y-1">
-                                    @if($demande->client_adresse)
-                                        <div class="flex items-center gap-1">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                            {{ $demande->client_adresse }}, {{ $demande->client_ville }}
-                                        </div>
-                                    @endif
-                                    
-                                    @if($demande->montant_total > 0)
-                                        <div class="flex items-center gap-1">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg>
-                                            {{ number_format($demande->montant_total, 2, ',', ' ') }} €
-                                        </div>
-                                    @endif
-                                </div>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Colonne Centre : Mode + Prix -->
+                    <div class="w-full lg:w-1/3 flex flex-col items-center text-center gap-2 mt-5">
+                        <div>
+                            <p class="text-xs text-gray-400 font-bold uppercase mb-0.5">Mode de cours</p>
+                            <p class="text-sm font-semibold text-gray-800 break-words">
+                                @if($demande->lieu === 'En ligne')
+                                    En ligne
+                                @else
+                                    À domicile
+                                    <span class="block text-xs text-gray-500">{{ $demande->lieu }}</span>
+                                @endif
+                            </p>
+                        </div>
+                        @if($demande->montant_total > 0)
+                            <div class="flex items-center gap-2 justify-center">
+                                <span class="text-xs text-gray-400 font-bold uppercase">Prix</span>
+                                <span class="text-lg font-extrabold text-[#1E40AF]">{{ number_format($demande->montant_total, 2, ',', ' ') }} DH</span>
+                            </div>
+                        @endif
                     </div>
                     
                     <!-- Colonne Droite : Actions -->
@@ -518,17 +534,8 @@
                         <!-- Badge Statut -->
                         <div class="flex items-center gap-2">
                             <span class="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full font-medium">
-                                {{ $demande->statut === 'terminée' ? 'Terminée' : ($demande->statut === 'refusée' ? 'Refusée' : 'Annulée') }}
+                                {{ $demande->statut === 'terminée' ? 'Terminée' : ($demande->statut === 'refusée' ? 'Refusée' : ($demande->statut === 'validée' ? 'Acceptée' : 'Annulée')) }}
                             </span>
-                        </div>
-                        
-                        <!-- Actions -->
-                        <div class="flex flex-col gap-3 w-full lg:w-48">
-                            <a href="{{ route('tutoring.request.details', $demande->idDemande) }}" 
-                               class="w-full py-2 bg-gray-100 text-gray-700 font-bold text-sm rounded-lg hover:bg-gray-200 transition-colors flex justify-center items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Voir les détails
-                            </a>
                         </div>
                     </div>
                 </div>

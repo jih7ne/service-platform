@@ -55,10 +55,10 @@ class StudentProfile extends Component
             ->orderBy('dateCreation', 'desc')
             ->get();
             
-        // 3. Moyenne de l'élève (Sympathie, Ponctualité...)
+        // 3. Moyenne de l'élève (Moyenne globale)
         $this->moyenne = DB::table('feedbacks')
             ->where('idCible', $id)
-            ->avg('sympathie'); // Ou une moyenne générale
+            ->avg('moyenne'); // Note moyenne globale
     }
 
     public function refreshPendingRequests(): void

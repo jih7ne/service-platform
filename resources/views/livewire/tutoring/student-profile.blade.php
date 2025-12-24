@@ -27,6 +27,39 @@
                     <div class="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-3">
                         <h1 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900">{{ $eleve->prenom }} {{ $eleve->nom }}</h1>
                     </div>
+                    @if($moyenne > 0)
+                        @php
+                            $rounded = round($moyenne * 2) / 2; // arrondi au 0.5 le plus proche
+                            $full = floor($rounded);
+                            $hasHalf = ($rounded - $full) == 0.5;
+                        @endphp
+                        <div class="flex items-center justify-center sm:justify-start gap-2 mt-2">
+                            <div class="flex items-center">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @if($i <= $full)
+                                        <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                        </svg>
+                                    @elseif($hasHalf && $i == $full + 1)
+                                        <svg class="w-4 h-4 text-yellow-400" viewBox="0 0 20 20">
+                                            <defs>
+                                                <linearGradient id="half-sp-{{ $i }}">
+                                                    <stop offset="50%" stop-color="#FBBF24"/>
+                                                    <stop offset="50%" stop-color="#D1D5DB"/>
+                                                </linearGradient>
+                                            </defs>
+                                            <path fill="url(#half-sp-{{ $i }})" d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                        </svg>
+                                    @endif
+                                @endfor
+                            </div>
+                            <span class="text-sm font-semibold text-gray-700">{{ number_format($moyenne, 1) }}</span>
+                        </div>
+                    @endif
                     <p class="text-xs sm:text-sm text-gray-500 flex items-center justify-center sm:justify-start mt-2">
                         <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         {{ $eleve->ville ?? 'Ville non renseignée' }}
@@ -82,11 +115,32 @@
                                     <span class="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap ml-auto sm:ml-0">{{ \Carbon\Carbon::parse($fb->dateCreation)->diffForHumans() }}</span>
                                 </div>
                                 
-                                <!-- Etoiles -->
-                                <div class="flex text-yellow-400 text-xs mb-2 sm:mb-3 ml-0 sm:ml-11">
-                                    @for($i=0; $i<5; $i++)
-                                        <svg class="w-3 h-3 sm:w-4 sm:h-4 {{ $i < ($fb->sympathie ?? 5) ? 'fill-current' : 'text-gray-200' }}" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                <!-- Etoiles (moyenne, arrondi 0.5) -->
+                                @php
+                                    $note = $fb->moyenne ?? 0;
+                                    $rounded = round($note * 2) / 2;
+                                    $full = floor($rounded);
+                                    $hasHalf = ($rounded - $full) == 0.5;
+                                @endphp
+                                <div class="flex items-center gap-1 text-xs mb-2 sm:mb-3 ml-0 sm:ml-11">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        @if($i <= $full)
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                        @elseif($hasHalf && $i == $full + 1)
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400" viewBox="0 0 20 20">
+                                                <defs>
+                                                    <linearGradient id="half-spfb-{{ $fb->idFeedBack }}-{{ $i }}">
+                                                        <stop offset="50%" stop-color="#FBBF24"/>
+                                                        <stop offset="50%" stop-color="#D1D5DB"/>
+                                                    </linearGradient>
+                                                </defs>
+                                                <path fill="url(#half-spfb-{{ $fb->idFeedBack }}-{{ $i }})" d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                            </svg>
+                                        @else
+                                            <svg class="w-3 h-3 sm:w-4 sm:h-4 text-gray-200 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                                        @endif
                                     @endfor
+                                    <span class="text-[11px] sm:text-xs font-semibold text-gray-700">{{ number_format($note, 1) }}</span>
                                 </div>
 
                                 <p class="text-xs sm:text-sm text-gray-600 italic ml-0 sm:ml-11 break-words">"{{ $fb->commentaire }}"</p>

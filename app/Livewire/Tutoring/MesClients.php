@@ -81,12 +81,22 @@ class MesClients extends Component
 
         // C. Heures Enseignées (Seulement celles passées)
         $heures = $coursTerminesQuery->get()->sum(function($d) {
+            if (!$d->heureDebut || !$d->heureFin) {
+                return 0;
+            }
+            
             $debut = \Carbon\Carbon::parse($d->heureDebut);
             $fin = \Carbon\Carbon::parse($d->heureFin);
             
-            // Calcul en minutes divisé par 60 pour éviter les "-1h" ou les arrondis bizarres
-            // Ex: 1h30 deviendra 1.5
-            return $fin->diffInMinutes($debut) / 60;
+            // Calcul en minutes divisé par 60, mais on s'assure que c'est positif
+            $minutes = $fin->diffInMinutes($debut, false); // false = peut être négatif
+            
+            // Si négatif (erreur de saisie), on inverse
+            if ($minutes < 0) {
+                $minutes = abs($minutes);
+            }
+            
+            return $minutes / 60;
         });
 
         // D. Revenus (On affiche tout le prévisionnel validé, c'est plus motivant)
@@ -132,22 +142,49 @@ class MesClients extends Component
             $query->where('demandes_intervention.statut', 'terminée');
         }
 
-        // On groupe par client pour ne pas avoir 10 fois le même client
-        // Et on sélectionne la DERNIÈRE demande pour afficher les infos récentes
-        return $query->select(
+        // Récupérer tous les cours avec leurs matières/niveaux
+        $allCourses = $query->select(
                 'utilisateurs.idUser as client_id',
                 'utilisateurs.nom',
                 'utilisateurs.prenom',
                 'utilisateurs.photo',
-                'demandes_intervention.dateSouhaitee', // Prochaine séance ou dernière
+                'demandes_intervention.dateSouhaitee',
                 'demandes_intervention.statut',
                 'matieres.nom_matiere',
-                'niveaux.nom_niveau',
-                'demandes_prof.montant_total'
+                'niveaux.nom_niveau'
             )
-            ->orderBy('demandes_intervention.dateSouhaitee', 'desc')
-            ->get()
-            ->unique('client_id'); // Astuce pour ne garder qu'une carte par client
+            ->get();
+
+        // Grouper par client et collecter tous les cours
+        $clientsGrouped = $allCourses->groupBy('client_id')->map(function($courses) {
+            $firstCourse = $courses->first();
+            
+            // Récupérer la date du premier cours pour chaque client
+            $firstCourseDate = $courses->min('dateSouhaitee');
+            
+            // Récupérer tous les matière/niveau uniques pour ce client
+            $coursesInfo = $courses->map(function($c) {
+                return [
+                    'nom_matiere' => $c->nom_matiere,
+                    'nom_niveau' => $c->nom_niveau
+                ];
+            })->unique(function($c) {
+                // Unique par combinaison matière/niveau
+                return $c['nom_matiere'] . '_' . $c['nom_niveau'];
+            })->values();
+            
+            return [
+                'client_id' => $firstCourse->client_id,
+                'nom' => $firstCourse->nom,
+                'prenom' => $firstCourse->prenom,
+                'photo' => $firstCourse->photo,
+                'firstCourseDate' => $firstCourseDate,
+                'statut' => $firstCourse->statut,
+                'courses' => $coursesInfo
+            ];
+        })->values();
+
+        return $clientsGrouped;
     }
 
     public function setFilter($filter)

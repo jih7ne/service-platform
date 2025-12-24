@@ -63,6 +63,17 @@ class ProfesseurSidebar extends Component
             str_contains($currentUrl, 'tutoring/courses')) {
             return 'tutoring-courses';
         }
+
+        // Avis
+        if (str_contains($currentUrl, 'tutoring/avis') || 
+            str_contains($currentUrl, 'tutoring/mes-avis')) {
+            return 'tutoring-avis';
+        }
+
+        // Réclamations
+        if (str_contains($currentUrl, 'tutoring/mes-reclamations')) {
+            return 'tutoring-mes-reclamations';
+        }
         
         // Profil
         if (str_contains($currentUrl, 'tutoring/mon-profil') || 
@@ -121,6 +132,8 @@ class ProfesseurSidebar extends Component
             'tutoring-disponibilites' => 'tutoring.disponibilites',
             'tutoring-clients' => 'tutoring.clients',
             'tutoring-courses' => 'tutoring.courses',
+            'tutoring-avis' => 'tutoring.avis',
+            'tutoring-mes-reclamations' => 'tutoring.mes-reclamations',
             'tutoring-profile' => 'tutoring.profile',
             'intervenant-hub' => 'intervenant.hub',
         ];

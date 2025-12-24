@@ -89,9 +89,9 @@
             title="{{ $isCollapsed ? 'Tableau de bord' : '' }}"
         >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
             @if(!$isCollapsed)
                 <span>Tableau de bord</span>
             @endif
@@ -171,6 +171,20 @@
             </svg>
             @if(!$isCollapsed)
                 <span>Mes avis</span>
+            @endif
+        </a>
+
+        {{-- Mes réclamations --}}
+        <a 
+            href="{{ route('tutoring.mes-reclamations') }}"
+            class="w-full flex items-center rounded-xl font-medium transition-all group relative {{ request()->routeIs('tutoring.mes-reclamations') ? 'bg-[#EFF6FF] text-blue-700 font-bold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }} {{ $isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3' }}"
+            title="{{ $isCollapsed ? 'Mes réclamations' : '' }}"
+        >
+            <svg class="w-5 h-5 group-hover:text-blue-600 {{ $isCollapsed ? 'flex-shrink-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            @if(!$isCollapsed)
+                <span>Mes réclamations</span>
             @endif
         </a>
     </nav>

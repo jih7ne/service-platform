@@ -23,6 +23,10 @@ class ProfilClient extends Component
     public $dateNaissance = '';
     public $photo;
     public $newPhoto;
+    
+    // ✅ Avis et notation depuis feedbacks
+    public $note = 0;
+    public $nbrAvis = 0;
 
     // Changement de mot de passe
     public $currentPassword = '';
@@ -95,6 +99,27 @@ class ProfilClient extends Component
         $this->telephone = $user->telephone;
         $this->dateNaissance = $user->dateNaissance ? $user->dateNaissance->format('Y-m-d') : '';
         $this->photo = $user->photo;
+        
+        // ✅ Calculer la note depuis la table feedbacks
+        $this->loadUserRating();
+    }
+
+    /**
+     * Charge la note et le nombre d'avis depuis la table feedbacks
+     */
+    private function loadUserRating()
+    {
+        $userId = Auth::id();
+        
+        // ✅ idCible = l'utilisateur qui REÇOIT les avis
+        $avisData = DB::table('feedbacks')
+            ->where('idCible', $userId)
+            ->where('estVisible', 1)
+            ->selectRaw('AVG(moyenne) as note_moyenne, COUNT(*) as nombre_avis')
+            ->first();
+        
+        $this->note = $avisData->note_moyenne ? round($avisData->note_moyenne, 2) : 0;
+        $this->nbrAvis = $avisData->nombre_avis ?? 0;
     }
 
     // Basculer le mode édition
