@@ -490,6 +490,10 @@ class SearchService extends Component
         return redirect()->route('pet-keeper.book', $IdService);
     }
 
+    public function toService($idPetKeeper, $id){
+        return redirect()->route('pet-keeper.about', ['idPetKeeper' => $idPetKeeper, 'idService' => $id]);
+    }
+
     public function zoomIn()
     {
         $this->dispatch('zoom-in');
@@ -575,6 +579,7 @@ class SearchService extends Component
 
     public function render()
     {
+        
         return view('livewire.pet-keeping.search-service')->with([
             'services' => $this->services,
             'totalPages' => ceil(count($this->services) / $this->perPage),
