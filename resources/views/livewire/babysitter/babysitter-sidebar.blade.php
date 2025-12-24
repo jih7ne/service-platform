@@ -42,14 +42,6 @@
             @endif
             <div>
                 <div class="font-semibold text-gray-800 text-sm">{{ $babysitterName }}</div>
-                <div class="flex items-center space-x-1 mt-0.5">
-                    <span class="text-yellow-500 text-xs">★</span>
-                    <span class="text-xs text-gray-600 font-medium">{{ number_format($babysitterRating, 1) }}</span>
-                    @if($babysitterRating >= 4.5)
-                        <span
-                            class="text-[10px] bg-pink-100 text-pink-800 px-1.5 py-0.5 rounded-full font-medium border border-pink-200">Expert</span>
-                    @endif
-                </div>
             </div>
         </div>
     </div>
