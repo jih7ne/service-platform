@@ -128,13 +128,13 @@
                                         @endif
 
                                         <!-- Badge Priorité -->
-                                        @if($reclamation->priorite === 'urgent')
-                                            <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Urgent</span>
-                                        @elseif($reclamation->priorite === 'normal')
-                                            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">Normal</span>
-                                        @else
-                                            <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">Faible</span>
-                                        @endif
+@if($reclamation->priorite === 'urgente')
+    <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Urgent</span>
+@elseif($reclamation->priorite === 'moyenne')
+    <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">Moyenne</span>
+@else
+    <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">Faible</span>
+@endif
                                     </div>
 
                                     <p class="text-gray-600 text-sm mb-3">{{ $reclamation->description }}</p>
