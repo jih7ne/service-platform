@@ -297,7 +297,7 @@
                                 Détails
                             </button>
 
-            @if(\Carbon\Carbon::parse($demande->dateSouhaitee)->isPast())
+            @if(\Carbon\Carbon::parse($demande->dateSouhaitee)->isPast() && $demande->statut == 'validée')
     @if(!$demande->feedback_existe)
         <button wire:click='openFeedbackModel({{ $demande->idDemande }}, {{ $demande->idIntervenant }})' 
                 class="px-4 py-2 bg-emerald-600 text-white rounded-full text-sm font-medium hover:bg-emerald-700 transition-colors duration-200 flex items-center gap-2">
