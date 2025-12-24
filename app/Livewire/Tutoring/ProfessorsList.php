@@ -74,6 +74,16 @@ class ProfessorsList extends Component
                           GROUP BY professeur_id) as prix_services'),
                 'professeurs.id_professeur', '=', 'prix_services.professeur_id'
             )
+            // ✅ CORRECTION : idCible = le professeur qui REÇOIT l'avis
+            ->leftJoin(
+                DB::raw('(SELECT idCible, 
+                                 AVG(moyenne) as note_moyenne, 
+                                 COUNT(*) as nombre_avis 
+                          FROM feedbacks 
+                          WHERE estVisible = 1 
+                          GROUP BY idCible) as avis_feedbacks'),
+                'utilisateurs.idUser', '=', 'avis_feedbacks.idCible'
+            )
             ->select(
                 'professeurs.id_professeur',
                 'professeurs.surnom',
@@ -85,13 +95,13 @@ class ProfessorsList extends Component
                 'utilisateurs.email',
                 'utilisateurs.telephone',
                 'utilisateurs.photo',
-                'utilisateurs.note',
-                'utilisateurs.nbrAvis',
                 'localisations.ville',
                 'localisations.adresse',
                 'localisations.latitude',
                 'localisations.longitude',
-                DB::raw('COALESCE(prix_services.min_prix, 0) as min_prix')
+                DB::raw('COALESCE(prix_services.min_prix, 0) as min_prix'),
+                DB::raw('COALESCE(avis_feedbacks.note_moyenne, 0) as note'),
+                DB::raw('COALESCE(avis_feedbacks.nombre_avis, 0) as nbrAvis')
             )
             ->where('intervenants.statut', 'VALIDE');
 
@@ -107,7 +117,7 @@ class ProfessorsList extends Component
                   ->orWhereRaw("CONCAT(utilisateurs.prenom, ' ', utilisateurs.nom) like ?", ["%{$search}%"]);
                 
                 if (is_numeric($search) && $search >= 0 && $search <= 5) {
-                    $q->orWhere('utilisateurs.note', '>=', $search);
+                    $q->orHaving('note', '>=', $search);
                 }
 
                 if (is_numeric($search)) {
@@ -141,7 +151,7 @@ class ProfessorsList extends Component
 
         // FILTRE NOTE
         if (!empty($this->selectedNote)) {
-            $query->where('utilisateurs.note', '>=', $this->selectedNote);
+            $query->havingRaw('COALESCE(avis_feedbacks.note_moyenne, 0) >= ?', [$this->selectedNote]);
         }
 
         // FILTRE MATIERE
@@ -169,7 +179,7 @@ class ProfessorsList extends Component
         // TRI
         switch ($this->sortBy) {
             case 'note':
-                $query->orderBy('utilisateurs.note', $this->sortDirection);
+                $query->orderBy('note', $this->sortDirection);
                 break;
             case 'nom':
                 $query->orderBy('utilisateurs.nom', $this->sortDirection);
@@ -178,7 +188,7 @@ class ProfessorsList extends Component
                 $query->orderBy('min_prix', $this->sortDirection);
                 break;
             default:
-                $query->orderBy('utilisateurs.note', 'desc');
+                $query->orderBy('note', 'desc');
         }
 
         return $query;
@@ -242,11 +252,9 @@ class ProfessorsList extends Component
     {
         Log::info('🎨 render()', ['showMap' => $this->showMap]);
 
-        // Récupérer TOUS les professeurs enrichis
         $query = $this->getProfesseursQuery();
         $allProfesseurs = $this->enrichWithServices($query->get());
 
-        // Pagination pour la vue liste
         $perPage = 12;
         $currentPage = $this->getPage();
         $total = $allProfesseurs->count();
@@ -261,10 +269,8 @@ class ProfessorsList extends Component
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
-        // Préparer les données carte
         $professeursMap = $this->prepareMapData($allProfesseurs);
 
-        // Récupération des filtres
         $villes = DB::table('localisations')
             ->select('ville')
             ->distinct()

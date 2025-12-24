@@ -8,7 +8,7 @@ use App\Models\SoutienScolaire\Professeur;
 use App\Models\Shared\DemandesIntervention;
 use App\Models\SoutienScolaire\DemandeProf;
 use App\Models\Shared\Disponibilite;
-use App\Models\Shared\Localisation; // Ajout
+use App\Models\Shared\Localisation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -93,7 +93,8 @@ class BookingProcess extends Component
         $this->service = ServiceProf::with(['professeur.intervenant.user', 'matiere', 'niveau'])
             ->findOrFail($this->serviceId);
 
-        $this->professeur = DB::table('professeurs')
+        // Charger les données de base du professeur
+        $professeurBase = DB::table('professeurs')
             ->join('intervenants', 'professeurs.intervenant_id', '=', 'intervenants.IdIntervenant')
             ->join('utilisateurs', 'intervenants.IdIntervenant', '=', 'utilisateurs.idUser')
             ->select(
@@ -101,17 +102,31 @@ class BookingProcess extends Component
                 'utilisateurs.nom',
                 'utilisateurs.prenom',
                 'utilisateurs.photo',
-                'utilisateurs.note',
+                'utilisateurs.idUser',
                 'intervenants.IdIntervenant as intervenant_id'
             )
             ->where('professeurs.id_professeur', $this->service->professeur_id)
             ->first();
 
+        if ($professeurBase) {
+            // ✅ Calculer la note depuis la table feedbacks (idCible = le professeur qui reçoit l'avis)
+            $avisData = DB::table('feedbacks')
+                ->where('idCible', $professeurBase->idUser)
+                ->where('estVisible', 1)
+                ->selectRaw('AVG(moyenne) as note_moyenne, COUNT(*) as nombre_avis')
+                ->first();
+
+            // Ajouter la note calculée
+            $this->professeur = $professeurBase;
+            $this->professeur->note = $avisData->note_moyenne ? round($avisData->note_moyenne, 2) : 0;
+            $this->professeur->nbrAvis = $avisData->nombre_avis ?? 0;
+        }
+
         // Charger les disponibilités du professeur
         $this->loadDisponibilites();
     }
 
- private function loadDisponibilites()
+    private function loadDisponibilites()
     {
         $this->disponibilites = Disponibilite::where('idIntervenant', $this->professeur->intervenant_id)
             ->where(function($query) {
@@ -132,7 +147,7 @@ class BookingProcess extends Component
         }
     }
 
-  private function loadAvailableSlotsForDate($date)
+    private function loadAvailableSlotsForDate($date)
     {
         $carbonDate = Carbon::parse($date);
         $jourSemaine = $this->getJourSemaine($carbonDate->dayOfWeek);
@@ -251,7 +266,6 @@ class BookingProcess extends Component
         $this->loadAvailableSlotsForDate($date);
     }
 
-  
     /**
      * Récupère tous les créneaux réservés pour le professeur à une date donnée
      * Statuts considérés : 'validee' et 'en_attente'
@@ -279,9 +293,6 @@ class BookingProcess extends Component
             $reservedEnd = Carbon::parse($reserved['heureFin']);
 
             // Vérifier si les créneaux se chevauchent
-            // Un créneau chevauche si :
-            // - Il commence avant la fin du créneau réservé ET
-            // - Il se termine après le début du créneau réservé
             if ($slotStartTime->lt($reservedEnd) && $slotEndTime->gt($reservedStart)) {
                 return true; // Le créneau est réservé
             }
@@ -397,18 +408,19 @@ class BookingProcess extends Component
                 $heureFin = trim($times[1]);
 
                 // Créer la demande d'intervention
-            $demande = DemandesIntervention::create([
-                'dateDemande' => now(),
-                'dateSouhaitee' => $this->selectedDate,
-                'heureDebut' => $heureDebut,
-                'heureFin' => $heureFin,
-                'statut' => 'en_attente',
-                'lieu' => $lieu,
-                'note_speciales' => $this->noteSpeciales,
-                'idIntervenant' => $this->professeur->intervenant_id,
-                'idClient' => Auth::id(),
-                'idService' => $serviceSoutienScolaire->idService  
-            ]);
+                $demande = DemandesIntervention::create([
+                    'dateDemande' => now(),
+                    'dateSouhaitee' => $this->selectedDate,
+                    'heureDebut' => $heureDebut,
+                    'heureFin' => $heureFin,
+                    'statut' => 'en_attente',
+                    'lieu' => $lieu,
+                    'note_speciales' => $this->noteSpeciales,
+                    'idIntervenant' => $this->professeur->intervenant_id,
+                    'idClient' => Auth::id(),
+                    'idService' => $serviceSoutienScolaire->idService  
+                ]);
+
                 // Créer la demande professeur pour chaque créneau
                 DemandeProf::create([
                     'montant_total' => $this->service->prix_par_heure,
@@ -510,7 +522,7 @@ class BookingProcess extends Component
     /**
      * Vérifie si un jour a des créneaux disponibles (non réservés)
      */
-  private function checkIfDayHasAvailability($date)
+    private function checkIfDayHasAvailability($date)
     {
         $carbonDate = Carbon::parse($date);
         $jourSemaine = $this->getJourSemaine($carbonDate->dayOfWeek);
