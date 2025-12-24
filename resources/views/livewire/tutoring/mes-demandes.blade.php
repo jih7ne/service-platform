@@ -172,11 +172,11 @@
 
                             <div class="flex items-center text-xs text-gray-500 mb-1 mt-1">
                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                {{ \Carbon\Carbon::parse($demande->dateDemande)->format('d M Y') }}
+                                {{ \Carbon\Carbon::parse($demande->dateDemande)->isoFormat('D MMM YYYY') }}
                             </div>
                             <div class="flex items-center text-[11px] text-gray-600 mb-3">
                                 <span class="text-[10px] text-gray-400 font-bold uppercase mr-2">Date souhaitée</span>
-                                {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->format('d M Y') }} • {{ substr($demande->heureDebut, 0, 5) }}-{{ substr($demande->heureFin, 0, 5) }}
+                               {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->isoFormat('D MMM YYYY') }} • {{ substr($demande->heureDebut, 0, 5) }}-{{ substr($demande->heureFin, 0, 5) }}
                             </div>
                             
                             <!-- Détails Service -->
@@ -203,7 +203,7 @@
                             <div>
                                 <p class="text-xs text-gray-400 font-bold uppercase mb-0.5">Horaire souhaité</p>
                                 <p class="text-sm font-semibold text-gray-800">
-                                    {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->format('l d M') }}, 
+                                    {{ \Carbon\Carbon::parse($demande->dateSouhaitee)->isoFormat('dddd D MMM') }}, 
                                     {{ substr($demande->heureDebut, 0, 5) }} - {{ substr($demande->heureFin, 0, 5) }}
                                 </p>
                             </div>

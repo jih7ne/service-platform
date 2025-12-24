@@ -6,6 +6,7 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Shared\Intervenant;
+use Carbon\Carbon;
 
 class Dashboard extends Component
 {
@@ -26,6 +27,9 @@ class Dashboard extends Component
 
     public function mount()
     {
+        // Configurer Carbon en français
+        Carbon::setLocale('fr');
+        
         $user = Auth::user();
         if (!$user) return redirect()->route('login');
 
@@ -46,9 +50,9 @@ class Dashboard extends Component
 
         // Note moyenne
         $moyenne = DB::table('feedbacks')
-    ->where('idCible', $userId)  
-    ->avg('moyenne');            
-    $this->note = $moyenne ? number_format($moyenne, 1) : '-';
+            ->where('idCible', $userId)  
+            ->avg('moyenne');            
+        $this->note = $moyenne ? number_format($moyenne, 1) : '-';
 
         // 1. KPI (Statistiques)
         $professeurId = DB::table('professeurs')
@@ -94,7 +98,11 @@ class Dashboard extends Component
             ->take(2)
             ->get();
 
-        // 3. Cours à venir
+        // 3. Cours à venir - CORRECTION ICI
+        $now = Carbon::now();
+        $today = $now->format('Y-m-d');
+        $currentTime = $now->format('H:i:s');
+
         $this->coursAVenir = DB::table('demandes_intervention')
             ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
             ->leftJoin('demandes_prof', 'demandes_intervention.idDemande', '=', 'demandes_prof.demande_id')
@@ -102,8 +110,17 @@ class Dashboard extends Component
             ->leftJoin('matieres', 'services_prof.matiere_id', '=', 'matieres.id_matiere')
             ->where('demandes_intervention.idIntervenant', $userId)
             ->where('demandes_intervention.statut', 'validée')
-            ->whereDate('demandes_intervention.dateSouhaitee', '>=', now())
+            ->where(function($query) use ($today, $currentTime) {
+                // Cours dont la date est future
+                $query->where('demandes_intervention.dateSouhaitee', '>', $today)
+                    // OU cours d'aujourd'hui mais dont l'heure de fin n'est pas encore passée
+                    ->orWhere(function($q) use ($today, $currentTime) {
+                        $q->where('demandes_intervention.dateSouhaitee', '=', $today)
+                          ->where('demandes_intervention.heureFin', '>', $currentTime);
+                    });
+            })
             ->select(
+                'demandes_intervention.idDemande',
                 'demandes_intervention.dateSouhaitee',
                 'demandes_intervention.heureDebut',
                 'demandes_intervention.heureFin',
