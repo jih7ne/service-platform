@@ -464,6 +464,7 @@ class PetKeeperDashboard extends Component
         if ($this->isAvailable) {
             $demandesUrgentes = DB::table('demandes_intervention')
                 ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
+                ->join('petkeeping', 'demandes_intervention.idService', '=', 'petkeeping.idPetKeeping')
                 ->leftJoin('animal_demande', 'demandes_intervention.idDemande', '=', 'animal_demande.idDemande')
                 ->leftJoin('factures', 'factures.idDemande', '=', 'demandes_intervention.idDemande')
                 ->leftJoin('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
@@ -495,6 +496,7 @@ class PetKeeperDashboard extends Component
         
         $missionsAVenir = DB::table('demandes_intervention')
             ->join('utilisateurs', 'demandes_intervention.idClient', '=', 'utilisateurs.idUser')
+            ->join('petkeeping', 'demandes_intervention.idService', '=', 'petkeeping.idPetKeeping')
             ->leftJoin('animal_demande', 'demandes_intervention.idDemande', '=', 'animal_demande.idDemande')
             ->leftJoin('factures', 'factures.idDemande', '=', 'demandes_intervention.idDemande')
             ->leftJoin('animals', 'animal_demande.idAnimal', '=', 'animals.idAnimale')
